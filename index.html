@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام إدارة الإيجارات</title>
+<style>
+  :root{
+    --bg:#eef2f7; --surface:#ffffff; --surface-2:#f8fafc;
+    --primary:#0f766e; --primary-d:#0b5d56; --primary-l:#ccfbf1;
+    --text:#0f172a; --muted:#64748b; --border:#e2e8f0;
+    --success:#16a34a; --success-l:#dcfce7;
+    --warning:#d97706; --warning-l:#fef3c7;
+    --danger:#dc2626; --danger-l:#fee2e2;
+    --info:#2563eb; --info-l:#dbeafe;
+    --shadow:0 1px 3px rgba(15,23,42,.08),0 8px 24px rgba(15,23,42,.06);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',Tahoma,'Helvetica Neue',Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit;font-size:14px}
+
+  /* Header */
+  header{
+    background:linear-gradient(135deg,var(--primary),var(--primary-d));
+    color:#fff;padding:0;box-shadow:var(--shadow);position:sticky;top:0;z-index:50;
+  }
+  .head-inner{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px;font-size:20px;font-weight:700}
+  .brand .logo{width:40px;height:40px;background:rgba(255,255,255,.18);border-radius:12px;display:grid;place-items:center;font-size:22px}
+  nav{display:flex;gap:6px;margin-inline-start:auto;flex-wrap:wrap}
+  nav button{
+    background:rgba(255,255,255,.12);color:#fff;border:none;padding:9px 16px;border-radius:10px;
+    font-size:14px;font-weight:600;transition:.15s;display:flex;align-items:center;gap:6px;
+  }
+  nav button:hover{background:rgba(255,255,255,.24)}
+  nav button.active{background:#fff;color:var(--primary-d)}
+
+  .wrap{max-width:1200px;margin:0 auto;padding:24px 20px 60px}
+
+  /* Page heading */
+  .page-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+  .page-head h1{font-size:24px;font-weight:800}
+  .page-head .sub{color:var(--muted);font-size:14px;margin-top:2px}
+  .crumbs{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin-bottom:6px}
+  .crumbs a{color:var(--primary);cursor:pointer;text-decoration:none;font-weight:600}
+  .crumbs a:hover{text-decoration:underline}
+
+  /* Buttons */
+  .btn{border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px;transition:.15s;background:var(--surface);color:var(--text);border:1px solid var(--border)}
+  .btn:hover{background:var(--surface-2)}
+  .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .btn-primary:hover{background:var(--primary-d)}
+  .btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+  .btn-danger:hover{filter:brightness(.94)}
+  .btn-sm{padding:6px 12px;font-size:13px;border-radius:8px}
+  .btn-ghost{background:transparent;border-color:transparent}
+  .btn-ghost:hover{background:var(--surface-2)}
+
+  /* Cards / stat grid */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+  .stat{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden}
+  .stat .ic{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:21px;margin-bottom:10px}
+  .stat .val{font-size:28px;font-weight:800;line-height:1.1}
+  .stat .lbl{color:var(--muted);font-size:13px;font-weight:600;margin-top:3px}
+  .stat.clickable{cursor:pointer;transition:.18s}
+  .stat.clickable:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(15,23,42,.13);border-color:var(--primary)}
+  .stat .stat-go{position:absolute;bottom:12px;left:16px;font-size:12px;font-weight:800;color:var(--primary);opacity:0;transition:.18s}
+  .stat.clickable:hover .stat-go{opacity:1}
+  tbody tr.rowlink{cursor:pointer}
+  .ic.teal{background:var(--primary-l);color:var(--primary-d)}
+  .ic.green{background:var(--success-l);color:var(--success)}
+  .ic.red{background:var(--danger-l);color:var(--danger)}
+  .ic.amber{background:var(--warning-l);color:var(--warning)}
+  .ic.blue{background:var(--info-l);color:var(--info)}
+
+  .panel{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px;overflow:hidden}
+  .panel-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .panel-head h2{font-size:16px;font-weight:800;display:flex;align-items:center;gap:9px}
+  .panel-head .count{background:var(--surface-2);color:var(--muted);font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid var(--border)}
+  .panel-body{padding:6px 0}
+  .panel-body.pad{padding:18px}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:12px 18px;text-align:right;font-size:14px}
+  th{color:var(--muted);font-weight:700;font-size:12.5px;border-bottom:2px solid var(--border);white-space:nowrap}
+  tbody tr{border-bottom:1px solid var(--border)}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:var(--surface-2)}
+  td .muted{color:var(--muted);font-size:12.5px}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:20px;font-size:12.5px;font-weight:700;white-space:nowrap}
+  .b-green{background:var(--success-l);color:var(--success)}
+  .b-red{background:var(--danger-l);color:var(--danger)}
+  .b-amber{background:var(--warning-l);color:var(--warning)}
+  .b-blue{background:var(--info-l);color:var(--info)}
+  .b-gray{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+  /* Building cards */
+  .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+  .bcard{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:.18s}
+  .bcard:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(15,23,42,.12)}
+  .bcard .top{background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;padding:16px 18px}
+  .bcard .top .name{font-size:18px;font-weight:800}
+  .bcard .top .addr{font-size:13px;opacity:.9;margin-top:2px}
+  .bcard .body{padding:14px 18px;display:flex;gap:18px;flex-wrap:wrap}
+  .bcard .mini{display:flex;flex-direction:column}
+  .bcard .mini .n{font-size:20px;font-weight:800}
+  .bcard .mini .t{font-size:12px;color:var(--muted);font-weight:600}
+
+  /* progress bar */
+  .pbar{height:8px;border-radius:8px;background:var(--surface-2);overflow:hidden;border:1px solid var(--border)}
+  .pbar > span{display:block;height:100%;background:var(--success)}
+
+  /* Empty states */
+  .empty{text-align:center;padding:50px 20px;color:var(--muted)}
+  .empty .em{font-size:54px;margin-bottom:10px}
+  .empty h3{color:var(--text);font-size:18px;margin-bottom:6px}
+  .empty p{margin-bottom:18px}
+
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(2px);display:grid;place-items:center;z-index:100;padding:20px}
+  .modal{background:var(--surface);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:100%;max-width:560px;max-height:92vh;overflow:auto}
+  .modal.lg{max-width:840px}
+  .modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:2}
+  .modal-head h3{font-size:18px;font-weight:800}
+  .modal-body{padding:22px}
+  .modal-foot{padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-start;position:sticky;bottom:0;background:var(--surface)}
+  .x{background:var(--surface-2);border:none;width:34px;height:34px;border-radius:9px;font-size:18px;color:var(--muted)}
+  .x:hover{background:var(--danger-l);color:var(--danger)}
+
+  /* Forms */
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13.5px;font-weight:700;margin-bottom:6px}
+  .field .hint{font-weight:500;color:var(--muted);font-size:12px}
+  .field input,.field select,.field textarea{
+    width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface-2);transition:.15s;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-l)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+  .info-box{background:var(--info-l);border:1px solid #bfdbfe;color:#1e40af;border-radius:12px;padding:13px 15px;font-size:13.5px;display:flex;gap:10px;align-items:flex-start}
+  .formula{background:var(--surface-2);border:1px dashed var(--border);border-radius:10px;padding:12px 15px;font-size:14px;color:var(--text);margin-top:6px}
+  .formula b{color:var(--primary-d)}
+
+  .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:6px}
+  .dcell{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
+  .dcell .t{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:3px}
+  .dcell .v{font-size:15px;font-weight:700}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+  .search{flex:1;min-width:200px;position:relative}
+  .search input{width:100%;padding:10px 38px 10px 14px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface)}
+  .search .si{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+
+  @media (max-width:600px){
+    .row2,.row3{grid-template-columns:1fr}
+    th,td{padding:10px 12px}
+    .head-inner{padding:12px}
+    nav button{padding:8px 12px;font-size:13px}
+  }
+  @media print{body{background:#fff}.no-print{display:none!important}}
+
+  /* مزامنة سحابية + شاشة رمز الدخول */
+  .sync-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.35);color:#fff;white-space:nowrap}
+  .sync-badge.ok{background:rgba(22,163,74,.28)}
+  .sync-badge.off{background:rgba(217,119,6,.32)}
+  .sync-badge:hover{filter:brightness(1.12)}
+  .overlay.gate{background:linear-gradient(135deg,var(--primary),var(--primary-d));z-index:200}
+  .gatebox{background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.35);padding:36px 30px;width:100%;max-width:410px;text-align:center}
+  .gate-logo{font-size:54px;margin-bottom:6px}
+  .gatebox h2{font-size:21px;font-weight:800;color:var(--text);margin-bottom:8px}
+  .gatebox p{color:var(--muted);font-size:14px;margin-bottom:18px}
+  .gate-hint{color:var(--primary-d);font-size:12.5px;font-weight:600}
+  #gate-code{width:100%;padding:14px 15px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface-2);font-size:17px;text-align:center;letter-spacing:3px;margin-bottom:14px}
+  #gate-code:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-l)}
+  .gate-btn{width:100%;justify-content:center;padding:14px;font-size:15px}
+  .gate-foot{margin-top:18px;font-size:12px;color:#94a3b8;line-height:1.7}
+</style>
+</head>
+<body>
+<header>
+  <div class="head-inner">
+    <div class="brand"><span class="logo">🏢</span><span>نظام إدارة الإيجارات</span></div>
+    <span id="syncBadge" class="sync-badge" style="display:none" onclick="cloudLogout()" title="اضغط لتغيير الرمز / تسجيل الخروج"></span>
+    <nav id="nav">
+      <button data-v="dashboard" onclick="go('dashboard')">📊 لوحة التحكم</button>
+      <button data-v="properties" onclick="go('properties')">🏘️ العقارات</button>
+      <button data-v="accounting" onclick="go('accounting')">🧮 المحاسبة</button>
+      <button data-v="payments" onclick="go('payments')">📋 المستحقات</button>
+      <button onclick="openGuide()">📖 دليل المستخدم</button>
+      <button onclick="openSettings()">⚙️ الإعدادات</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap" id="app"></div>
+<div id="modal-root"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+/* ============================ البيانات ============================ */
+const STORAGE_KEY = 'rentals_app_v1';
+const CODE_KEY = 'rentals_space_code';
+let db = null;
+let view = { name:'dashboard', buildingId:null };
+let _bForm = { deedImage:null, attachments:[] };
+
+/* إعدادات Firebase للمزامنة السحابية (مشروع meal-dfd65) */
+const firebaseConfig = {
+  apiKey: "AIzaSyBRwT71-WPRrEIIfG-6mnt2--QXvDOvJjw",
+  authDomain: "meal-dfd65.firebaseapp.com",
+  projectId: "meal-dfd65",
+  storageBucket: "meal-dfd65.firebasestorage.app",
+  messagingSenderId: "630056216874",
+  appId: "1:630056216874:web:c552010369ee1d2b505653"
+};
+let fs = null;
+let cloud = { ready:false, enabled:false, code:null, spaceId:null, ref:null, online:false, applyingRemote:false, saveTimer:null, unsub:null };
+try{
+  if(window.firebase && firebase.initializeApp){
+    firebase.initializeApp(firebaseConfig);
+    fs = firebase.firestore();
+    cloud.ready = true;
+  }
+}catch(e){ cloud.ready = false; console.warn('Firebase init', e); }
+
+function defaults(){
+  return { settings:{ currency:'ريال', paymentReminderDays:30, deliveryReminderDays:60 }, buildings:[], units:[], expenses:[] };
+}
+function normalize(d){
+  d = d || defaults();
+  d.settings = Object.assign(defaults().settings, d.settings||{});
+  d.buildings = d.buildings||[]; d.units = d.units||[]; d.expenses = d.expenses||[];
+  d.units.forEach(u=>{
+    u.payments=u.payments||[]; u.history=u.history||[];
+    if(u.quarterlyRent!==undefined && u.rentAmount===undefined) u.rentAmount=u.quarterlyRent;
+    u.rentAmount=u.rentAmount||0; u.paymentPeriod=u.paymentPeriod||'quarterly'; u.electricityMeter=u.electricityMeter||'';
+  });
+  return d;
+}
+function loadLocal(){
+  try{ const raw = localStorage.getItem(STORAGE_KEY); db = raw ? JSON.parse(raw) : defaults(); }
+  catch(e){ db = defaults(); }
+  db = normalize(db);
+}
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  if(cloud.enabled && !cloud.applyingRemote) scheduleCloudPush();
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function periodMos(u){ return {monthly:1,quarterly:3,semiannual:6,annual:12}[u.paymentPeriod||'quarterly']||3; }
+function periodLbl(u){ return {monthly:'شهري',quarterly:'ربع سنوي',semiannual:'نصف سنوي',annual:'سنوي'}[u.paymentPeriod||'quarterly']||'ربع سنوي'; }
+
+/* واتساب — يفتح الجوال مباشرة على الرقم، الجهاز الثابت يفتح واتساب ويب */
+function isMobile(){ return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
+function openWhatsApp(phone,msg){
+  const p=(phone||'').replace(/[^0-9]/g,'');
+  const enc=encodeURIComponent(msg);
+  const url=p?(isMobile()?`whatsapp://send?phone=${p}&text=${enc}`:`https://wa.me/${p}?text=${enc}`):`https://wa.me/?text=${enc}`;
+  window.open(url,'_blank');
+}
+/* يُنشئ سكريبت لنوافذ المستندات: يلتقط الصفحة كصورة PNG ويشاركها عبر واتساب */
+function waWindowScript(phone,msg,title){
+  const p=JSON.stringify((phone||'').replace(/[^0-9]/g,''));
+  const m=JSON.stringify(msg||'');
+  const t=JSON.stringify(title||'مستند');
+  return `<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script><scr`+`ipt>
+function sendWA(){
+  var p=${p},msg=${m},ttl=${t};
+  var mob=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  function goText(){
+    var enc=encodeURIComponent(msg);
+    window.open(p?(mob?'whatsapp://send?phone='+p+'&text='+enc:'https://wa.me/'+p+'?text='+enc):'https://wa.me/?text='+enc,'_blank');
+  }
+  function doShare(blob){
+    var file=new File([blob],ttl+'.png',{type:'image/png'});
+    if(navigator.share){
+      navigator.share({files:[file],title:ttl}).catch(function(e){
+        if(e.name!=='AbortError') goText();
+      });
+    } else {
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=ttl+'.png';
+      a.click();
+      setTimeout(goText,400);
+    }
+  }
+  if(typeof html2canvas==='undefined'){ goText(); return; }
+  var noprint=document.querySelectorAll('.noprint,.btnbar');
+  noprint.forEach(function(el){el.style.visibility='hidden';});
+  html2canvas(document.body,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false})
+    .then(function(canvas){
+      noprint.forEach(function(el){el.style.visibility='';});
+      canvas.toBlob(function(blob){ doShare(blob); },'image/png');
+    })
+    .catch(function(){ noprint.forEach(function(el){el.style.visibility='';}); goText(); });
+}
+<\/scr`+`ipt>`;
+}
+
+/* ============================ التواريخ والأرقام ============================ */
+function todayISO(){ const d=new Date(); d.setHours(0,0,0,0);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parseISO(iso){ return new Date(iso+'T00:00:00'); }
+function addMonths(iso,n){
+  const d=parseISO(iso); const day=d.getDate();
+  d.setMonth(d.getMonth()+n);
+  if(d.getDate()<day) d.setDate(0); // ضبط نهاية الشهر
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fmtDate(iso){ if(!iso) return '—';
+  return parseISO(iso).toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'long',year:'numeric'}); }
+function fmtMoney(n){ return new Intl.NumberFormat('en-US').format(Math.round(n||0))+' '+db.settings.currency; }
+function daysFromToday(iso){ return Math.round((parseISO(iso)-parseISO(todayISO()))/86400000); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ============================ منطق الدفعات ============================
+   معادلة الاستحقاق: تاريخ الدفعة (ن) = تاريخ بداية العقد + (ن−1) × 3 أشهر
+   عدد الدفعات = مدة العقد بالأشهر ÷ 3                                       */
+function buildSchedule(unit){
+  const mos=periodMos(unit);
+  const count=Math.max(1,Math.ceil((Number(unit.durationMonths)||12)/mos));
+  const prev={}; (unit.payments||[]).forEach(p=>{ prev[p.dueDate]=p; });
+  const list=[];
+  for(let i=0;i<count;i++){
+    const due=addMonths(unit.contractStart,i*mos);
+    const ex=prev[due];
+    list.push({id:ex?ex.id:uid(),n:i+1,dueDate:due,amount:Number(unit.rentAmount)||0,status:ex?ex.status:'unpaid',paidDate:ex?ex.paidDate:null});
+  }
+  return list;
+}
+function payStatus(p){
+  if(p.status==='paid') return 'paid';
+  if(daysFromToday(p.dueDate)<0) return 'overdue';
+  if(daysFromToday(p.dueDate)<=db.settings.paymentReminderDays) return 'due';
+  return 'upcoming';
+}
+function contractEnd(unit){ return addMonths(unit.contractStart, Number(unit.durationMonths)||12); }
+function unitsOf(bId){ return db.units.filter(u=>u.buildingId===bId); }
+function nextUnpaid(unit){
+  return (unit.payments||[]).filter(p=>p.status!=='paid').sort((a,b)=>a.dueDate<b.dueDate?-1:1)[0]||null;
+}
+function unitTotals(unit){
+  const ps=unit.payments||[];
+  const paid=ps.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const total=ps.reduce((s,p)=>s+p.amount,0);
+  const overdue=ps.filter(p=>payStatus(p)==='overdue').reduce((s,p)=>s+p.amount,0);
+  return {paid,total,remaining:total-paid,overdue,
+    overdueCount:ps.filter(p=>payStatus(p)==='overdue').length};
+}
+
+/* ============================ التنقل والعرض ============================ */
+function go(name,bId){ view={name,buildingId:bId||null}; render(); window.scrollTo(0,0); }
+function render(){
+  document.querySelectorAll('#nav button[data-v]').forEach(b=>b.classList.toggle('active',b.dataset.v===view.name));
+  const app=document.getElementById('app');
+  if(view.name==='dashboard') app.innerHTML=viewDashboard();
+  else if(view.name==='properties') app.innerHTML=viewProperties();
+  else if(view.name==='building') app.innerHTML=viewBuilding(view.buildingId);
+  else if(view.name==='accounting') app.innerHTML=viewAccounting();
+  else if(view.name==='payments') app.innerHTML=viewPaymentsFilter();
+}
+
+/* ---------- لوحة التحكم ---------- */
+function viewDashboard(){
+  const units=db.units;
+  let allPayments=[];
+  units.forEach(u=>{ const b=db.buildings.find(x=>x.id===u.buildingId);
+    (u.payments||[]).forEach(p=>allPayments.push({...p,unit:u,building:b})); });
+
+  const overdue=allPayments.filter(p=>payStatus(p)==='overdue').sort((a,b)=>a.dueDate<b.dueDate?-1:1);
+  const dueSoon=allPayments.filter(p=>payStatus(p)==='due').sort((a,b)=>a.dueDate<b.dueDate?-1:1);
+  const totalCollected=allPayments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const totalDue=overdue.reduce((s,p)=>s+p.amount,0)+dueSoon.reduce((s,p)=>s+p.amount,0);
+
+  // عقارات قريبة التسليم
+  const nearDelivery=db.buildings.filter(b=>b.deliveryDate)
+    .map(b=>({b,days:daysFromToday(b.deliveryDate)}))
+    .filter(x=>x.days>=0 && x.days<=db.settings.deliveryReminderDays)
+    .sort((a,b)=>a.days-b.days);
+
+  // عقود قريبة الانتهاء
+  const endingSoon=units.map(u=>({u,b:db.buildings.find(x=>x.id===u.buildingId),end:contractEnd(u)}))
+    .map(x=>({...x,days:daysFromToday(x.end)}))
+    .filter(x=>x.days>=0 && x.days<=db.settings.deliveryReminderDays)
+    .sort((a,b)=>a.days-b.days);
+
+  if(db.buildings.length===0) return pageEmpty();
+
+  const occupied=units.filter(u=>u.tenantName).length;
+
+  let h=`<div class="page-head"><div><h1>📊 لوحة التحكم</h1>
+    <div class="sub">نظرة عامة على العقارات والمستحقات — ${fmtDate(todayISO())}</div></div></div>`;
+
+  h+=`<div class="stats">
+    ${stat('teal','🏢',db.buildings.length,'عدد العقارات',"go('properties')")}
+    ${stat('blue','🚪',units.length,'إجمالي الوحدات',"go('properties')")}
+    ${stat('green','✅',fmtMoney(totalCollected),'إجمالي المحصّل',"go('accounting')")}
+    ${stat('red','⚠️',overdue.length,'دفعات متأخرة',"scrollToPanel('p-overdue')")}
+    ${stat('amber','⏰',dueSoon.length,'دفعات قريبة',"scrollToPanel('p-duesoon')")}
+  </div>`;
+
+  // متأخرات
+  h+=`<div class="panel" id="p-overdue"><div class="panel-head"><h2>⚠️ دفعات متأخرة</h2>
+    <span class="count">${overdue.length} دفعة • ${fmtMoney(overdue.reduce((s,p)=>s+p.amount,0))}</span></div>`;
+  if(overdue.length===0) h+=`<div class="panel-body pad" style="color:var(--success);font-weight:700">🎉 لا توجد دفعات متأخرة، كل شيء على ما يرام.</div>`;
+  else{
+    h+=`<div class="panel-body"><table><thead><tr><th>العقار</th><th>الوحدة</th><th>المستأجر</th><th>تاريخ الاستحقاق</th><th>التأخير</th><th>المبلغ</th><th></th></tr></thead><tbody>`;
+    overdue.slice(0,12).forEach(p=>{ h+=`<tr class="rowlink" onclick="openUnit('${p.unit.id}')">
+      <td>${esc(p.building?p.building.name:'—')}</td>
+      <td>${esc(p.unit.name)}</td>
+      <td>${esc(p.unit.tenantName||'—')}</td>
+      <td>${fmtDate(p.dueDate)}</td>
+      <td><span class="badge b-red">متأخر ${Math.abs(daysFromToday(p.dueDate))} يوم</span></td>
+      <td style="font-weight:700">${fmtMoney(p.amount)}</td>
+      <td><button class="btn btn-sm btn-primary" onclick="openUnit('${p.unit.id}')">فتح</button></td>
+    </tr>`; });
+    h+=`</tbody></table></div>`;
+  }
+  h+=`</div>`;
+
+  // قريبة الاستحقاق
+  if(dueSoon.length){
+    h+=`<div class="panel" id="p-duesoon"><div class="panel-head"><h2>⏰ دفعات قريبة الاستحقاق (خلال ${db.settings.paymentReminderDays} يوم)</h2>
+      <span class="count">${dueSoon.length} دفعة</span></div><div class="panel-body"><table>
+      <thead><tr><th>العقار</th><th>الوحدة</th><th>المستأجر</th><th>تاريخ الاستحقاق</th><th>باقٍ</th><th>المبلغ</th><th></th></tr></thead><tbody>`;
+    dueSoon.slice(0,12).forEach(p=>{ h+=`<tr class="rowlink" onclick="openUnit('${p.unit.id}')">
+      <td>${esc(p.building?p.building.name:'—')}</td><td>${esc(p.unit.name)}</td>
+      <td>${esc(p.unit.tenantName||'—')}</td><td>${fmtDate(p.dueDate)}</td>
+      <td><span class="badge b-amber">بعد ${daysFromToday(p.dueDate)} يوم</span></td>
+      <td style="font-weight:700">${fmtMoney(p.amount)}</td>
+      <td><button class="btn btn-sm btn-primary" onclick="openUnit('${p.unit.id}')">فتح</button></td>
+    </tr>`; });
+    h+=`</tbody></table></div></div>`;
+  }
+
+  // عقارات قريبة التسليم + عقود قريبة الانتهاء
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="dash-2col">`;
+  h+=`<div class="panel"><div class="panel-head"><h2>🔑 عقارات قريبة التسليم</h2><span class="count">${nearDelivery.length}</span></div><div class="panel-body">`;
+  if(nearDelivery.length===0) h+=`<div class="pad" style="padding:18px;color:var(--muted)">لا توجد عقارات قريبة التسليم خلال ${db.settings.deliveryReminderDays} يوم.</div>`;
+  else{ h+=`<table><thead><tr><th>العقار</th><th>تاريخ التسليم</th><th>المتبقّي</th></tr></thead><tbody>`;
+    nearDelivery.forEach(x=>{ h+=`<tr onclick="go('building','${x.b.id}')" style="cursor:pointer">
+      <td style="font-weight:700">${esc(x.b.name)}</td><td>${fmtDate(x.b.deliveryDate)}</td>
+      <td><span class="badge ${x.days<=14?'b-red':'b-amber'}">بعد ${x.days} يوم</span></td></tr>`; });
+    h+=`</tbody></table>`; }
+  h+=`</div></div>`;
+
+  h+=`<div class="panel"><div class="panel-head"><h2>📅 عقود قريبة الانتهاء</h2><span class="count">${endingSoon.length}</span></div><div class="panel-body">`;
+  if(endingSoon.length===0) h+=`<div style="padding:18px;color:var(--muted)">لا توجد عقود قريبة الانتهاء خلال ${db.settings.deliveryReminderDays} يوم.</div>`;
+  else{ h+=`<table><thead><tr><th>الوحدة</th><th>المستأجر</th><th>نهاية العقد</th></tr></thead><tbody>`;
+    endingSoon.forEach(x=>{ h+=`<tr onclick="openUnit('${x.u.id}')" style="cursor:pointer">
+      <td style="font-weight:700">${esc(x.b?x.b.name:'')} — ${esc(x.u.name)}</td>
+      <td>${esc(x.u.tenantName||'—')}</td>
+      <td><span class="badge ${x.days<=14?'b-red':'b-amber'}">${fmtDate(x.end)}</span></td></tr>`; });
+    h+=`</tbody></table>`; }
+  h+=`</div></div></div>`;
+
+  return h;
+}
+function stat(c,ic,val,lbl,action){
+  return `<div class="stat${action?' clickable':''}"${action?` onclick="${action}"`:''}>
+    <div class="ic ${c}">${ic}</div><div class="val">${val}</div><div class="lbl">${lbl}</div>
+    ${action?'<div class="stat-go">عرض ›</div>':''}</div>`;
+}
+function scrollToPanel(id){
+  const el=document.getElementById(id); if(!el) return;
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  el.style.transition='box-shadow .25s';
+  el.style.boxShadow='0 0 0 3px var(--primary)';
+  setTimeout(function(){ el.style.boxShadow=''; }, 1300);
+}
+
+/* ============================ جدول المستحقات ============================ */
+let paymentFilterDays=30;
+function viewPaymentsFilter(){
+  if(db.buildings.length===0) return pageEmpty();
+  const allDue=[];
+  db.units.forEach(u=>{
+    const b=db.buildings.find(x=>x.id===u.buildingId);
+    (u.payments||[]).forEach(p=>{
+      if(p.status==='paid') return;
+      const d=daysFromToday(p.dueDate);
+      if(d>=0 && d<=paymentFilterDays) allDue.push({...p,unit:u,building:b});
+    });
+  });
+  allDue.sort((a,b)=>a.dueDate<b.dueDate?-1:1);
+  const total=allDue.reduce((s,p)=>s+p.amount,0);
+  const filterMap={30:'شهري (30 يوم)',90:'3 أشهر (90 يوم)',180:'6 أشهر (180 يوم)'};
+  let h=`<div class="page-head no-print"><div><h1>📋 جدول المستحقات</h1>
+    <div class="sub">الدفعات المستحقة خلال الفترة المحددة — ${fmtDate(todayISO())}</div></div>
+    <button class="btn btn-primary no-print" onclick="window.print()">🖨️ طباعة الكل</button></div>`;
+  h+=`<div class="toolbar no-print">${[30,90,180].map(d=>`<button class="btn${paymentFilterDays===d?' btn-primary':''}" onclick="paymentFilterDays=${d};render()">${filterMap[d]}</button>`).join('')}</div>`;
+  h+=`<div class="panel"><div class="panel-head"><h2>📋 المستحقات — ${filterMap[paymentFilterDays]}</h2>
+    <span class="count">${allDue.length} دفعة • ${fmtMoney(total)}</span></div>`;
+  if(allDue.length===0){
+    h+=`<div class="panel-body pad" style="color:var(--success);font-weight:700">✅ لا توجد دفعات مستحقة في هذه الفترة.</div>`;
+  } else {
+    h+=`<div class="panel-body"><table>
+      <thead><tr><th>المستأجر</th><th>الجوال</th><th>العقار</th><th>الوحدة</th><th>تاريخ الاستحقاق</th><th>المبلغ</th><th>باقٍ</th><th class="no-print"></th></tr></thead><tbody>`;
+    allDue.forEach(p=>{
+      const d=daysFromToday(p.dueDate);
+      h+=`<tr>
+        <td style="font-weight:700">${esc(p.unit.tenantName||'—')}</td>
+        <td>${p.unit.tenantPhone?esc(p.unit.tenantPhone):'<span class="muted">—</span>'}</td>
+        <td>${esc(p.building?p.building.name:'—')}</td>
+        <td>${esc(p.unit.name)}</td>
+        <td>${fmtDate(p.dueDate)}</td>
+        <td style="font-weight:700">${fmtMoney(p.amount)}</td>
+        <td><span class="badge ${d===0?'b-red':d<=7?'b-amber':'b-blue'}">بعد ${d} يوم</span></td>
+        <td class="no-print"><div style="display:flex;gap:5px">
+          <button class="btn btn-sm" onclick="printDueNotice('${p.unit.id}','${p.id}')" title="طباعة">🖨️</button>
+          ${p.unit.tenantPhone?`<button class="btn btn-sm" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')">💬</button>`:''}
+        </div></td>
+      </tr>`;
+    });
+    h+=`</tbody><tfoot><tr style="background:var(--surface-2);font-weight:800;border-top:2px solid var(--border)">
+      <td colspan="5">الإجمالي</td><td>${fmtMoney(total)}</td><td colspan="2"></td></tr></tfoot></table></div>`;
+  }
+  h+=`</div>`;
+  return h;
+}
+function sendPaymentWhatsApp(uId,pId){
+  const u=db.units.find(x=>x.id===uId);
+  const b=db.buildings.find(x=>x.id===u.buildingId);
+  const p=(u.payments||[]).find(x=>x.id===pId); if(!p) return;
+  const d=daysFromToday(p.dueDate);
+  const msg=`السلام عليكم ${u.tenantName||''}،\nنود تذكيركم بموعد سداد إيجار\n${b.name} — ${u.name}\n\nالدفعة رقم: ${p.n}\nتاريخ الاستحقاق: ${fmtDate(p.dueDate)}\nالمبلغ: ${fmtMoney(p.amount)}\n${d>0?'المتبقي: '+d+' يوم':d===0?'مستحقة اليوم ⚠️':'متأخرة '+Math.abs(d)+' يوم ⚠️'}\n\nشكرًا لتعاملكم معنا.`;
+  openWhatsApp(u.tenantPhone,msg);
+}
+function printDueNotice(uId,pId){
+  const u=db.units.find(x=>x.id===uId);
+  const b=db.buildings.find(x=>x.id===u.buildingId);
+  const p=(u.payments||[]).find(x=>x.id===pId); if(!p) return;
+  const d=daysFromToday(p.dueDate);
+  const waMsg=`إشعار استحقاق دفعة إيجار\n${b.name} — ${u.name}\nالمستأجر: ${u.tenantName||''}\nالدفعة رقم: ${p.n}\nتاريخ الاستحقاق: ${fmtDate(p.dueDate)}\nالمبلغ: ${fmtMoney(p.amount)}`;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>إشعار استحقاق</title>
+  <style>*{font-family:'Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}body{padding:40px;color:#0f172a}
+  .vh{background:#0f766e;color:#fff;padding:18px 24px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between}
+  .vh h1{margin:0;font-size:22px}.vb{border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;padding:22px}
+  .line{display:flex;justify-content:space-between;padding:10px 2px;border-bottom:1px dashed #cbd5e1;font-size:15px}
+  .line .l{color:#64748b}.line .v{font-weight:bold}
+  .amount{background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:16px;margin:18px 0;text-align:center}
+  .amount .big{font-size:32px;font-weight:bold;color:#d97706}
+  .btnbar{text-align:center;margin-bottom:18px}.btnbar button{border:none;padding:10px 22px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold;margin:0 5px}
+  @media print{.noprint{display:none}}</style>
+  ${waWindowScript(u.tenantPhone,waMsg,'إشعار-استحقاق')}
+  </head><body>
+  <div class="btnbar noprint">
+    <button style="background:#0f766e;color:#fff" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+    ${u.tenantPhone?`<button style="background:#25d366;color:#fff" onclick="sendWA()">💬 إرسال واتساب</button>`:''}
+  </div>
+  <div class="vh"><div><h1>إشعار استحقاق دفعة إيجار</h1></div><div style="font-size:36px">📋</div></div>
+  <div class="vb">
+    <div class="line"><span class="l">المستأجر</span><span class="v">${esc(u.tenantName||'—')}</span></div>
+    <div class="line"><span class="l">العقار</span><span class="v">${esc(b.name)}</span></div>
+    <div class="line"><span class="l">الوحدة</span><span class="v">${esc(u.name)}</span></div>
+    <div class="line"><span class="l">الدفعة رقم</span><span class="v">${p.n}</span></div>
+    <div class="line"><span class="l">تاريخ الاستحقاق</span><span class="v">${fmtDate(p.dueDate)}</span></div>
+    <div class="line"><span class="l">المتبقي للاستحقاق</span><span class="v">${d===0?'مستحقة اليوم':d>0?'بعد '+d+' يوم':'متأخرة '+Math.abs(d)+' يوم'}</span></div>
+    <div class="amount"><div class="big">${fmtMoney(p.amount)}</div></div>
+  </div>
+  <div style="text-align:center;font-size:12px;color:#94a3b8;margin-top:16px">صدر من نظام إدارة الإيجارات • ${fmtDate(todayISO())}</div>
+  </body></html>`);
+  w.document.close();
+}
+
+/* ============================ المحاسبة ============================ */
+let acctYear = null;
+function yearOf(iso){ return iso ? parseInt(iso.slice(0,4)) : null; }
+function quarterOf(iso){ return iso ? Math.floor((parseInt(iso.slice(5,7))-1)/3)+1 : null; }
+function allYears(){
+  const ys=new Set();
+  db.units.forEach(u=>(u.payments||[]).forEach(p=>{ if(p.dueDate) ys.add(yearOf(p.dueDate)); }));
+  (db.expenses||[]).forEach(e=>{ if(e.date) ys.add(yearOf(e.date)); });
+  ys.add(new Date().getFullYear());
+  return [...ys].sort((a,b)=>b-a);
+}
+/* تجميع محاسبي لفترة (سنة/ربع/عقار) بحسب تاريخ الاستحقاق الميلادي */
+function acct(year, quarter, buildingId){
+  let expected=0, collected=0, overdue=0;
+  db.units.forEach(u=>{
+    if(buildingId && u.buildingId!==buildingId) return;
+    let pays=(u.payments||[]).slice();
+    (u.history||[]).forEach(t=>{ pays=pays.concat(t.payments||[]); }); // تشمل دفعات المستأجرين السابقين
+    pays.forEach(p=>{
+      if(yearOf(p.dueDate)!==year) return;
+      if(quarter && quarterOf(p.dueDate)!==quarter) return;
+      expected += p.amount;
+      if(p.status==='paid') collected += p.amount;
+      else if(daysFromToday(p.dueDate)<0) overdue += p.amount;
+    });
+  });
+  let expenses=0;
+  (db.expenses||[]).forEach(e=>{
+    if(buildingId && e.buildingId!==buildingId) return;
+    if(yearOf(e.date)!==year) return;
+    if(quarter && quarterOf(e.date)!==quarter) return;
+    expenses += Number(e.amount)||0;
+  });
+  return { expected, collected, outstanding:expected-collected, overdue, expenses, net:collected-expenses, rate: expected?Math.round(collected/expected*100):0 };
+}
+function rateBar(rate){
+  const col=rate>=90?'var(--success)':rate>=60?'var(--warning)':'var(--danger)';
+  return `<div style="display:flex;align-items:center;gap:8px"><div class="pbar" style="width:70px"><span style="width:${rate}%;background:${col}"></span></div><span style="font-weight:700;font-size:12.5px">${rate}%</span></div>`;
+}
+
+function viewAccounting(){
+  if(db.buildings.length===0) return pageEmpty();
+  const years=allYears();
+  const nowY=new Date().getFullYear();
+  if(!acctYear || years.indexOf(acctYear)<0) acctYear = years.indexOf(nowY)>=0 ? nowY : years[0];
+  const y=acctYear;
+  const yr=acct(y,null,null);
+
+  let h=`<div class="page-head"><div><h1>🧮 المحاسبة</h1>
+    <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية</div></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <label style="font-weight:700;font-size:13px">السنة:</label>
+      <select onchange="acctYear=parseInt(this.value);render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-weight:700">
+        ${years.map(yy=>`<option value="${yy}" ${yy===y?'selected':''}>${yy}</option>`).join('')}
+      </select>
+      <button class="btn" onclick="exportAccountingCSV(${y})">📊 تصدير Excel</button>
+      <button class="btn btn-primary" onclick="exportAccountingPDF(${y})">📄 تقرير PDF</button>
+    </div></div>`;
+
+  h+=`<div class="stats">
+    ${stat('blue','📊',fmtMoney(yr.expected),'المستحق السنوي')}
+    ${stat('green','✅',fmtMoney(yr.collected),'المحصّل')}
+    ${stat('amber','⏳',fmtMoney(yr.outstanding),'المتبقّي')}
+    ${stat('teal','📈',yr.rate+'%','نسبة التحصيل')}
+    ${stat('red','💸',fmtMoney(yr.expenses),'المصروفات')}
+    ${stat(yr.net>=0?'green':'red','💰',fmtMoney(yr.net),'صافي الدخل')}
+  </div>`;
+
+  const qNames=['الربع الأول (يناير–مارس)','الربع الثاني (أبريل–يونيو)','الربع الثالث (يوليو–سبتمبر)','الربع الرابع (أكتوبر–ديسمبر)'];
+  h+=`<div class="panel"><div class="panel-head"><h2>📅 التفصيل الربع سنوي — ${y}</h2></div><div class="panel-body">
+    <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>نسبة التحصيل</th><th>المصروفات</th><th>الصافي</th></tr></thead><tbody>`;
+  for(let q=1;q<=4;q++){ const a=acct(y,q,null);
+    h+=`<tr>
+      <td style="font-weight:700">${qNames[q-1]}</td>
+      <td>${fmtMoney(a.expected)}</td>
+      <td style="color:var(--success);font-weight:700">${fmtMoney(a.collected)}</td>
+      <td style="color:${a.outstanding>0?'var(--warning)':'var(--muted)'}">${fmtMoney(a.outstanding)}</td>
+      <td>${rateBar(a.rate)}</td>
+      <td style="color:var(--danger)">${a.expenses?fmtMoney(a.expenses):'—'}</td>
+      <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td></tr>`;
+  }
+  h+=`<tr style="background:var(--surface-2);font-weight:800;border-top:2px solid var(--border)">
+      <td>الإجمالي السنوي</td><td>${fmtMoney(yr.expected)}</td>
+      <td style="color:var(--success)">${fmtMoney(yr.collected)}</td>
+      <td style="color:var(--warning)">${fmtMoney(yr.outstanding)}</td>
+      <td>${yr.rate}%</td><td style="color:var(--danger)">${fmtMoney(yr.expenses)}</td>
+      <td style="color:${yr.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(yr.net)}</td></tr>`;
+  h+=`</tbody></table></div></div>`;
+
+  h+=`<div class="panel"><div class="panel-head"><h2>🏢 حسب العقار — ${y}</h2></div><div class="panel-body">
+    <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th></tr></thead><tbody>`;
+  db.buildings.forEach(b=>{ const a=acct(y,null,b.id);
+    h+=`<tr onclick="go('building','${b.id}')" style="cursor:pointer">
+      <td style="font-weight:700">${esc(b.name)}</td>
+      <td>${fmtMoney(a.expected)}</td>
+      <td style="color:var(--success)">${fmtMoney(a.collected)}</td>
+      <td style="color:${a.outstanding>0?'var(--warning)':'var(--muted)'}">${fmtMoney(a.outstanding)}</td>
+      <td style="color:var(--danger)">${a.expenses?fmtMoney(a.expenses):'—'}</td>
+      <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td>
+      <td>${rateBar(a.rate)}</td></tr>`;
+  });
+  h+=`</tbody></table></div></div>`;
+
+  if(years.length>1){
+    const maxC=Math.max(...years.map(yy=>acct(yy,null,null).collected),1);
+    h+=`<div class="panel"><div class="panel-head"><h2>📈 المحصّل عبر السنوات</h2></div><div class="panel-body pad">`;
+    years.slice().sort((a,b)=>a-b).forEach(yy=>{ const c=acct(yy,null,null).collected;
+      h+=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div style="width:54px;font-weight:700;${yy===y?'color:var(--primary-d)':''}">${yy}</div>
+        <div style="flex:1;background:var(--surface-2);border-radius:8px;height:26px;overflow:hidden;border:1px solid var(--border)">
+          <div style="height:100%;width:${Math.round(c/maxC*100)}%;background:linear-gradient(90deg,var(--primary),var(--primary-d));min-width:2px"></div></div>
+        <div style="width:140px;text-align:left;font-weight:700">${fmtMoney(c)}</div></div>`;
+    });
+    h+=`</div></div>`;
+  }
+
+  const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===y).sort((a,b)=>a.date<b.date?1:-1);
+  h+=`<div class="panel"><div class="panel-head"><h2>💸 المصروفات — ${y}</h2>
+    <button class="btn btn-sm btn-primary" onclick="openExpenseForm()">➕ إضافة مصروف</button></div><div class="panel-body">`;
+  if(exps.length===0){
+    h+=`<div style="padding:20px;color:var(--muted)">لا توجد مصروفات مسجّلة لهذه السنة. أضِف الصيانة والفواتير والرسوم لاحتساب صافي الدخل بدقة.</div>`;
+  } else {
+    h+=`<table><thead><tr><th>التاريخ</th><th>العقار</th><th>البند</th><th>الوصف</th><th>المبلغ</th><th></th></tr></thead><tbody>`;
+    exps.forEach(e=>{ const b=db.buildings.find(x=>x.id===e.buildingId);
+      h+=`<tr><td>${fmtDate(e.date)}</td>
+        <td>${b?esc(b.name):'<span class="muted">عام</span>'}</td>
+        <td><span class="badge b-gray">${esc(e.category||'أخرى')}</span></td>
+        <td>${esc(e.note||'—')}</td>
+        <td style="font-weight:700;color:var(--danger)">${fmtMoney(e.amount)}</td>
+        <td><button class="btn btn-sm" onclick="openExpenseForm('${e.id}')">✏️</button></td></tr>`;
+    });
+    h+=`<tr style="background:var(--surface-2);font-weight:800"><td colspan="4">إجمالي مصروفات ${y}</td><td style="color:var(--danger)">${fmtMoney(exps.reduce((s,e)=>s+(Number(e.amount)||0),0))}</td><td></td></tr>`;
+    h+=`</tbody></table>`;
+  }
+  h+=`</div></div>`;
+  return h;
+}
+
+/* ---------- إدارة المصروفات ---------- */
+function openExpenseForm(eId){
+  const e=eId?(db.expenses.find(x=>x.id===eId)||{}):{date:todayISO()};
+  const cats=['صيانة','كهرباء وماء','رسوم حكومية','ضرائب/زكاة','إدارة','تأمين','تنظيف','أخرى'];
+  openModal(`<div class="modal"><div class="modal-head"><h3>${eId?'✏️ تعديل مصروف':'➕ إضافة مصروف'}</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="row2">
+        <div class="field"><label>العقار</label><select id="e-building"><option value="">عام (غير مخصّص)</option>${db.buildings.map(b=>`<option value="${b.id}" ${e.buildingId===b.id?'selected':''}>${esc(b.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>البند</label><select id="e-cat">${cats.map(c=>`<option ${e.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>المبلغ ( ${db.settings.currency} ) *</label><input type="number" id="e-amount" value="${e.amount||''}" placeholder="مثال: 1500"></div>
+        <div class="field"><label>التاريخ *</label><input type="date" id="e-date" value="${e.date||todayISO()}"></div>
+      </div>
+      <div class="field"><label>الوصف</label><input id="e-note" value="${esc(e.note||'')}" placeholder="تفاصيل المصروف"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="saveExpense('${eId||''}')">💾 حفظ</button>
+      <button class="btn" onclick="closeModal()">إلغاء</button>
+      ${eId?`<button class="btn btn-danger" style="margin-inline-start:auto" onclick="deleteExpense('${eId}')">🗑️ حذف</button>`:''}
+    </div></div>`);
+}
+function saveExpense(eId){
+  const amount=parseFloat(document.getElementById('e-amount').value)||0;
+  const date=document.getElementById('e-date').value;
+  if(amount<=0){ alert('أدخل مبلغًا صحيحًا'); return; }
+  if(!date){ alert('أدخل التاريخ'); return; }
+  const data={ buildingId:document.getElementById('e-building').value||null,
+    category:document.getElementById('e-cat').value, amount, date,
+    note:document.getElementById('e-note').value.trim() };
+  if(eId){ Object.assign(db.expenses.find(x=>x.id===eId),data); }
+  else{ db.expenses.push({id:uid(),...data}); }
+  save(); closeModal(); render();
+}
+function deleteExpense(eId){
+  if(!confirm('حذف هذا المصروف؟')) return;
+  db.expenses=db.expenses.filter(x=>x.id!==eId);
+  save(); closeModal(); render();
+}
+
+/* ---------- تقرير محاسبي PDF ---------- */
+function exportAccountingPDF(year){
+  const yr=acct(year,null,null);
+  const qN=['الربع الأول','الربع الثاني','الربع الثالث','الربع الرابع'];
+  let qRows='';
+  for(let q=1;q<=4;q++){ const a=acct(year,q,null);
+    qRows+=`<tr><td>${qN[q-1]}</td><td>${fmtMoney(a.expected)}</td><td style="color:#16a34a">${fmtMoney(a.collected)}</td><td style="color:#d97706">${fmtMoney(a.outstanding)}</td><td>${a.rate}%</td><td style="color:#dc2626">${a.expenses?fmtMoney(a.expenses):'—'}</td><td style="font-weight:bold">${fmtMoney(a.net)}</td></tr>`;
+  }
+  let bRows='';
+  db.buildings.forEach(b=>{ const a=acct(year,null,b.id);
+    bRows+=`<tr><td>${esc(b.name)}</td><td>${fmtMoney(a.expected)}</td><td style="color:#16a34a">${fmtMoney(a.collected)}</td><td style="color:#d97706">${fmtMoney(a.outstanding)}</td><td style="color:#dc2626">${a.expenses?fmtMoney(a.expenses):'—'}</td><td style="font-weight:bold">${fmtMoney(a.net)}</td></tr>`;
+  });
+  const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===year).sort((a,b)=>a.date<b.date?1:-1);
+  let eRows='';
+  exps.forEach(e=>{ const b=db.buildings.find(x=>x.id===e.buildingId);
+    eRows+=`<tr><td>${fmtDate(e.date)}</td><td>${b?esc(b.name):'عام'}</td><td>${esc(e.category||'أخرى')}</td><td>${esc(e.note||'—')}</td><td style="color:#dc2626">${fmtMoney(e.amount)}</td></tr>`;
+  });
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>التقرير المحاسبي ${year}</title>
+  <style>
+    *{font-family:'Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
+    body{padding:34px;color:#0f172a}
+    .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0f766e;padding-bottom:16px;margin-bottom:20px}
+    .hd h1{font-size:24px;color:#0f766e;margin:0}.hd .meta{font-size:13px;color:#64748b;margin-top:4px}.hd .logo{font-size:40px}
+    .cards{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
+    .cards .c{flex:1;min-width:140px;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;text-align:center}
+    .cards .t{font-size:12px;color:#64748b}.cards .v{font-size:19px;font-weight:bold;margin-top:3px}
+    h2{font-size:16px;color:#0f766e;margin:22px 0 8px;border-right:4px solid #0f766e;padding-right:9px}
+    table{width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:6px}
+    th,td{border:1px solid #e2e8f0;padding:9px 11px;text-align:right}
+    th{background:#0f766e;color:#fff}tr:nth-child(even) td{background:#f8fafc}
+    tfoot td,.tot td{background:#eef2f7!important;font-weight:bold}
+    .ft{margin-top:26px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}
+    @media print{body{padding:18px}.noprint{display:none}}
+    .btnbar{text-align:center;margin-bottom:18px}.btnbar button{background:#0f766e;color:#fff;border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold}
+  </style></head><body>
+    <div class="btnbar noprint"><button onclick="window.print()">🖨️ طباعة / حفظ PDF</button></div>
+    <div class="hd"><div><h1>التقرير المحاسبي السنوي — ${year}</h1>
+      <div class="meta">نظام إدارة الإيجارات • تاريخ الإصدار: ${fmtDate(todayISO())}</div></div><div class="logo">🧮</div></div>
+    <div class="cards">
+      <div class="c"><div class="t">المستحق</div><div class="v">${fmtMoney(yr.expected)}</div></div>
+      <div class="c"><div class="t">المحصّل</div><div class="v" style="color:#16a34a">${fmtMoney(yr.collected)}</div></div>
+      <div class="c"><div class="t">المتبقّي</div><div class="v" style="color:#d97706">${fmtMoney(yr.outstanding)}</div></div>
+      <div class="c"><div class="t">نسبة التحصيل</div><div class="v">${yr.rate}%</div></div>
+      <div class="c"><div class="t">المصروفات</div><div class="v" style="color:#dc2626">${fmtMoney(yr.expenses)}</div></div>
+      <div class="c"><div class="t">صافي الدخل</div><div class="v" style="color:${yr.net>=0?'#16a34a':'#dc2626'}">${fmtMoney(yr.net)}</div></div>
+    </div>
+    <h2>التفصيل الربع سنوي</h2>
+    <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>التحصيل</th><th>المصروفات</th><th>الصافي</th></tr></thead>
+      <tbody>${qRows}</tbody>
+      <tfoot><tr class="tot"><td>الإجمالي</td><td>${fmtMoney(yr.expected)}</td><td>${fmtMoney(yr.collected)}</td><td>${fmtMoney(yr.outstanding)}</td><td>${yr.rate}%</td><td>${fmtMoney(yr.expenses)}</td><td>${fmtMoney(yr.net)}</td></tr></tfoot></table>
+    <h2>حسب العقار</h2>
+    <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th></tr></thead><tbody>${bRows}</tbody></table>
+    ${eRows?`<h2>تفاصيل المصروفات</h2><table><thead><tr><th>التاريخ</th><th>العقار</th><th>البند</th><th>الوصف</th><th>المبلغ</th></tr></thead><tbody>${eRows}</tbody></table>`:''}
+    <div class="ft">طريقة الاحتساب: التجميع حسب السنة والربع الميلادي لتاريخ استحقاق كل دفعة • صافي الدخل = المحصّل − المصروفات • صدر من نظام إدارة الإيجارات</div>
+  </body></html>`);
+  w.document.close();
+}
+
+/* ---------- قائمة العقارات ---------- */
+function viewProperties(){
+  if(db.buildings.length===0) return pageEmpty();
+  let h=`<div class="page-head"><div><h1>🏘️ العقارات</h1>
+    <div class="sub">${db.buildings.length} عقار • ${db.units.length} وحدة</div></div>
+    <button class="btn btn-primary" onclick="openBuildingForm()">➕ إضافة عقار</button></div>`;
+  h+=`<div class="bgrid">`;
+  db.buildings.forEach(b=>{
+    const us=unitsOf(b.id);
+    const occupied=us.filter(u=>u.tenantName).length;
+    let overdue=0; us.forEach(u=>{ (u.payments||[]).forEach(p=>{ if(payStatus(p)==='overdue') overdue++; }); });
+    h+=`<div class="bcard" onclick="go('building','${b.id}')">
+      <div class="top"><div class="name">🏢 ${esc(b.name)}</div>${b.address?`<div class="addr">📍 ${esc(b.address)}</div>`:''}</div>
+      <div class="body">
+        <div class="mini"><span class="n">${us.length}</span><span class="t">وحدة</span></div>
+        <div class="mini"><span class="n" style="color:var(--success)">${occupied}</span><span class="t">مؤجّرة</span></div>
+        <div class="mini"><span class="n" style="color:${overdue?'var(--danger)':'var(--muted)'}">${overdue}</span><span class="t">متأخرات</span></div>
+        ${b.deliveryDate?`<div class="mini"><span class="n" style="font-size:13px;color:var(--info)">🔑 ${fmtDate(b.deliveryDate)}</span><span class="t">تسليم</span></div>`:''}
+      </div></div>`;
+  });
+  h+=`</div>`;
+  return h;
+}
+
+/* ---------- تفاصيل العقار ---------- */
+function viewBuilding(bId){
+  const b=db.buildings.find(x=>x.id===bId);
+  if(!b) return pageEmpty();
+  const us=unitsOf(bId);
+  let h=`<div class="crumbs"><a onclick="go('properties')">العقارات</a><span>›</span><span>${esc(b.name)}</span></div>`;
+  h+=`<div class="page-head"><div><h1>🏢 ${esc(b.name)}</h1>
+    <div class="sub">${b.address?'📍 '+esc(b.address)+' • ':''}${us.length} وحدة${b.waterMeter?' • 💧 '+esc(b.waterMeter):''}${b.deliveryDate?' • 🔑 التسليم: '+fmtDate(b.deliveryDate):''}</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" onclick="openBuildingForm('${b.id}')">✏️ تعديل العقار</button>
+      <button class="btn btn-primary" onclick="openUnitForm('${b.id}')">➕ إضافة وحدة</button>
+    </div></div>`;
+  if(b.notes) h+=`<div class="info-box" style="margin-bottom:18px">📝 <div>${esc(b.notes)}</div></div>`;
+
+  // معلومات الملكية (صك + ماء + مرفقات)
+  const _hasPropInfo=b.deedNumber||b.deedDate||b.waterMeter||b.deedImage||(b.attachments&&b.attachments.length);
+  if(_hasPropInfo){
+    h+=`<div class="panel" style="margin-bottom:18px"><div class="panel-head"><h2>📋 معلومات الملكية</h2></div><div class="panel-body pad">`;
+    if(b.deedNumber||b.deedDate||b.waterMeter){
+      h+=`<div class="detail-grid" style="margin-bottom:14px">`;
+      if(b.deedNumber) h+=`<div class="dcell"><div class="t">رقم الصك</div><div class="v">${esc(b.deedNumber)}</div></div>`;
+      if(b.deedDate) h+=`<div class="dcell"><div class="t">تاريخ الصك</div><div class="v">${fmtDate(b.deedDate)}</div></div>`;
+      if(b.waterMeter) h+=`<div class="dcell"><div class="t">عداد الماء 💧</div><div class="v">${esc(b.waterMeter)}</div></div>`;
+      h+=`</div>`;
+    }
+    if(b.deedImage){
+      const di=b.deedImage; const diImg=di.type&&di.type.startsWith('image/');
+      h+=`<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">📄 صورة الصك</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px">
+          ${diImg?`<img src="${di.data}" style="width:64px;height:64px;object-fit:cover;border-radius:7px;cursor:pointer" onclick="openBuildingFile('${b.id}','deed',0)">`:'<span style="font-size:36px">📄</span>'}
+          <div style="flex:1;font-size:13px;font-weight:700">${esc(di.name)}</div>
+          <a href="${di.data}" download="${esc(di.name)}" class="btn btn-sm">⬇️ تنزيل</a>
+        </div></div>`;
+    }
+    if(b.attachments&&b.attachments.length){
+      h+=`<div><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:7px">📁 مرفقات أخرى (${b.attachments.length})</div>`;
+      b.attachments.forEach((a,i)=>{
+        const aImg=a.type&&a.type.startsWith('image/');
+        h+=`<div style="display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
+          ${aImg?`<img src="${a.data}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;cursor:pointer" onclick="openBuildingFile('${b.id}','att',${i})">`:'<span style="font-size:24px">📄</span>'}
+          <div style="flex:1;font-size:13px;font-weight:700">${esc(a.name)}</div>
+          <a href="${a.data}" download="${esc(a.name)}" class="btn btn-sm">⬇️</a>
+        </div>`;
+      });
+      h+=`</div>`;
+    }
+    h+=`</div></div>`;
+  }
+
+  if(us.length===0){
+    h+=`<div class="panel"><div class="empty"><div class="em">🚪</div><h3>لا توجد وحدات بعد</h3>
+      <p>أضف الشقق أو المحلات التابعة لهذا العقار لبدء متابعة الإيجارات.</p>
+      <button class="btn btn-primary" onclick="openUnitForm('${b.id}')">➕ إضافة أول وحدة</button></div></div>`;
+    return h;
+  }
+  h+=`<div class="panel"><div class="panel-head"><h2>🚪 الوحدات</h2><span class="count">${us.length}</span></div>
+    <div class="panel-body"><table><thead><tr>
+      <th>الوحدة</th><th>المستأجر</th><th>الإيجار</th><th>الدورية</th><th>بداية العقد</th>
+      <th>الدفعة القادمة</th><th>الحالة</th><th>التحصيل</th><th></th></tr></thead><tbody>`;
+  us.forEach(u=>{
+    const t=unitTotals(u); const nx=nextUnpaid(u);
+    const pct=t.total?Math.round(t.paid/t.total*100):0;
+    let statusBadge;
+    if(t.overdueCount) statusBadge=`<span class="badge b-red">متأخر ${t.overdueCount}</span>`;
+    else if(!u.tenantName) statusBadge=`<span class="badge b-gray">شاغرة</span>`;
+    else if(t.remaining===0) statusBadge=`<span class="badge b-green">مسدّد بالكامل</span>`;
+    else statusBadge=`<span class="badge b-blue">منتظم</span>`;
+    h+=`<tr>
+      <td style="font-weight:800">${esc(u.name)}${u.electricityMeter?`<div class="muted">⚡ ${esc(u.electricityMeter)}</div>`:''}</td>
+      <td>${u.tenantName?esc(u.tenantName):'<span class="muted">— شاغرة —</span>'}${u.tenantPhone?`<div class="muted">📞 ${esc(u.tenantPhone)}</div>`:''}</td>
+      <td style="font-weight:700">${fmtMoney(u.rentAmount)}</td>
+      <td><span class="badge b-gray">${periodLbl(u)}</span></td>
+      <td>${fmtDate(u.contractStart)}</td>
+      <td>${nx?fmtDate(nx.dueDate):'<span class="muted">—</span>'}</td>
+      <td>${statusBadge}</td>
+      <td style="min-width:120px"><div class="pbar"><span style="width:${pct}%"></span></div>
+        <div class="muted" style="margin-top:3px">${pct}% • باقٍ ${fmtMoney(t.remaining)}</div></td>
+      <td><button class="btn btn-sm btn-primary" onclick="openUnit('${u.id}')">إدارة</button></td>
+    </tr>`;
+  });
+  h+=`</tbody></table></div></div>`;
+  return h;
+}
+
+function pageEmpty(){
+  return `<div class="panel" style="margin-top:30px"><div class="empty">
+    <div class="em">🏢</div><h3>ابدأ بإضافة أول عقار</h3>
+    <p>سجّل العمارة أو العقار ثم أضف الشقق التابعة له وتابع دفعات الإيجار الربع سنوية.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="openBuildingForm()">➕ إضافة عقار</button>
+      <button class="btn" onclick="openGuide()">📖 دليل المستخدم</button>
+      <button class="btn" onclick="loadDemo()">📦 تحميل بيانات تجريبية</button>
+    </div></div></div>`;
+}
+
+/* ============================ النوافذ المنبثقة ============================ */
+function openModal(html){ document.getElementById('modal-root').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()">${html}</div>`; }
+function closeModal(){ document.getElementById('modal-root').innerHTML=''; }
+
+/* ---------- مساعدات نموذج العقار (صك + مرفقات) ---------- */
+function _bRenderDeed(){
+  const el=document.getElementById('b-deed-prev'); if(!el) return;
+  if(!_bForm.deedImage){ el.innerHTML=''; return; }
+  const d=_bForm.deedImage; const isImg=d.type&&d.type.startsWith('image/');
+  el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;margin-top:7px">
+    ${isImg?`<img src="${d.data}" style="width:56px;height:56px;object-fit:cover;border-radius:6px">`:'<span style="font-size:34px">📄</span>'}
+    <div style="flex:1;font-size:13px;font-weight:700;word-break:break-all">${esc(d.name)}</div>
+    <a href="${d.data}" download="${esc(d.name)}" class="btn btn-sm" title="تنزيل">⬇️</a>
+    <button class="btn btn-sm" onclick="_bForm.deedImage=null;_bRenderDeed()" title="حذف">🗑️</button>
+  </div>`;
+}
+function _bRenderAtts(){
+  const el=document.getElementById('b-att-list'); if(!el) return;
+  if(!_bForm.attachments.length){ el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:4px 0">لا توجد مرفقات</div>'; return; }
+  el.innerHTML=_bForm.attachments.map((a,i)=>{
+    const isImg=a.type&&a.type.startsWith('image/');
+    return `<div style="display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
+      ${isImg?`<img src="${a.data}" style="width:40px;height:40px;object-fit:cover;border-radius:5px">`:'<span style="font-size:24px">📄</span>'}
+      <div style="flex:1;font-size:13px;font-weight:700;word-break:break-all">${esc(a.name)}</div>
+      <a href="${a.data}" download="${esc(a.name)}" class="btn btn-sm" title="تنزيل">⬇️</a>
+      <button class="btn btn-sm" onclick="_bForm.attachments.splice(${i},1);_bRenderAtts()" title="حذف">🗑️</button>
+    </div>`;
+  }).join('');
+}
+function _bDeedFile(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{ _bForm.deedImage={name:f.name,type:f.type,data:e.target.result}; _bRenderDeed(); };
+  r.readAsDataURL(f); input.value='';
+}
+function _bAddAtt(input){
+  const files=Array.from(input.files); let cnt=files.length; if(!cnt) return;
+  files.forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{ _bForm.attachments.push({id:uid(),name:f.name,type:f.type,data:e.target.result}); if(--cnt===0) _bRenderAtts(); };
+    r.readAsDataURL(f);
+  });
+  input.value='';
+}
+function openBuildingFile(bId,type,idx){
+  const b=db.buildings.find(x=>x.id===bId); if(!b) return;
+  const d=(type==='deed'?b.deedImage:((b.attachments||[])[idx])); if(!d||!d.data) return;
+  if(d.type&&d.type.startsWith('image/')){
+    const w=window.open('','_blank');
+    w.document.write(`<html><body style="margin:0;background:#111;display:flex;justify-content:center"><img src="${d.data}" style="max-width:100%;height:auto;display:block"></body></html>`);
+    w.document.close();
+  } else { window.open(d.data,'_blank'); }
+}
+
+/* ---------- نموذج العقار ---------- */
+function openBuildingForm(bId){
+  const b=bId?db.buildings.find(x=>x.id===bId):{};
+  _bForm.deedImage=b.deedImage||null;
+  _bForm.attachments=(b.attachments||[]).map(a=>({...a}));
+  openModal(`<div class="modal lg"><div class="modal-head"><h3>${bId?'✏️ تعديل عقار':'➕ إضافة عقار'}</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>اسم العقار / العمارة *</label><input id="b-name" value="${esc(b.name||'')}" placeholder="مثال: عمارة الياسمين"></div>
+      <div class="field"><label>العنوان</label><input id="b-addr" value="${esc(b.address||'')}" placeholder="الحي، المدينة"></div>
+      <div class="row2">
+        <div class="field"><label>رقم الصك</label><input id="b-deed-num" value="${esc(b.deedNumber||'')}" placeholder="رقم صك الملكية"></div>
+        <div class="field"><label>تاريخ الصك</label><input type="date" id="b-deed-date" value="${b.deedDate||''}"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>عداد الماء 💧</label><input id="b-water" value="${esc(b.waterMeter||'')}" placeholder="رقم عداد الماء (اختياري)"></div>
+        <div class="field"><label>تاريخ التسليم المتوقع <span class="hint">(اختياري)</span></label><input type="date" id="b-deliv" value="${b.deliveryDate||''}"></div>
+      </div>
+      <div class="field"><label>صورة الصك <span class="hint">(صورة أو PDF)</span></label>
+        <input type="file" id="b-deed-file" accept="image/*,application/pdf" style="display:none" onchange="_bDeedFile(this)">
+        <button type="button" class="btn btn-sm" onclick="document.getElementById('b-deed-file').click()">📎 ${b.deedImage?'تغيير صورة الصك':'رفع صورة الصك'}</button>
+        <div id="b-deed-prev"></div>
+      </div>
+      <div class="field"><label>مرفقات أخرى <span class="hint">(كل مرفق يُضاف على حدة)</span></label>
+        <input type="file" id="b-att-file" accept="image/*,application/pdf,.doc,.docx" style="display:none" onchange="_bAddAtt(this)">
+        <button type="button" class="btn btn-sm" onclick="document.getElementById('b-att-file').click()">➕ إضافة مرفق</button>
+        <div id="b-att-list" style="margin-top:8px"></div>
+      </div>
+      <div class="field"><label>ملاحظات</label><textarea id="b-notes" rows="2" placeholder="أي ملاحظات عن العقار">${esc(b.notes||'')}</textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="saveBuilding('${bId||''}')">💾 حفظ</button>
+      <button class="btn" onclick="closeModal()">إلغاء</button>
+      ${bId?`<button class="btn btn-danger" style="margin-inline-start:auto" onclick="deleteBuilding('${bId}')">🗑️ حذف العقار</button>`:''}
+    </div></div>`);
+  _bRenderDeed(); _bRenderAtts();
+}
+function saveBuilding(bId){
+  const name=document.getElementById('b-name').value.trim();
+  if(!name){ alert('يرجى إدخال اسم العقار'); return; }
+  const data={ name, address:document.getElementById('b-addr').value.trim(),
+    deliveryDate:document.getElementById('b-deliv').value||null,
+    deedNumber:document.getElementById('b-deed-num').value.trim(),
+    deedDate:document.getElementById('b-deed-date').value||null,
+    waterMeter:document.getElementById('b-water').value.trim(),
+    deedImage:_bForm.deedImage,
+    attachments:_bForm.attachments.slice(),
+    notes:document.getElementById('b-notes').value.trim() };
+  if(bId){ Object.assign(db.buildings.find(x=>x.id===bId),data); }
+  else{ const id=uid(); db.buildings.push({id,...data,createdAt:todayISO()}); }
+  save(); closeModal(); render();
+}
+function deleteBuilding(bId){
+  const us=unitsOf(bId);
+  if(!confirm(`سيتم حذف العقار و${us.length} وحدة تابعة له نهائيًا. متأكد؟`)) return;
+  db.buildings=db.buildings.filter(x=>x.id!==bId);
+  db.units=db.units.filter(u=>u.buildingId!==bId);
+  save(); closeModal(); go('properties');
+}
+
+/* ---------- نموذج الوحدة ---------- */
+function openUnitForm(bId,uId){
+  const u=uId?db.units.find(x=>x.id===uId):{durationMonths:12};
+  openModal(`<div class="modal"><div class="modal-head"><h3>${uId?'✏️ تعديل وحدة':'➕ إضافة وحدة'}</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="row2">
+        <div class="field"><label>اسم/رقم الوحدة *</label><input id="u-name" value="${esc(u.name||'')}" placeholder="مثال: شقة 1 / محل أرضي"></div>
+        <div class="field"><label>اسم المستأجر</label><input id="u-tenant" value="${esc(u.tenantName||'')}" placeholder="اتركه فارغًا إن كانت شاغرة"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>جوال المستأجر</label><input id="u-phone" value="${esc(u.tenantPhone||'')}" placeholder="05xxxxxxxx"></div>
+        <div class="field"><label>دورية السداد</label><select id="u-period">
+          <option value="monthly" ${(u.paymentPeriod||'quarterly')==='monthly'?'selected':''}>شهري (كل شهر)</option>
+          <option value="quarterly" ${(u.paymentPeriod||'quarterly')==='quarterly'?'selected':''}>ربع سنوي (كل 3 أشهر)</option>
+          <option value="semiannual" ${(u.paymentPeriod||'quarterly')==='semiannual'?'selected':''}>نصف سنوي (كل 6 أشهر)</option>
+          <option value="annual" ${(u.paymentPeriod||'quarterly')==='annual'?'selected':''}>سنوي (كل 12 شهر)</option>
+        </select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>قيمة الإيجار ( ${db.settings.currency} ) *</label><input type="number" id="u-rent" value="${u.rentAmount||''}" placeholder="مثال: 6000"></div>
+        <div class="field"><label>رقم عداد الكهرباء</label><input id="u-meter" value="${esc(u.electricityMeter||'')}" placeholder="رقم العداد (اختياري)"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>تاريخ بداية العقد *</label><input type="date" id="u-start" value="${u.contractStart||todayISO()}"></div>
+        <div class="field"><label>مدة العقد <span class="hint">(بالأشهر)</span></label>
+          <select id="u-dur">
+            ${[6,12,18,24,36].map(m=>`<option value="${m}" ${(u.durationMonths||12)==m?'selected':''}>${m} شهر (${m/12} سنة)</option>`).join('')}
+          </select></div>
+      </div>
+      <div class="field"><label>ملاحظات</label><input id="u-notes" value="${esc(u.notes||'')}" placeholder="أي ملاحظات عن العقد أو الوحدة"></div>
+      <div class="info-box">🧮 <div><b>كيف تُحسب الدفعات؟</b><div class="formula">تاريخ الدفعة (ن) = <b>تاريخ بداية العقد</b> + (ن−1) × <b>فترة السداد</b><br>عدد الدفعات = مدة العقد ÷ فترة السداد — وتُنشأ تلقائيًا عند الحفظ.</div></div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="saveUnit('${bId}','${uId||''}')">💾 حفظ</button>
+      <button class="btn" onclick="closeModal()">إلغاء</button>
+      ${uId?`<button class="btn btn-danger" style="margin-inline-start:auto" onclick="deleteUnit('${uId}')">🗑️ حذف الوحدة</button>`:''}
+    </div></div>`);
+}
+function saveUnit(bId,uId){
+  const name=document.getElementById('u-name').value.trim();
+  const start=document.getElementById('u-start').value;
+  const rent=parseFloat(document.getElementById('u-rent').value)||0;
+  if(!name){ alert('يرجى إدخال اسم/رقم الوحدة'); return; }
+  if(!start){ alert('يرجى إدخال تاريخ بداية العقد'); return; }
+  if(rent<=0){ alert('يرجى إدخال قيمة الإيجار'); return; }
+  const data={
+    buildingId:bId, name,
+    tenantName:document.getElementById('u-tenant').value.trim(),
+    tenantPhone:document.getElementById('u-phone').value.trim(),
+    rentAmount:rent, quarterlyRent:rent,
+    paymentPeriod:document.getElementById('u-period').value,
+    electricityMeter:document.getElementById('u-meter').value.trim(),
+    contractStart:start,
+    durationMonths:parseInt(document.getElementById('u-dur').value),
+    notes:document.getElementById('u-notes').value.trim()
+  };
+  let unit;
+  if(uId){ unit=db.units.find(x=>x.id===uId); Object.assign(unit,data); }
+  else{ unit={id:uid(),...data,payments:[]}; db.units.push(unit); }
+  unit.payments=unit.tenantName?buildSchedule(unit):[]; // وحدة شاغرة (بلا مستأجر) لا تُنتج دفعات
+  save(); closeModal();
+  if(view.name==='building') render(); else go('building',bId);
+}
+function deleteUnit(uId){
+  const u=db.units.find(x=>x.id===uId);
+  if(!confirm('سيتم حذف هذه الوحدة وكل دفعاتها نهائيًا. متأكد؟')) return;
+  const bId=u.buildingId;
+  db.units=db.units.filter(x=>x.id!==uId);
+  save(); closeModal(); go('building',bId);
+}
+
+/* ---------- إدارة الوحدة والدفعات ---------- */
+function openUnit(uId){
+  const u=db.units.find(x=>x.id===uId);
+  const b=db.buildings.find(x=>x.id===u.buildingId);
+  const t=unitTotals(u);
+  const pct=t.total?Math.round(t.paid/t.total*100):0;
+  let h=`<div class="modal lg"><div class="modal-head">
+    <h3>🚪 ${esc(u.name)} <span style="font-weight:500;color:var(--muted);font-size:14px">— ${esc(b.name)}</span></h3>
+    <button class="x" onclick="closeModal()">✕</button></div><div class="modal-body">`;
+
+  h+=`<div class="detail-grid">
+    <div class="dcell"><div class="t">المستأجر</div><div class="v">${u.tenantName?esc(u.tenantName):'<span style="color:var(--muted)">شاغرة</span>'}</div></div>
+    ${u.tenantPhone?`<div class="dcell"><div class="t">الجوال</div><div class="v">${esc(u.tenantPhone)}</div></div>`:''}
+    <div class="dcell"><div class="t">الإيجار (${periodLbl(u)})</div><div class="v">${fmtMoney(u.rentAmount)}</div></div>
+    <div class="dcell"><div class="t">بداية العقد</div><div class="v">${fmtDate(u.contractStart)}</div></div>
+    <div class="dcell"><div class="t">نهاية العقد</div><div class="v">${fmtDate(contractEnd(u))}</div></div>
+    ${u.electricityMeter?`<div class="dcell"><div class="t">عداد الكهرباء ⚡</div><div class="v">${esc(u.electricityMeter)}</div></div>`:''}
+  </div>`;
+
+  h+=`<div class="detail-grid" style="margin-top:14px">
+    <div class="dcell" style="background:var(--success-l);border-color:#bbf7d0"><div class="t">المحصّل</div><div class="v" style="color:var(--success)">${fmtMoney(t.paid)}</div></div>
+    <div class="dcell" style="background:var(--warning-l);border-color:#fde68a"><div class="t">المتبقّي</div><div class="v" style="color:var(--warning)">${fmtMoney(t.remaining)}</div></div>
+    ${t.overdue?`<div class="dcell" style="background:var(--danger-l);border-color:#fecaca"><div class="t">متأخرات</div><div class="v" style="color:var(--danger)">${fmtMoney(t.overdue)}</div></div>`:''}
+    <div class="dcell"><div class="t">نسبة السداد</div><div class="v">${pct}%</div><div class="pbar" style="margin-top:6px"><span style="width:${pct}%"></span></div></div>
+  </div>`;
+
+  h+=`<div class="panel-head" style="border:none;padding:18px 0 8px"><h2>📋 جدول الدفعات (${periodLbl(u)})</h2>
+    <span class="count">${u.payments.length} دفعة</span></div>`;
+  if(u.payments.length===0){
+    h+=`<div class="info-box">🏠 <div>هذه الوحدة شاغرة حاليًا — لا توجد دفعات مستحقة. أضِف اسم المستأجر من «تعديل العقد» لإنشاء جدول الدفعات تلقائيًا.</div></div>`;
+  } else {
+  h+=`<table><thead><tr><th>#</th><th>تاريخ الاستحقاق</th><th>المبلغ</th><th>الحالة</th><th>تاريخ السداد</th><th></th></tr></thead><tbody>`;
+  u.payments.forEach(p=>{
+    const st=payStatus(p);
+    const map={paid:['b-green','✓ مسدّدة'],overdue:['b-red','متأخرة'],due:['b-amber','مستحقة قريبًا'],upcoming:['b-gray','قادمة']};
+    let extra='';
+    if(st==='overdue') extra=`<div class="muted">متأخر ${Math.abs(daysFromToday(p.dueDate))} يوم</div>`;
+    else if(st==='due') extra=`<div class="muted">بعد ${daysFromToday(p.dueDate)} يوم</div>`;
+    h+=`<tr>
+      <td style="font-weight:700">${p.n}</td>
+      <td>${fmtDate(p.dueDate)}${extra}</td>
+      <td style="font-weight:700">${fmtMoney(p.amount)}</td>
+      <td><span class="badge ${map[st][0]}">${map[st][1]}</span></td>
+      <td>${p.paidDate?fmtDate(p.paidDate):'<span class="muted">—</span>'}</td>
+      <td><div style="display:flex;gap:5px;justify-content:flex-end">${p.status==='paid'
+        ? `<button class="btn btn-sm" onclick="printReceipt('${u.id}','${p.id}')" title="سند قبض">🧾 سند</button><button class="btn btn-sm" onclick="togglePay('${u.id}','${p.id}')">↩️</button>`
+        : `<button class="btn btn-sm btn-primary" onclick="togglePay('${u.id}','${p.id}')">✓ تسجيل سداد</button>`}</div></td>
+    </tr>`;
+  });
+  h+=`</tbody></table>`;
+  }
+  if((u.history||[]).length){
+    h+=`<div class="panel-head" style="border:none;padding:20px 0 8px"><h2>📜 المستأجرون السابقون</h2><span class="count">${u.history.length}</span></div>`;
+    h+=`<table><thead><tr><th>المستأجر</th><th>الفترة</th><th>المحصّل</th><th>الإجمالي</th><th></th></tr></thead><tbody>`;
+    u.history.forEach((tn,idx)=>{ const tt=paysTotals(tn.payments||[]);
+      h+=`<tr><td style="font-weight:700">${esc(tn.tenantName)}</td>
+        <td>${fmtDate(tn.contractStart)} — ${fmtDate(addMonths(tn.contractStart, tn.durationMonths||12))}</td>
+        <td style="color:var(--success);font-weight:700">${fmtMoney(tt.paid)}</td>
+        <td>${fmtMoney(tt.total)}</td>
+        <td><div style="display:flex;gap:5px;justify-content:flex-end">
+          <button class="btn btn-sm" onclick="viewTenancy('${u.id}',${idx})">عرض</button>
+          <button class="btn btn-sm" onclick="exportTenancyPDF('${u.id}',${idx})">📄</button></div></td></tr>`;
+    });
+    h+=`</tbody></table>`;
+  }
+  if(u.notes) h+=`<div class="info-box" style="margin-top:16px">📝 <div>${esc(u.notes)}</div></div>`;
+  h+=`</div><div class="modal-foot">
+      <button class="btn btn-primary" onclick="exportUnitPDF('${u.id}')">📄 تصدير PDF</button>
+      ${u.tenantPhone?`<button class="btn" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendUnitWhatsApp('${u.id}')">💬 واتساب</button>`:''}
+      ${u.tenantName?`<button class="btn" onclick="openChangeTenant('${u.id}')">🔄 تغيير المستأجر</button>`:''}
+      <button class="btn" onclick="openUnitForm('${u.buildingId}','${u.id}')">✏️ تعديل العقد</button>
+      <button class="btn" onclick="closeModal()" style="margin-inline-start:auto">إغلاق</button>
+    </div></div>`;
+  openModal(h);
+}
+function sendUnitWhatsApp(uId){
+  const u=db.units.find(x=>x.id===uId);
+  const b=db.buildings.find(x=>x.id===u.buildingId);
+  const t=unitTotals(u);
+  const nx=nextUnpaid(u);
+  const msg=`نظام إدارة الإيجارات 🏢\n\nالعقار: ${b.name}\nالوحدة: ${u.name}\nالمستأجر: ${u.tenantName||'—'}\nالإيجار: ${fmtMoney(u.rentAmount)} — ${periodLbl(u)}\n\nالمحصّل: ${fmtMoney(t.paid)}\nالمتبقّي: ${fmtMoney(t.remaining)}${nx?'\n\nالدفعة القادمة:\nالتاريخ: '+fmtDate(nx.dueDate)+'\nالمبلغ: '+fmtMoney(nx.amount):''}`;
+  openWhatsApp(u.tenantPhone,msg);
+}
+function togglePay(uId,pId){
+  const u=db.units.find(x=>x.id===uId);
+  const p=u.payments.find(x=>x.id===pId);
+  if(p.status==='paid'){ p.status='unpaid'; p.paidDate=null; }
+  else{ p.status='paid'; p.paidDate=todayISO(); }
+  save(); openUnit(uId); // إعادة فتح النافذة بنفس الحالة
+}
+
+/* ============================ تصدير PDF ============================ */
+function openReportWindow(html){ const w=window.open('','_blank'); w.document.write(html); w.document.close(); }
+function exportUnitPDF(uId){
+  const u=db.units.find(x=>x.id===uId); const b=db.buildings.find(x=>x.id===u.buildingId);
+  openReportWindow(paymentReportHTML(b,{unitName:u.name,tenant:u.tenantName,phone:u.tenantPhone,start:u.contractStart,dur:u.durationMonths,rent:u.rentAmount,period:periodLbl(u),meter:u.electricityMeter,payments:u.payments}));
+}
+function exportTenancyPDF(uId,idx){
+  const u=db.units.find(x=>x.id===uId); const b=db.buildings.find(x=>x.id===u.buildingId); const tn=u.history[idx];
+  openReportWindow(paymentReportHTML(b,{unitName:u.name+' — مستأجر سابق',tenant:tn.tenantName,phone:tn.tenantPhone,start:tn.contractStart,dur:tn.durationMonths,rent:tn.rentAmount||tn.quarterlyRent,payments:tn.payments}));
+}
+function paymentReportHTML(b, o){
+  const payments=o.payments||[];
+  const paidT=payments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const totalT=payments.reduce((s,p)=>s+p.amount,0);
+  const waMsg=`كشف دفعات الإيجار\nالعقار: ${b.name}\nالوحدة: ${o.unitName}\nالمستأجر: ${o.tenant||'—'}\nالإيجار: ${fmtMoney(o.rent)}${o.period?' ('+o.period+')':''}\nبداية العقد: ${fmtDate(o.start)}\nنهاية العقد: ${fmtDate(addMonths(o.start,o.dur||12))}\n\nإجمالي العقد: ${fmtMoney(totalT)}\nالمحصّل: ${fmtMoney(paidT)}\nالمتبقّي: ${fmtMoney(totalT-paidT)}`;
+  let rows='';
+  payments.forEach(p=>{
+    const st=p.status==='paid'?'paid':(daysFromToday(p.dueDate)<0?'overdue':(daysFromToday(p.dueDate)<=db.settings.paymentReminderDays?'due':'upcoming'));
+    const lbl={paid:'مسدّدة',overdue:'متأخرة',due:'مستحقة قريبًا',upcoming:'قادمة'}[st];
+    const col={paid:'#16a34a',overdue:'#dc2626',due:'#d97706',upcoming:'#64748b'}[st];
+    rows+=`<tr>
+      <td>${p.n}</td><td>${fmtDate(p.dueDate)}</td><td>${fmtMoney(p.amount)}</td>
+      <td style="color:${col};font-weight:bold">${lbl}</td>
+      <td>${p.paidDate?fmtDate(p.paidDate):'—'}</td></tr>`;
+  });
+  return (`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>كشف دفعات - ${esc(o.unitName)}</title>
+  <style>
+    *{font-family:'Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
+    body{padding:34px;color:#0f172a}
+    .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0f766e;padding-bottom:16px;margin-bottom:22px}
+    .hd h1{font-size:24px;color:#0f766e;margin:0}
+    .hd .meta{font-size:13px;color:#64748b;margin-top:4px}
+    .hd .logo{font-size:40px}
+    .info{display:grid;grid-template-columns:1fr 1fr;gap:10px 26px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:18px;font-size:14px}
+    .info div b{color:#0f766e}
+    .sum{display:flex;gap:12px;margin-bottom:18px}
+    .sum div{flex:1;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;text-align:center}
+    .sum .t{font-size:12px;color:#64748b}.sum .v{font-size:20px;font-weight:bold;margin-top:3px}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{border:1px solid #e2e8f0;padding:10px 12px;text-align:right}
+    th{background:#0f766e;color:#fff}
+    tr:nth-child(even) td{background:#f8fafc}
+    .formula{margin-top:18px;font-size:12.5px;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 14px}
+    .ft{margin-top:26px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}
+    @media print{body{padding:18px}.noprint{display:none}}
+    .btnbar{text-align:center;margin-bottom:18px}
+    .btnbar button{border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold;margin:0 5px}
+  </style>${waWindowScript(o.phone,waMsg,'كشف-دفعات')}</head><body>
+    <div class="btnbar noprint">
+      <button style="background:#0f766e;color:#fff" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+      ${o.phone?`<button style="background:#25d366;color:#fff" onclick="sendWA()">💬 إرسال واتساب</button>`:''}
+    </div>
+    <div class="hd"><div><h1>كشف دفعات الإيجار</h1>
+      <div class="meta">عقار: <b>${esc(b.name)}</b> ${b.address?'• '+esc(b.address):''}</div>
+      <div class="meta">تاريخ الإصدار: ${fmtDate(todayISO())}</div></div>
+      <div class="logo">🏢</div></div>
+    <div class="info">
+      <div><b>الوحدة:</b> ${esc(o.unitName)}</div>
+      <div><b>المستأجر:</b> ${esc(o.tenant||'—')}</div>
+      <div><b>الجوال:</b> ${esc(o.phone||'—')}</div>
+      <div><b>الإيجار${o.period?' ('+o.period+')':''}:</b> ${fmtMoney(o.rent)}</div>
+      ${o.meter?`<div><b>عداد الكهرباء:</b> ${esc(o.meter)}</div>`:''}
+      <div><b>بداية العقد:</b> ${fmtDate(o.start)}</div>
+      <div><b>نهاية العقد:</b> ${fmtDate(addMonths(o.start, o.dur||12))}</div>
+    </div>
+    <div class="sum">
+      <div><div class="t">إجمالي العقد</div><div class="v">${fmtMoney(totalT)}</div></div>
+      <div><div class="t">المحصّل</div><div class="v" style="color:#16a34a">${fmtMoney(paidT)}</div></div>
+      <div><div class="t">المتبقّي</div><div class="v" style="color:#d97706">${fmtMoney(totalT-paidT)}</div></div>
+    </div>
+    <table><thead><tr><th>#</th><th>تاريخ الاستحقاق</th><th>المبلغ</th><th>الحالة</th><th>تاريخ السداد</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    <div class="formula">طريقة الاحتساب: تاريخ الدفعة (ن) = تاريخ بداية العقد + (ن−1) × 3 أشهر — دفعات ربع سنوية.</div>
+    <div class="ft">صدر هذا الكشف من نظام إدارة الإيجارات • ${fmtDate(todayISO())}</div>
+  </body></html>`);
+}
+
+/* ============================ سند القبض + تغيير المستأجر + تصدير Excel ============================ */
+function paysTotals(payments){
+  payments=payments||[];
+  const paid=payments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const total=payments.reduce((s,p)=>s+p.amount,0);
+  return { paid, total, remaining:total-paid };
+}
+/* تفقيط المبلغ بالعربية (أعداد صحيحة) */
+function tafqit(num){
+  num=Math.floor(Math.abs(Number(num)||0));
+  if(num===0) return 'صفر';
+  const ones=['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة','أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
+  const tens=['','','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
+  const huns=['','مئة','مئتان','ثلاثمئة','أربعمئة','خمسمئة','ستمئة','سبعمئة','ثمانمئة','تسعمئة'];
+  function b3(n){ let s=[]; const h=Math.floor(n/100), r=n%100;
+    if(h) s.push(huns[h]);
+    if(r){ if(r<20) s.push(ones[r]); else { const t=Math.floor(r/10), o=r%10; s.push(o?ones[o]+' و'+tens[t]:tens[t]); } }
+    return s.join(' و'); }
+  let parts=[];
+  const mil=Math.floor(num/1e6); num%=1e6;
+  const th=Math.floor(num/1000); const rest=num%1000;
+  if(mil) parts.push(b3(mil)+' مليون');
+  if(th){ if(th===1) parts.push('ألف'); else if(th===2) parts.push('ألفان'); else if(th<11) parts.push(b3(th)+' آلاف'); else parts.push(b3(th)+' ألف'); }
+  if(rest) parts.push(b3(rest));
+  return parts.join(' و');
+}
+/* سند قبض لدفعة (histIdx==null للمستأجر الحالي) */
+function printReceipt(uId,payId,histIdx){
+  const u=db.units.find(x=>x.id===uId); const b=db.buildings.find(x=>x.id===u.buildingId);
+  const src=(histIdx==null)?u:u.history[histIdx];
+  const p=(src.payments||[]).find(x=>x.id===payId); if(!p) return;
+  const recNo='R'+(p.paidDate||todayISO()).replace(/-/g,'')+'-'+String(u.id).slice(-3).toUpperCase()+p.n;
+  const cur=db.settings.currency;
+  const rcptMsg=`سند قبض — رقم: ${recNo}\nالتاريخ: ${fmtDate(p.paidDate||todayISO())}\nاستلمنا من: ${src.tenantName||'—'}\nعن إيجار: ${u.name} — ${b.name}\nالدفعة رقم: ${p.n}\nالمبلغ: ${fmtMoney(p.amount)}`;
+  openReportWindow(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>سند قبض ${recNo}</title>
+  <style>
+    *{font-family:'Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
+    body{padding:40px;color:#0f172a}
+    .voucher{max-width:640px;margin:0 auto;border:2px solid #0f766e;border-radius:16px;overflow:hidden}
+    .vh{background:#0f766e;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}
+    .vh h1{margin:0;font-size:24px}.vh .no{font-size:13px;opacity:.9;margin-top:3px}
+    .vb{padding:24px}
+    .line{display:flex;justify-content:space-between;padding:11px 2px;border-bottom:1px dashed #cbd5e1;font-size:15px}
+    .line .l{color:#64748b}.line .v{font-weight:bold;text-align:left}
+    .amount{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;margin:18px 0;text-align:center}
+    .amount .big{font-size:28px;font-weight:bold;color:#16a34a}
+    .amount .words{font-size:13px;color:#475569;margin-top:6px}
+    .sign{display:flex;justify-content:space-between;margin-top:36px;font-size:14px}
+    .sign div{text-align:center;width:42%}.sign .ln{border-top:1px solid #94a3b8;margin-top:36px;padding-top:6px;color:#64748b}
+    .ft{text-align:center;font-size:11px;color:#94a3b8;margin-top:18px}
+    @media print{body{padding:10px}.noprint{display:none}}
+    .btnbar{text-align:center;margin-bottom:18px}.btnbar button{border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold;margin:0 5px}
+  </style>${waWindowScript(src.tenantPhone,rcptMsg,'سند-قبض')}</head><body>
+    <div class="btnbar noprint">
+      <button style="background:#0f766e;color:#fff" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+      ${src.tenantPhone?`<button style="background:#25d366;color:#fff" onclick="sendWA()">💬 إرسال واتساب</button>`:''}
+    </div>
+    <div class="voucher">
+      <div class="vh"><div><h1>سند قبض</h1><div class="no">رقم: ${recNo}</div></div><div style="font-size:38px">🧾</div></div>
+      <div class="vb">
+        <div class="line"><span class="l">التاريخ</span><span class="v">${fmtDate(p.paidDate||todayISO())}</span></div>
+        <div class="line"><span class="l">استلمنا من السيد/المؤسسة</span><span class="v">${esc(src.tenantName||'—')}</span></div>
+        <div class="line"><span class="l">وذلك عن</span><span class="v">إيجار ${esc(u.name)} — ${esc(b.name)}</span></div>
+        <div class="line"><span class="l">عن الدفعة</span><span class="v">رقم ${p.n} المستحقة ${fmtDate(p.dueDate)}</span></div>
+        <div class="amount"><div class="big">${fmtMoney(p.amount)}</div><div class="words">فقط: ${tafqit(p.amount)} ${cur} لا غير</div></div>
+        <div class="sign"><div><div class="ln">المستلم</div></div><div><div class="ln">الدافع</div></div></div>
+      </div>
+    </div>
+    <div class="ft">صدر من نظام إدارة الإيجارات • ${fmtDate(todayISO())}</div>
+  </body></html>`);
+}
+/* تغيير المستأجر مع أرشفة الحالي */
+function openChangeTenant(uId){
+  const u=db.units.find(x=>x.id===uId);
+  const n=(u.payments||[]).length;
+  openModal(`<div class="modal"><div class="modal-head"><h3>🔄 تغيير المستأجر</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
+    <div class="modal-body">
+      <div class="info-box" style="background:var(--warning-l);border-color:#fde68a;color:#92400e">⚠️ <div>سيتم <b>أرشفة المستأجر الحالي «${esc(u.tenantName||'')}»</b> مع كامل دفعاته (${n} دفعة) في «المستأجرون السابقون»، ثم إنشاء عقد جديد. لن تُفقد أي بيانات.</div></div>
+      <div class="row2">
+        <div class="field"><label>اسم المستأجر الجديد *</label><input id="ct-name" placeholder="الاسم"></div>
+        <div class="field"><label>الجوال</label><input id="ct-phone" placeholder="05xxxxxxxx"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>الإيجار ( ${db.settings.currency} ) *</label><input type="number" id="ct-rent" value="${u.rentAmount||u.quarterlyRent||''}"></div>
+        <div class="field"><label>بداية العقد الجديد *</label><input type="date" id="ct-start" value="${todayISO()}"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>مدة العقد</label><select id="ct-dur">${[6,12,18,24,36].map(m=>`<option value="${m}" ${m===12?'selected':''}>${m} شهر</option>`).join('')}</select></div>
+        <div class="field"><label>دورية السداد</label><select id="ct-period">
+          <option value="monthly" ${(u.paymentPeriod||'quarterly')==='monthly'?'selected':''}>شهري</option>
+          <option value="quarterly" ${(u.paymentPeriod||'quarterly')==='quarterly'?'selected':''}>ربع سنوي</option>
+          <option value="semiannual" ${(u.paymentPeriod||'quarterly')==='semiannual'?'selected':''}>نصف سنوي</option>
+          <option value="annual" ${(u.paymentPeriod||'quarterly')==='annual'?'selected':''}>سنوي</option>
+        </select></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="changeTenant('${uId}')">💾 حفظ وأرشفة السابق</button>
+      <button class="btn" onclick="openUnit('${uId}')">إلغاء</button>
+    </div></div>`);
+}
+function changeTenant(uId){
+  const u=db.units.find(x=>x.id===uId);
+  const name=document.getElementById('ct-name').value.trim();
+  const start=document.getElementById('ct-start').value;
+  const rent=parseFloat(document.getElementById('ct-rent').value)||0;
+  if(!name){ alert('أدخل اسم المستأجر الجديد'); return; }
+  if(!start){ alert('أدخل تاريخ بداية العقد'); return; }
+  if(rent<=0){ alert('أدخل قيمة الإيجار'); return; }
+  if(u.tenantName){
+    u.history=u.history||[];
+    u.history.push({ tenantName:u.tenantName, tenantPhone:u.tenantPhone, quarterlyRent:u.quarterlyRent,
+      contractStart:u.contractStart, durationMonths:u.durationMonths, payments:(u.payments||[]).slice(), archivedAt:todayISO() });
+  }
+  u.tenantName=name; u.tenantPhone=document.getElementById('ct-phone').value.trim();
+  u.rentAmount=rent; u.quarterlyRent=rent;
+  u.paymentPeriod=document.getElementById('ct-period').value;
+  u.contractStart=start; u.durationMonths=parseInt(document.getElementById('ct-dur').value);
+  u.payments=buildSchedule(u);
+  save(); closeModal(); openUnit(uId);
+}
+/* عرض سجل مستأجر سابق */
+function viewTenancy(uId,idx){
+  const u=db.units.find(x=>x.id===uId); const tn=u.history[idx];
+  const tt=paysTotals(tn.payments||[]);
+  let h=`<div class="modal lg"><div class="modal-head"><h3>📜 ${esc(tn.tenantName)} <span style="font-weight:500;color:var(--muted);font-size:14px">— ${esc(u.name)} · مستأجر سابق</span></h3><button class="x" onclick="openUnit('${uId}')">✕</button></div><div class="modal-body">`;
+  h+=`<div class="detail-grid">
+    <div class="dcell"><div class="t">الجوال</div><div class="v">${esc(tn.tenantPhone||'—')}</div></div>
+    <div class="dcell"><div class="t">الإيجار</div><div class="v">${fmtMoney(tn.rentAmount||tn.quarterlyRent)}</div></div>
+    <div class="dcell"><div class="t">الفترة</div><div class="v" style="font-size:13px">${fmtDate(tn.contractStart)} — ${fmtDate(addMonths(tn.contractStart,tn.durationMonths||12))}</div></div>
+    <div class="dcell" style="background:var(--success-l);border-color:#bbf7d0"><div class="t">المحصّل</div><div class="v" style="color:var(--success)">${fmtMoney(tt.paid)}</div></div>
+  </div>`;
+  h+=`<table style="margin-top:14px"><thead><tr><th>#</th><th>الاستحقاق</th><th>المبلغ</th><th>الحالة</th><th>السداد</th><th></th></tr></thead><tbody>`;
+  (tn.payments||[]).forEach(p=>{ const paid=p.status==='paid';
+    h+=`<tr><td style="font-weight:700">${p.n}</td><td>${fmtDate(p.dueDate)}</td><td style="font-weight:700">${fmtMoney(p.amount)}</td>
+      <td><span class="badge ${paid?'b-green':'b-gray'}">${paid?'✓ مسدّدة':'غير مسدّدة'}</span></td>
+      <td>${p.paidDate?fmtDate(p.paidDate):'<span class="muted">—</span>'}</td>
+      <td>${paid?`<button class="btn btn-sm" onclick="printReceipt('${uId}','${p.id}',${idx})" title="سند قبض">🧾</button>`:''}</td></tr>`;
+  });
+  h+=`</tbody></table></div><div class="modal-foot">
+    <button class="btn btn-primary" onclick="exportTenancyPDF('${uId}',${idx})">📄 تصدير PDF</button>
+    <button class="btn" onclick="openUnit('${uId}')" style="margin-inline-start:auto">رجوع للوحدة</button></div></div>`;
+  openModal(h);
+}
+/* تصدير المحاسبة Excel/CSV */
+function exportAccountingCSV(year){
+  const cell=(v)=> (typeof v==='number')? v : '"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows=[];
+  rows.push(['التقرير المحاسبي السنوي', year]);
+  rows.push([]);
+  rows.push(['التفصيل الربع سنوي']);
+  rows.push(['الربع','المستحق','المحصّل','المتبقّي','نسبة التحصيل %','المصروفات','الصافي']);
+  const qN=['الربع الأول','الربع الثاني','الربع الثالث','الربع الرابع'];
+  for(let i=1;i<=4;i++){ const a=acct(year,i,null); rows.push([qN[i-1],a.expected,a.collected,a.outstanding,a.rate,a.expenses,a.net]); }
+  const yr=acct(year,null,null);
+  rows.push(['الإجمالي السنوي',yr.expected,yr.collected,yr.outstanding,yr.rate,yr.expenses,yr.net]);
+  rows.push([]);
+  rows.push(['حسب العقار']);
+  rows.push(['العقار','المستحق','المحصّل','المتبقّي','المصروفات','الصافي']);
+  db.buildings.forEach(b=>{ const a=acct(year,null,b.id); rows.push([b.name,a.expected,a.collected,a.outstanding,a.expenses,a.net]); });
+  rows.push([]);
+  rows.push(['المصروفات']);
+  rows.push(['التاريخ','العقار','البند','الوصف','المبلغ']);
+  (db.expenses||[]).filter(e=>yearOf(e.date)===year).sort((a,b)=>a.date<b.date?1:-1).forEach(e=>{
+    const b=db.buildings.find(x=>x.id===e.buildingId);
+    rows.push([e.date,(b?b.name:'عام'),e.category||'أخرى',e.note||'',Number(e.amount)||0]);
+  });
+  const csv='﻿'+rows.map(r=>r.map(cell).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='محاسبة-'+year+'.csv'; a.click();
+}
+
+/* ============================ دليل المستخدم ============================ */
+function openGuide(){
+  const sec=[
+   ['🚀','البدء السريع (٩ خطوات)',
+    '<ol style="margin:0;padding-inline-start:20px">'+
+    '<li><b>رمز الدخول:</b> افتح الموقع وأدخل رمزًا سريًا (أول مرة اختر رمزًا جديدًا واحفظه).</li>'+
+    '<li><b>أضف عقارًا</b> من تبويب «العقارات».</li>'+
+    '<li><b>أضف الوحدات</b> داخل العقار مع تحديد دورية السداد ورقم عداد الكهرباء.</li>'+
+    '<li><b>سجّل السداد</b> لكل دفعة واطبع «سند قبض» أو أرسله مباشرةً عبر واتساب.</li>'+
+    '<li><b>تابع لوحة التحكم</b> للمتأخرات والتذكيرات.</li>'+
+    '<li><b>استخدم تبويب «📋 المستحقات»</b> لمعرفة من حلّ سداده خلال شهر أو 3 أو 6 أشهر.</li>'+
+    '<li><b>راجع المحاسبة</b> للتحصيل والمصروفات وصافي الدخل.</li>'+
+    '<li><b>غيّر المستأجر</b> عند الحاجة مع حفظ سجل القديم.</li>'+
+    '<li><b>خذ نسخة احتياطية</b> من الإعدادات دوريًا.</li></ol>'],
+   ['🔐','رمز الدخول والمزامنة السحابية',
+    '<ul><li>بياناتك محفوظة في السحابة ومرتبطة بـ<b>رمز سري</b> تختاره.</li>'+
+    '<li>أدخل <b>نفس الرمز</b> على أي جهاز (جوال/كمبيوتر) لترى نفس البيانات — <b>مزامنة لحظية</b>.</li>'+
+    '<li>شارة <b>«🟢 متزامن»</b> أعلى الصفحة تؤكد الاتصال؛ اضغطها لتغيير الرمز أو تسجيل الخروج.</li>'+
+    '<li>بدون إنترنت يعمل النظام محليًا ويتزامن تلقائيًا عند عودة الاتصال.</li></ul>'+
+    '<div class="tip">💡 احفظ رمزك في مكان آمن — هو مفتاح بياناتك ولا يمكن استرجاعها بدونه.</div>'],
+   ['🏢','إدارة العقارات',
+    '<ul><li><b>إضافة:</b> «العقارات» ← «➕ إضافة عقار» (الاسم، العنوان، تاريخ التسليم المتوقع، ملاحظات).</li>'+
+    '<li><b>تاريخ التسليم:</b> للعقارات تحت الإنشاء — يظهر تذكيره في «عقارات قريبة التسليم» بلوحة التحكم.</li>'+
+    '<li><b>تعديل/حذف:</b> من داخل العقار «✏️ تعديل العقار». حذف العقار يحذف وحداته أيضًا.</li></ul>'],
+   ['🚪','الوحدات والعقود',
+    '<ul><li><b>إضافة وحدة:</b> الرقم/الاسم، المستأجر، قيمة الإيجار، <b>دورية السداد</b>، رقم عداد الكهرباء، تاريخ البداية، المدة.</li>'+
+    '<li><b>دورية السداد:</b> اختر من أربع خيارات — <b>شهري</b> / <b>ربع سنوي</b> (كل 3 أشهر) / <b>نصف سنوي</b> / <b>سنوي</b>.</li>'+
+    '<li><b>جدول الدفعات</b> يُنشأ تلقائيًا حسب الدورية المختارة: الدفعة (ن) = البداية + (ن−1) × فترة السداد.</li>'+
+    '<li><b>عداد الكهرباء ⚡:</b> يظهر في جدول الوحدات وتفاصيل الوحدة وكشف الدفعات.</li>'+
+    '<li>وحدة <b>بلا مستأجر = شاغرة</b> (لا تُحتسب عليها دفعات).</li>'+
+    '<li><b>نهاية العقد</b> تُحسب تلقائيًا وتظهر في «عقود قريبة الانتهاء».</li></ul>'],
+   ['✓','الدفعات وسند القبض',
+    '<ul><li>افتح الوحدة بزر <b>«إدارة»</b> ثم «✓ تسجيل سداد» عند استلام كل دفعة، أو «↩️» للتراجع.</li>'+
+    '<li><b>🧾 سند قبض:</b> يطبع إيصال للمستأجر مع تفقيط المبلغ بالعربية.</li>'+
+    '<li><b>💬 إرسال واتساب:</b> من نافذة السند أو من تفاصيل الوحدة مباشرةً — يفتح واتساب بتفاصيل الدفعة أو ملخص العقد.</li>'+
+    '<li><b>📄 تصدير PDF:</b> كشف كامل بكل دفعات الوحدة مع زر إرسال واتساب.</li></ul>'],
+   ['📋','جدول المستحقات',
+    '<ul><li>تبويب <b>«📋 المستحقات»</b> في شريط التنقل العلوي.</li>'+
+    '<li>اختر الفترة: <b>شهري (30 يوم)</b> | <b>3 أشهر (90 يوم)</b> | <b>6 أشهر (180 يوم)</b>.</li>'+
+    '<li>يعرض جميع المستأجرين الذين حلّ موعد سدادهم خلال الفترة المختارة.</li>'+
+    '<li><b>🖨️ طباعة الكل:</b> يطبع الجدول كاملًا بكل الأسماء والمبالغ.</li>'+
+    '<li><b>🖨️ طباعة لشخص معيّن:</b> اضغط أيقونة الطباعة في صف المستأجر لطباعة إشعار استحقاق له.</li>'+
+    '<li><b>💬 إرسال واتساب لشخص معيّن:</b> اضغط الزر الأخضر في صفه لإرسال تذكير مباشرةً.</li></ul>'+
+    '<div class="tip">💡 ابدأ دائمًا بفلتر «شهري» لمتابعة أقرب المستحقات، ثم وسّع للـ 3 أو 6 أشهر للتخطيط المسبق.</div>'],
+   ['📊','لوحة التحكم',
+    '<ul><li>بطاقات سريعة: عدد العقارات، الوحدات، إجمالي المحصّل، المتأخرات، الدفعات القريبة.</li>'+
+    '<li>جداول متابعة: <b>متأخرات</b>، <b>دفعات قريبة الاستحقاق</b>، <b>عقارات قريبة التسليم</b>، <b>عقود قريبة الانتهاء</b>.</li>'+
+    '<li>مدد التنبيه قابلة للضبط من «الإعدادات».</li></ul>'],
+   ['🧮','المحاسبة',
+    '<ul><li>اختر <b>السنة</b> من أعلى الصفحة.</li>'+
+    '<li>بطاقات: المستحق، المحصّل، المتبقّي، <b>نسبة التحصيل</b>، المصروفات، <b>صافي الدخل</b>.</li>'+
+    '<li><b>التفصيل الربع سنوي</b> + الإجمالي السنوي، و<b>حسب كل عقار</b>، ومقارنة المحصّل عبر السنوات.</li>'+
+    '<li><b>المصروفات:</b> «➕ إضافة مصروف» (البند، العقار، المبلغ، التاريخ) — تُخصم لحساب صافي الدخل.</li>'+
+    '<li><b>📄 تقرير PDF</b> و<b>📊 تصدير Excel</b> للسنة المختارة.</li></ul>'],
+   ['🔄','تغيير المستأجر والأرشفة',
+    '<ul><li>من داخل الوحدة اضغط «🔄 تغيير المستأجر».</li>'+
+    '<li>حدّد دورية السداد الجديدة للمستأجر القادم (قد تختلف عن السابق).</li>'+
+    '<li>يُؤرشف المستأجر القديم <b>وكامل دفعاته تحت اسمه</b> في قسم «المستأجرون السابقون».</li>'+
+    '<li>يبدأ المستأجر الجديد بعقد وجدول دفعات جديد دون فقدان أي بيانات.</li>'+
+    '<li>الدفعات المؤرشفة <b>تبقى محسوبة</b> في تقارير المحاسبة التاريخية.</li></ul>'],
+   ['⚙️','الإعدادات والنسخ الاحتياطي',
+    '<ul><li>تغيير <b>العملة</b> ومدد <b>التنبيه</b>.</li>'+
+    '<li><b>⬇️ تنزيل نسخة احتياطية</b> (ملف JSON) — يُنصح به دوريًا.</li>'+
+    '<li><b>⬆️ استيراد نسخة</b> لاستعادة البيانات.</li>'+
+    '<li><b>🗑️ مسح كل البيانات</b> (لا يمكن التراجع).</li></ul>'],
+   ['❓','أسئلة شائعة',
+    '<ul><li><b>هل بياناتي آمنة؟</b> محفوظة سحابيًا ومرتبطة برمزك؛ لا تشارك الرمز إلا مع من تثق به.</li>'+
+    '<li><b>نسيت رمزي؟</b> الرمز مفتاح بياناتك ولا يمكن استرجاعها بدونه — احرص على حفظه.</li>'+
+    '<li><b>هل يعمل بدون إنترنت؟</b> نعم محليًا، ويتزامن عند عودة الاتصال.</li>'+
+    '<li><b>كيف أفتح بياناتي على جهاز جديد؟</b> افتح الرابط وأدخل نفس الرمز.</li>'+
+    '<li><b>كيف تُحسب الدفعات؟</b> حسب الدورية المختارة: شهري/ربعي/نصف سنوي/سنوي من تاريخ بداية العقد.</li>'+
+    '<li><b>كيف أغيّر دورية السداد؟</b> من «✏️ تعديل العقد» داخل الوحدة، أو عند «🔄 تغيير المستأجر».</li>'+
+    '<li><b>هل يعمل زر واتساب بدون حفظ رقم الجوال؟</b> يحتاج رقم جوال المستأجر محفوظًا في بيانات الوحدة.</li></ul>']
+  ];
+  const acc=sec.map((s,i)=>`
+    <div class="gsec">
+      <button class="gsec-h" onclick="toggleGuide(${i})"><span>${s[0]} &nbsp;${s[1]}</span><span class="gsec-ar" id="gar${i}" style="${i===0?'transform:rotate(180deg)':''}">▾</span></button>
+      <div class="gsec-b" id="gsec${i}" style="display:${i===0?'block':'none'}">${s[2]}</div>
+    </div>`).join('');
+  openModal(`<div class="modal lg"><div class="modal-head"><h3>📖 دليل المستخدم</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <style>
+        .gsec{border:1px solid var(--border);border-radius:11px;margin-bottom:9px;overflow:hidden}
+        .gsec-h{width:100%;background:var(--surface-2);border:none;padding:13px 15px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14.5px;font-weight:800;color:var(--text);cursor:pointer;text-align:right}
+        .gsec-h:hover{background:var(--primary-l)}
+        .gsec-b{padding:13px 16px;font-size:13.5px;line-height:1.85;color:var(--text);border-top:1px solid var(--border)}
+        .gsec-b ul,.gsec-b ol{margin:0;padding-inline-start:20px}
+        .gsec-b li{margin-bottom:6px}
+        .gsec-b b{color:var(--primary-d)}
+        .gsec-b .tip{background:var(--info-l);border-radius:8px;padding:8px 11px;margin-top:9px;color:#1e40af;font-size:12.8px}
+        .gsec-ar{transition:.2s;color:var(--muted);font-size:13px}
+      </style>
+      <div class="info-box" style="margin-bottom:12px">📖 <div><b>نظام إدارة الإيجارات</b> — دليل كامل لإدارة العقارات والوحدات ومتابعة الدفعات بدوريات متعددة، مع مزامنة سحابية وإرسال واتساب. اضغط أي قسم لفتحه.</div></div>
+      ${acc}
+      <div class="formula" style="margin-top:12px">📌 <b>معادلة الاستحقاق:</b> تاريخ الدفعة (ن) = تاريخ بداية العقد + (ن−1) × فترة السداد (شهر/3/6/12).</div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal()">إغلاق الدليل</button></div></div>`);
+}
+function toggleGuide(i){
+  const b=document.getElementById('gsec'+i);
+  const open=b.style.display!=='none';
+  b.style.display=open?'none':'block';
+  document.getElementById('gar'+i).style.transform=open?'':'rotate(180deg)';
+}
+
+/* ============================ الإعدادات والنسخ الاحتياطي ============================ */
+function openSettings(){
+  const s=db.settings;
+  openModal(`<div class="modal"><div class="modal-head"><h3>⚙️ الإعدادات</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>العملة</label><input id="s-cur" value="${esc(s.currency)}"></div>
+      <div class="row2">
+        <div class="field"><label>تنبيه قبل الاستحقاق <span class="hint">(أيام)</span></label><input type="number" id="s-pay" value="${s.paymentReminderDays}"></div>
+        <div class="field"><label>تنبيه التسليم/انتهاء العقد <span class="hint">(أيام)</span></label><input type="number" id="s-deliv" value="${s.deliveryReminderDays}"></div>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:18px 0">
+      <div class="field"><label>النسخ الاحتياطي للبيانات</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" onclick="exportData()">⬇️ تنزيل نسخة احتياطية</button>
+          <button class="btn" onclick="document.getElementById('imp').click()">⬆️ استيراد نسخة</button>
+          <input type="file" id="imp" accept="application/json" style="display:none" onchange="importData(this)">
+        </div>
+        <div class="hint" style="margin-top:8px">💾 البيانات محفوظة محليًا في هذا المتصفح. نزّل نسخة احتياطية بين فترة وأخرى.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="saveSettings()">💾 حفظ</button>
+      <button class="btn" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-danger" style="margin-inline-start:auto" onclick="clearAll()">🗑️ مسح كل البيانات</button>
+    </div></div>`);
+}
+function saveSettings(){
+  db.settings.currency=document.getElementById('s-cur').value.trim()||'ريال';
+  db.settings.paymentReminderDays=parseInt(document.getElementById('s-pay').value)||30;
+  db.settings.deliveryReminderDays=parseInt(document.getElementById('s-deliv').value)||60;
+  save(); closeModal(); render();
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='نسخة-الايجارات-'+todayISO()+'.json';
+  a.click();
+}
+function importData(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{ try{ const d=JSON.parse(e.target.result);
+    if(!d.buildings||!d.units) throw 0;
+    if(!confirm('سيتم استبدال البيانات الحالية بالنسخة المستوردة. متابعة؟')) return;
+    db=d; db.settings=Object.assign(defaults().settings,db.settings||{});
+    save(); closeModal(); go('dashboard');
+  }catch(err){ alert('ملف غير صالح'); } };
+  r.readAsText(f);
+}
+function clearAll(){
+  if(!confirm('سيتم مسح جميع العقارات والوحدات والدفعات نهائيًا. هل أنت متأكد؟')) return;
+  if(!confirm('تأكيد أخير: لا يمكن التراجع عن هذه الخطوة.')) return;
+  db=defaults(); save(); closeModal(); go('dashboard');
+}
+
+/* ============================ بيانات تجريبية ============================ */
+function loadDemo(){
+  const b1=uid(), b2=uid();
+  db.buildings=[
+    {id:b1,name:'عمارة الياسمين',address:'حي النخيل، الرياض',deliveryDate:null,notes:'عمارة سكنية 6 شقق',createdAt:todayISO()},
+    {id:b2,name:'برج الواحة التجاري',address:'حي العليا، الرياض',deliveryDate:addMonths(todayISO(),2),notes:'تحت التشطيب النهائي',createdAt:todayISO()}
+  ];
+  const mk=(bId,name,tenant,phone,rent,start,dur,period)=>{
+    const u={id:uid(),buildingId:bId,name,tenantName:tenant,tenantPhone:phone,rentAmount:rent,quarterlyRent:rent,paymentPeriod:period||'quarterly',electricityMeter:'',contractStart:start,durationMonths:dur,notes:'',payments:[]};
+    u.payments=u.tenantName?buildSchedule(u):[]; return u;
+  };
+  db.units=[
+    mk(b1,'شقة 1','أحمد العتيبي','0501234567',6000,addMonths(todayISO(),-10),12),
+    mk(b1,'شقة 2','خالد الدوسري','0509876543',6500,addMonths(todayISO(),-4),12),
+    mk(b1,'شقة 3','','',6000,addMonths(todayISO(),-1),12),
+    mk(b2,'محل أرضي 1','مؤسسة النور','0555555555',15000,addMonths(todayISO(),-7),24)
+  ];
+  // سداد واقعي: أغلب المستحقات الماضية مسدّدة مع ترك بعض المتأخرات لبعض الوحدات
+  db.units.forEach((u,ui)=>{
+    const past=u.payments.filter(p=>daysFromToday(p.dueDate)<0);
+    past.forEach((p,i)=>{
+      const leaveUnpaid=(ui%2===0)&&i===past.length-1; // اترك آخر متأخرة لوحدات معيّنة
+      if(!leaveUnpaid){ p.status='paid'; p.paidDate=p.dueDate; }
+    });
+  });
+  // مصروفات تجريبية
+  db.expenses=[
+    {id:uid(),buildingId:b1,category:'صيانة',amount:1200,date:addMonths(todayISO(),-5),note:'إصلاح مصعد'},
+    {id:uid(),buildingId:b1,category:'كهرباء وماء',amount:800,date:addMonths(todayISO(),-2),note:'فاتورة المرافق'},
+    {id:uid(),buildingId:b2,category:'رسوم حكومية',amount:2500,date:addMonths(todayISO(),-3),note:'رخصة وتصاريح'}
+  ];
+  save(); go('dashboard');
+}
+
+/* ============================ المزامنة السحابية ============================ */
+function spaceIdFromCode(code){
+  let h=5381; const s=String(code);
+  for(let i=0;i<s.length;i++) h=(((h<<5)+h) ^ s.charCodeAt(i))>>>0;
+  return 'sp'+h.toString(36)+s.length;
+}
+function connectCloud(code){
+  cloud.code=code; cloud.enabled=true; cloud.spaceId=spaceIdFromCode(code);
+  cloud.ref=fs.collection('rentals').doc(cloud.spaceId);
+  localStorage.setItem(CODE_KEY, code);
+  loadLocal(); render(); updateSyncBadge();
+  if(cloud.unsub){ try{cloud.unsub();}catch(e){} }
+  cloud.unsub = cloud.ref.onSnapshot(function(snap){
+    cloud.online = true;
+    if(snap.exists && snap.data() && snap.data().json){
+      try{
+        const remote = normalize(JSON.parse(snap.data().json));
+        cloud.applyingRemote = true;
+        db = remote;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+        cloud.applyingRemote = false;
+        if(!document.querySelector('.overlay')) render();
+      }catch(e){ console.warn('apply remote', e); }
+    } else {
+      pushCloud(); // أول مرة لهذا الرمز: ارفع البيانات الحالية لإنشاء المساحة
+    }
+    updateSyncBadge();
+  }, function(err){ cloud.online=false; updateSyncBadge(); console.warn('snapshot', err); });
+}
+function scheduleCloudPush(){ clearTimeout(cloud.saveTimer); cloud.saveTimer=setTimeout(pushCloud, 400); }
+function pushCloud(){
+  if(!cloud.ref) return;
+  cloud.ref.set({ json: JSON.stringify(db), updatedAt: Date.now() })
+    .then(function(){ cloud.online=true; updateSyncBadge(); })
+    .catch(function(e){ cloud.online=false; updateSyncBadge(); console.warn('push', e); });
+}
+function cloudLogout(){
+  if(!cloud.enabled) return;
+  if(!confirm('تسجيل الخروج من المزامنة على هذا الجهاز؟\nبياناتك تبقى محفوظة في السحابة وتُسترجع بإدخال نفس الرمز.')) return;
+  if(cloud.unsub){ try{cloud.unsub();}catch(e){} }
+  cloud.enabled=false; cloud.ref=null; cloud.code=null; cloud.unsub=null;
+  localStorage.removeItem(CODE_KEY);
+  updateSyncBadge(); showGate();
+}
+function updateSyncBadge(){
+  const el=document.getElementById('syncBadge'); if(!el) return;
+  if(!cloud.enabled){ el.style.display='none'; return; }
+  el.style.display='inline-flex';
+  if(cloud.online){ el.className='sync-badge ok'; el.innerHTML='🟢 متزامن'; }
+  else{ el.className='sync-badge off'; el.innerHTML='🟠 غير متصل'; }
+}
+
+/* ---------- شاشة رمز الدخول ---------- */
+function showGate(){
+  document.getElementById('modal-root').innerHTML=
+    '<div class="overlay gate"><div class="gatebox">'
+    +'<div class="gate-logo">🏢</div>'
+    +'<h2>نظام إدارة الإيجارات</h2>'
+    +'<p>أدخل رمز الدخول للوصول إلى بياناتك على كل الأجهزة.<br>'
+    +'<span class="gate-hint">أول مرة؟ اختر رمزًا جديدًا واحفظه — هو مفتاح بياناتك.</span></p>'
+    +'<input id="gate-code" type="password" inputmode="text" placeholder="رمز الدخول" onkeydown="if(event.key===\'Enter\')submitGate()">'
+    +'<button class="btn btn-primary gate-btn" onclick="submitGate()">🔓 دخول ومزامنة</button>'
+    +'<div class="gate-foot">🔒 بياناتك مرتبطة بهذا الرمز. لا تشاركه إلا مع من تريد أن يطّلع على نفس البيانات أو يعدّلها.</div>'
+    +'</div></div>';
+  setTimeout(function(){ var i=document.getElementById('gate-code'); if(i) i.focus(); }, 60);
+}
+function submitGate(){
+  var code=(document.getElementById('gate-code').value||'').trim();
+  if(code.length<4){ alert('اختر رمزًا من 4 خانات على الأقل'); return; }
+  closeModal();
+  connectCloud(code);
+}
+
+/* ============================ التشغيل ============================ */
+function bootstrap(){
+  if(cloud.ready){
+    var saved=localStorage.getItem(CODE_KEY);
+    if(saved){ connectCloud(saved); }
+    else{ loadLocal(); render(); showGate(); }
+  } else {
+    // تعذّر تحميل Firebase (بلا إنترنت مثلًا): وضع محلي فقط على هذا الجهاز
+    loadLocal(); render();
+  }
+}
+bootstrap();
+</script>
+</body>
+</html>
