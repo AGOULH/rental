@@ -169,6 +169,7 @@
     th,td{padding:10px 12px}
     .head-inner{padding:12px}
     nav button{padding:8px 12px;font-size:13px}
+    .dash-2col{grid-template-columns:1fr!important}
   }
   @media print{body{background:#fff}.no-print{display:none!important}}
 
@@ -393,10 +394,11 @@ function viewDashboard(){
     .filter(x=>x.days>=0 && x.days<=db.settings.deliveryReminderDays)
     .sort((a,b)=>a.days-b.days);
 
-  // عقود قريبة الانتهاء
-  const endingSoon=units.map(u=>({u,b:db.buildings.find(x=>x.id===u.buildingId),end:contractEnd(u)}))
+  // عقود قريبة الانتهاء أو منتهية بالفعل
+  const endingSoon=units.filter(u=>u.tenantName)
+    .map(u=>({u,b:db.buildings.find(x=>x.id===u.buildingId),end:contractEnd(u)}))
     .map(x=>({...x,days:daysFromToday(x.end)}))
-    .filter(x=>x.days>=0 && x.days<=db.settings.deliveryReminderDays)
+    .filter(x=>x.days<=db.settings.deliveryReminderDays)
     .sort((a,b)=>a.days-b.days);
 
   if(db.buildings.length===0) return pageEmpty();
@@ -460,12 +462,17 @@ function viewDashboard(){
   h+=`</div></div>`;
 
   h+=`<div class="panel"><div class="panel-head"><h2>📅 عقود قريبة الانتهاء</h2><span class="count">${endingSoon.length}</span></div><div class="panel-body">`;
-  if(endingSoon.length===0) h+=`<div style="padding:18px;color:var(--muted)">لا توجد عقود قريبة الانتهاء خلال ${db.settings.deliveryReminderDays} يوم.</div>`;
-  else{ h+=`<table><thead><tr><th>الوحدة</th><th>المستأجر</th><th>نهاية العقد</th></tr></thead><tbody>`;
-    endingSoon.forEach(x=>{ h+=`<tr onclick="openUnit('${x.u.id}')" style="cursor:pointer">
-      <td style="font-weight:700">${esc(x.b?x.b.name:'')} — ${esc(x.u.name)}</td>
+  if(endingSoon.length===0) h+=`<div style="padding:18px;color:var(--muted)">لا توجد عقود قريبة الانتهاء أو منتهية.</div>`;
+  else{ h+=`<table><thead><tr><th>الوحدة</th><th>المستأجر</th><th>نهاية العقد</th><th></th></tr></thead><tbody>`;
+    endingSoon.forEach(x=>{ const expired=x.days<0;
+      h+=`<tr>
+      <td style="font-weight:700;cursor:pointer" onclick="openUnit('${x.u.id}')">${esc(x.b?x.b.name:'')} — ${esc(x.u.name)}</td>
       <td>${esc(x.u.tenantName||'—')}</td>
-      <td><span class="badge ${x.days<=14?'b-red':'b-amber'}">${fmtDate(x.end)}</span></td></tr>`; });
+      <td><span class="badge ${expired||x.days<=14?'b-red':'b-amber'}">${expired?'منتهي منذ '+Math.abs(x.days)+' يوم':'بعد '+x.days+' يوم'}</span></td>
+      <td><div style="display:flex;gap:5px;justify-content:flex-end">
+        <button class="btn btn-sm btn-primary" onclick="openRenewContract('${x.u.id}')" title="تجديد العقد">🔁 تجديد</button>
+        ${expired?`<button class="btn btn-sm btn-danger" onclick="openEndContract('${x.u.id}')" title="إنهاء وخروج">🚪 إنهاء</button>`:''}
+      </div></td></tr>`; });
     h+=`</tbody></table>`; }
   h+=`</div></div></div>`;
 
@@ -1135,7 +1142,7 @@ function openUnit(uId){
     ${u.tenantPhone?`<div class="dcell"><div class="t">الجوال</div><div class="v">${esc(u.tenantPhone)}</div></div>`:''}
     <div class="dcell"><div class="t">الإيجار (${periodLbl(u)})</div><div class="v">${fmtMoney(u.rentAmount)}</div></div>
     <div class="dcell"><div class="t">بداية العقد</div><div class="v">${fmtDate(u.contractStart)}</div></div>
-    <div class="dcell"><div class="t">نهاية العقد</div><div class="v">${fmtDate(contractEnd(u))}</div></div>
+    <div class="dcell"><div class="t">نهاية العقد</div><div class="v">${fmtDate(contractEnd(u))}${(u.tenantName&&daysFromToday(contractEnd(u))<0)?' <span class="badge b-red" style="margin-inline-start:6px">منتهي</span>':''}</div></div>
     ${u.electricityMeter?`<div class="dcell"><div class="t">عداد الكهرباء ⚡</div><div class="v">${esc(u.electricityMeter)}</div></div>`:''}
   </div>`;
 
@@ -1174,8 +1181,9 @@ function openUnit(uId){
   if((u.history||[]).length){
     h+=`<div class="panel-head" style="border:none;padding:20px 0 8px"><h2>📜 المستأجرون السابقون</h2><span class="count">${u.history.length}</span></div>`;
     h+=`<table><thead><tr><th>المستأجر</th><th>الفترة</th><th>المحصّل</th><th>الإجمالي</th><th></th></tr></thead><tbody>`;
+    const reasonBadge={renewal:'<span class="badge b-blue" style="margin-inline-start:6px">🔁 تجديد</span>',ended:'<span class="badge b-red" style="margin-inline-start:6px">🚪 إنهاء</span>'};
     u.history.forEach((tn,idx)=>{ const tt=paysTotals(tn.payments||[]);
-      h+=`<tr><td style="font-weight:700">${esc(tn.tenantName)}</td>
+      h+=`<tr><td style="font-weight:700">${esc(tn.tenantName)}${reasonBadge[tn.reason]||''}</td>
         <td>${fmtDate(tn.contractStart)} — ${fmtDate(addMonths(tn.contractStart, tn.durationMonths||12))}</td>
         <td style="color:var(--success);font-weight:700">${fmtMoney(tt.paid)}</td>
         <td>${fmtMoney(tt.total)}</td>
@@ -1189,7 +1197,9 @@ function openUnit(uId){
   h+=`</div><div class="modal-foot">
       <button class="btn btn-primary" onclick="exportUnitPDF('${u.id}')">📄 تصدير PDF</button>
       ${u.tenantPhone?`<button class="btn" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendUnitWhatsApp('${u.id}')">💬 واتساب</button>`:''}
+      ${u.tenantName?`<button class="btn" onclick="openRenewContract('${u.id}')">🔁 تجديد العقد</button>`:''}
       ${u.tenantName?`<button class="btn" onclick="openChangeTenant('${u.id}')">🔄 تغيير المستأجر</button>`:''}
+      ${u.tenantName?`<button class="btn btn-danger" onclick="openEndContract('${u.id}')">🚪 إنهاء وخروج</button>`:''}
       <button class="btn" onclick="openUnitForm('${u.buildingId}','${u.id}')">✏️ تعديل العقد</button>
       <button class="btn" onclick="closeModal()" style="margin-inline-start:auto">إغلاق</button>
     </div></div>`;
@@ -1399,14 +1409,97 @@ function changeTenant(uId){
   if(rent<=0){ alert('أدخل قيمة الإيجار'); return; }
   if(u.tenantName){
     u.history=u.history||[];
-    u.history.push({ tenantName:u.tenantName, tenantPhone:u.tenantPhone, quarterlyRent:u.quarterlyRent,
-      contractStart:u.contractStart, durationMonths:u.durationMonths, payments:(u.payments||[]).slice(), archivedAt:todayISO() });
+    u.history.push({ tenantName:u.tenantName, tenantPhone:u.tenantPhone, rentAmount:u.rentAmount, quarterlyRent:u.quarterlyRent,
+      contractStart:u.contractStart, durationMonths:u.durationMonths, payments:(u.payments||[]).slice(), archivedAt:todayISO(), reason:'change' });
   }
   u.tenantName=name; u.tenantPhone=document.getElementById('ct-phone').value.trim();
   u.rentAmount=rent; u.quarterlyRent=rent;
   u.paymentPeriod=document.getElementById('ct-period').value;
   u.contractStart=start; u.durationMonths=parseInt(document.getElementById('ct-dur').value);
   u.payments=buildSchedule(u);
+  save(); closeModal(); openUnit(uId);
+}
+/* تجديد العقد: يعيد فتح كل بيانات العقد الحالي للتعديل، ويؤرشف الفترة القديمة قبل حفظ الجديدة */
+function openRenewContract(uId){
+  const u=db.units.find(x=>x.id===uId); if(!u) return;
+  const suggestedStart=contractEnd(u);
+  openModal(`<div class="modal"><div class="modal-head"><h3>🔁 تجديد العقد — ${esc(u.name)}</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
+    <div class="modal-body">
+      <div class="info-box">🔁 <div>سيتم أرشفة الفترة الحالية من العقد (${(u.payments||[]).length} دفعة) في «المستأجرون السابقون»، ثم بدء عقد جديد بالبيانات التي تعدّلها أدناه — يمكنك تغيير أي منها.</div></div>
+      <div class="row2">
+        <div class="field"><label>اسم المستأجر *</label><input id="rc-name" value="${esc(u.tenantName||'')}"></div>
+        <div class="field"><label>الجوال</label><input id="rc-phone" value="${esc(u.tenantPhone||'')}" placeholder="05xxxxxxxx"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>قيمة الإيجار ( ${db.settings.currency} ) *</label><input type="number" id="rc-rent" value="${u.rentAmount||''}"></div>
+        <div class="field"><label>دورية السداد</label><select id="rc-period">
+          <option value="monthly" ${(u.paymentPeriod||'quarterly')==='monthly'?'selected':''}>شهري</option>
+          <option value="quarterly" ${(u.paymentPeriod||'quarterly')==='quarterly'?'selected':''}>ربع سنوي</option>
+          <option value="semiannual" ${(u.paymentPeriod||'quarterly')==='semiannual'?'selected':''}>نصف سنوي</option>
+          <option value="annual" ${(u.paymentPeriod||'quarterly')==='annual'?'selected':''}>سنوي</option>
+        </select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>تاريخ بداية العقد الجديد *</label><input type="date" id="rc-start" value="${suggestedStart}"></div>
+        <div class="field"><label>مدة العقد <span class="hint">(بالأشهر)</span></label><select id="rc-dur">
+          ${[6,12,18,24,36].map(m=>`<option value="${m}" ${(u.durationMonths||12)==m?'selected':''}>${m} شهر (${m/12} سنة)</option>`).join('')}
+        </select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>رقم عداد الكهرباء</label><input id="rc-meter" value="${esc(u.electricityMeter||'')}"></div>
+        <div class="field"><label>ملاحظات</label><input id="rc-notes" value="${esc(u.notes||'')}"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="renewContract('${uId}')">💾 حفظ وتجديد العقد</button>
+      <button class="btn" onclick="openUnit('${uId}')">إلغاء</button>
+    </div></div>`);
+}
+function renewContract(uId){
+  const u=db.units.find(x=>x.id===uId);
+  const name=document.getElementById('rc-name').value.trim();
+  const start=document.getElementById('rc-start').value;
+  const rent=parseFloat(document.getElementById('rc-rent').value)||0;
+  if(!name){ alert('أدخل اسم المستأجر'); return; }
+  if(!start){ alert('أدخل تاريخ بداية العقد الجديد'); return; }
+  if(rent<=0){ alert('أدخل قيمة الإيجار'); return; }
+  if(u.tenantName){
+    u.history=u.history||[];
+    u.history.push({ tenantName:u.tenantName, tenantPhone:u.tenantPhone, rentAmount:u.rentAmount, quarterlyRent:u.quarterlyRent,
+      contractStart:u.contractStart, durationMonths:u.durationMonths, payments:(u.payments||[]).slice(), archivedAt:todayISO(), reason:'renewal' });
+  }
+  u.tenantName=name;
+  u.tenantPhone=document.getElementById('rc-phone').value.trim();
+  u.rentAmount=rent; u.quarterlyRent=rent;
+  u.paymentPeriod=document.getElementById('rc-period').value;
+  u.electricityMeter=document.getElementById('rc-meter').value.trim();
+  u.contractStart=start;
+  u.durationMonths=parseInt(document.getElementById('rc-dur').value);
+  u.notes=document.getElementById('rc-notes').value.trim();
+  u.payments=buildSchedule(u);
+  save(); closeModal(); openUnit(uId);
+}
+/* إنهاء العقد وخروج المستأجر: أرشفة كاملة وتحويل الوحدة إلى شاغرة */
+function openEndContract(uId){
+  const u=db.units.find(x=>x.id===uId); if(!u) return;
+  openModal(`<div class="modal"><div class="modal-head"><h3>🚪 إنهاء العقد وخروج المستأجر</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
+    <div class="modal-body">
+      <div class="info-box" style="background:var(--danger-l);border-color:#fecaca;color:#991b1b">⚠️ <div>سيتم إنهاء عقد <b>«${esc(u.tenantName||'')}»</b> وأرشفته مع كامل دفعاته (${(u.payments||[]).length} دفعة) في «المستأجرون السابقون»، وستصبح الوحدة <b>شاغرة</b>. يمكنك لاحقًا إضافة مستأجر جديد أو تجديد العقد من نفس الوحدة.</div></div>
+      <div class="field"><label>تاريخ الخروج / إنهاء العقد</label><input type="date" id="ec-date" value="${todayISO()}"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" onclick="endContract('${uId}')">🚪 تأكيد الإنهاء والخروج</button>
+      <button class="btn" onclick="openUnit('${uId}')">إلغاء</button>
+    </div></div>`);
+}
+function endContract(uId){
+  const u=db.units.find(x=>x.id===uId); if(!u||!u.tenantName){ closeModal(); return; }
+  const moveOutDate=document.getElementById('ec-date').value||todayISO();
+  u.history=u.history||[];
+  u.history.push({ tenantName:u.tenantName, tenantPhone:u.tenantPhone, rentAmount:u.rentAmount, quarterlyRent:u.quarterlyRent,
+    contractStart:u.contractStart, durationMonths:u.durationMonths, payments:(u.payments||[]).slice(), archivedAt:todayISO(), endedAt:moveOutDate, reason:'ended' });
+  u.tenantName=''; u.tenantPhone='';
+  u.payments=[];
   save(); closeModal(); openUnit(uId);
 }
 /* عرض سجل مستأجر سابق */
