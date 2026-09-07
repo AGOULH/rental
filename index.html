@@ -9,20 +9,20 @@
 <title>نظام إدارة الإيجارات v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#eef1f6; --surface:#ffffff; --surface-2:#f7f9fc;
-    --primary:#0f766e; --primary-d:#0b5d56; --primary-l:#ccfbf1;
-    --text:#0f172a; --muted:#64748b; --border:#e2e8f0;
+    --bg:#f6f4ef; --surface:#ffffff; --surface-2:#f6f4ee;
+    --primary:#188078; --primary-d:#0f5c56; --primary-l:#e1f2f0;
+    --text:#0f172a; --muted:#64748b; --border:#e5e1d8;
     --success:#16a34a; --success-l:#dcfce7;
     --warning:#d97706; --warning-l:#fef3c7;
     --danger:#dc2626; --danger-l:#fee2e2;
     --info:#2563eb; --info-l:#dbeafe;
-    --font:'Tajawal','Segoe UI',Tahoma,'Helvetica Neue',Arial,sans-serif;
-    --shadow:0 1px 2px rgba(15,23,42,.06),0 6px 20px rgba(15,23,42,.06);
-    --shadow-lg:0 12px 32px rgba(15,23,42,.14);
-    --radius:16px; --radius-sm:11px;
+    --font:'IBM Plex Sans Arabic','Segoe UI',Tahoma,'Helvetica Neue',Arial,sans-serif;
+    --shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.05);
+    --shadow-lg:0 16px 40px rgba(15,23,42,.12);
+    --radius:18px; --radius-sm:10px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scrollbar-color:#cbd5e1 transparent}
@@ -42,20 +42,20 @@
 
   /* Header */
   header{
-    background:linear-gradient(135deg,var(--primary),var(--primary-d));
-    color:#fff;padding:0;box-shadow:0 2px 12px rgba(11,93,86,.25);position:sticky;top:0;z-index:50;
+    background:var(--surface);
+    color:var(--text);padding:0;box-shadow:0 1px 0 var(--border),0 4px 16px rgba(15,23,42,.04);position:sticky;top:0;z-index:50;
   }
   .head-inner{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-  .brand{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:800;letter-spacing:.01em}
-  .brand .logo{width:40px;height:40px;background:rgba(255,255,255,.18);border-radius:13px;display:grid;place-items:center;font-size:21px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
-  nav{display:flex;gap:7px;margin-inline-start:auto;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px;font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--text)}
+  .brand .logo{width:38px;height:38px;background:var(--primary);color:#fff;border-radius:12px;display:grid;place-items:center;font-size:19px}
+  nav{display:flex;gap:4px;margin-inline-start:auto;flex-wrap:wrap}
   nav button{
-    background:rgba(255,255,255,.13);color:#fff;border:none;padding:10px 16px;border-radius:11px;
+    background:transparent;color:var(--muted);border:none;padding:10px 15px;border-radius:10px;
     font-size:14px;font-weight:600;transition:.18s ease;display:inline-flex;align-items:center;gap:7px;
   }
-  nav button:hover{background:rgba(255,255,255,.25)}
-  nav button.active{background:#fff;color:var(--primary-d);box-shadow:0 4px 14px rgba(0,0,0,.18)}
-  .nav-ic{font-size:15px;line-height:1}
+  nav button:hover{background:var(--primary-l);color:var(--primary-d)}
+  nav button.active{background:var(--primary);color:#fff}
+  .nav-ic{font-size:15px;line-height:1;display:inline-flex}
 
   .wrap{max-width:1200px;margin:0 auto;padding:26px 20px 60px}
 
@@ -71,8 +71,8 @@
   .btn{border:none;border-radius:var(--radius-sm);padding:10px 18px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px;transition:.15s ease;background:var(--surface);color:var(--text);border:1px solid var(--border)}
   .btn:hover{background:var(--surface-2);border-color:#cbd5e1}
   .btn:active{transform:translateY(1px)}
-  .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 2px 8px rgba(15,118,110,.28)}
-  .btn-primary:hover{background:var(--primary-d);box-shadow:0 4px 14px rgba(15,118,110,.34)}
+  .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 2px 8px rgba(24,128,120,.28)}
+  .btn-primary:hover{background:var(--primary-d);box-shadow:0 4px 14px rgba(24,128,120,.34)}
   .btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
   .btn-danger:hover{filter:brightness(.94)}
   .btn-sm{padding:6px 12px;font-size:13px;border-radius:9px}
@@ -197,13 +197,14 @@
   @media print{body{background:#fff}.no-print{display:none!important}}
 
   /* مزامنة سحابية + شاشة رمز الدخول */
-  .sync-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.35);color:#fff;white-space:nowrap;transition:.15s}
-  .sync-badge.ok{background:rgba(22,163,74,.28)}
-  .sync-badge.off{background:rgba(217,119,6,.32)}
-  .sync-badge:hover{filter:brightness(1.12)}
+  .sync-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid var(--border);color:var(--text);white-space:nowrap;transition:.15s}
+  .sync-badge.ok{background:var(--success-l);color:var(--success);border-color:transparent}
+  .sync-badge.off{background:var(--warning-l);color:var(--warning);border-color:transparent}
+  .sync-badge:hover{filter:brightness(1.06)}
   .overlay.gate{background:linear-gradient(135deg,var(--primary),var(--primary-d));z-index:200}
   .gatebox{background:#fff;border-radius:22px;box-shadow:0 24px 64px rgba(0,0,0,.35);padding:38px 32px;width:100%;max-width:410px;text-align:center}
-  .gate-logo{font-size:56px;margin-bottom:8px}
+  .gate-logo{margin-bottom:8px;display:flex;justify-content:center}
+  .gate-logo svg{width:52px;height:52px;color:var(--primary)}
   .gatebox h2{font-size:21px;font-weight:800;color:var(--text);margin-bottom:8px}
   .gatebox p{color:var(--muted);font-size:14px;margin-bottom:18px}
   .gate-hint{color:var(--primary-d);font-size:12.5px;font-weight:600}
@@ -211,20 +212,29 @@
   #gate-code:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-l)}
   .gate-btn{width:100%;justify-content:center;padding:14px;font-size:15px}
   .gate-foot{margin-top:18px;font-size:12px;color:#94a3b8;line-height:1.7}
+
+  /* أيقونات SVG (مستوحاة من هوية مبيت البصرية) */
+  .page-head h1{display:flex;align-items:center;gap:10px}
+  .page-head h1 svg,.crumbs svg{color:var(--primary);width:22px;height:22px;flex-shrink:0}
+  .ic svg{width:22px;height:22px}
+  .empty .em{display:flex;justify-content:center;margin-bottom:14px;color:var(--primary)}
+  .empty .em svg{width:52px;height:52px;opacity:.55}
+  .bcard .top .name{display:flex;align-items:center;gap:7px}
+  .bcard .top .name svg{width:17px;height:17px;flex-shrink:0}
 </style>
 </head>
 <body>
 <header>
   <div class="head-inner">
-    <div class="brand"><span class="logo">🏢</span><span>نظام إدارة الإيجارات</span></div>
+    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M9 15h1.5M13.5 15H15M10 21v-3.5h4V21"/></svg></span><span>نظام إدارة الإيجارات</span></div>
     <span id="syncBadge" class="sync-badge" style="display:none" onclick="cloudLogout()" title="اضغط لتغيير الرمز / تسجيل الخروج"></span>
     <nav id="nav">
-      <button data-v="dashboard" onclick="go('dashboard')"><span class="nav-ic">📊</span>لوحة التحكم</button>
-      <button data-v="properties" onclick="go('properties')"><span class="nav-ic">🏘️</span>العقارات</button>
-      <button data-v="accounting" onclick="go('accounting')"><span class="nav-ic">🧮</span>المحاسبة</button>
-      <button data-v="payments" onclick="go('payments')"><span class="nav-ic">📋</span>المستحقات</button>
-      <button onclick="openGuide()"><span class="nav-ic">📖</span>دليل المستخدم</button>
-      <button onclick="openSettings()"><span class="nav-ic">⚙️</span>الإعدادات</button>
+      <button data-v="dashboard" onclick="go('dashboard')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>لوحة التحكم</button>
+      <button data-v="properties" onclick="go('properties')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M9 15h1.5M13.5 15H15M10 21v-3.5h4V21"/></svg></span>العقارات</button>
+      <button data-v="accounting" onclick="go('accounting')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M8 6.5h8"/><circle cx="8.3" cy="11" r=".6"/><circle cx="12" cy="11" r=".6"/><circle cx="15.7" cy="11" r=".6"/><circle cx="8.3" cy="14.5" r=".6"/><circle cx="12" cy="14.5" r=".6"/><circle cx="15.7" cy="14.5" r=".6"/><circle cx="8.3" cy="18" r=".6"/><circle cx="12" cy="18" r=".6"/><circle cx="15.7" cy="18" r=".6"/></svg></span>المحاسبة</button>
+      <button data-v="payments" onclick="go('payments')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.2" cy="6" r="1"/><circle cx="4.2" cy="12" r="1"/><circle cx="4.2" cy="18" r="1"/></svg></span>المستحقات</button>
+      <button onclick="openGuide()"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V6a2.5 2.5 0 0 1 2.5-2.5H20V17H6.5A2.5 2.5 0 0 0 4 19.5 2.5 2.5 0 0 0 6.5 22H20"/></svg></span>دليل المستخدم</button>
+      <button onclick="openSettings()"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5v-3l-2.2-.4a6.8 6.8 0 0 0-.7-1.7l1.3-1.8-2.1-2.1-1.8 1.3a6.8 6.8 0 0 0-1.7-.7L12 2.6H9l-.4 2.2a6.8 6.8 0 0 0-1.7.7L5.1 4.2 3 6.3l1.3 1.8a6.8 6.8 0 0 0-.7 1.7l-2.2.4v3l2.2.4a6.8 6.8 0 0 0 .7 1.7L3 17.1l2.1 2.1 1.8-1.3a6.8 6.8 0 0 0 1.7.7l.4 2.2h3l.4-2.2a6.8 6.8 0 0 0 1.7-.7l1.8 1.3 2.1-2.1-1.3-1.8a6.8 6.8 0 0 0 .7-1.7Z"/></svg></span>الإعدادات</button>
     </nav>
   </div>
 </header>
@@ -361,9 +371,41 @@ function addMonths(iso,n){
 }
 function fmtDate(iso){ if(!iso) return '—';
   return parseISO(iso).toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'long',year:'numeric'}); }
-function fmtMoney(n){ return new Intl.NumberFormat('en-US').format(Math.round(n||0))+' '+db.settings.currency; }
+function fmtMoneyText(n){ return new Intl.NumberFormat('en-US').format(Math.round(n||0))+' '+db.settings.currency; }
+/* الرمز الرسمي للريال السعودي (SAR) — يُستخدم في واجهة الشاشة، بينما تبقى رسائل واتساب/الفواتير النصية بكلمة "ريال" */
+function riyalIcon(){
+  return '<svg viewBox="0 0 1124.14 1256.39" width="0.8em" height="0.8em" fill="none" style="vertical-align:-0.05em;display:inline-block"><path fill="currentColor" d="M699.62,1113.02h0c-20.06,44.48-33.32,92.75-38.4,143.37l424.51-90.24c20.06-44.47,33.31-92.75,38.4-143.37l-424.51,90.24Z"/><path fill="currentColor" d="M1085.73,895.8c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.33v-135.2l292.27-62.11c20.06-44.47,33.32-92.75,38.4-143.37l-330.68,70.27V66.13c-50.67,28.45-95.67,66.32-132.25,110.99v403.35l-132.25,28.11V0c-50.67,28.44-95.67,66.32-132.25,110.99v525.69l-295.91,62.88c-20.06,44.47-33.33,92.75-38.42,143.37l334.33-71.05v170.26l-358.3,76.14c-20.06,44.47-33.32,92.75-38.4,143.37l375.04-79.7c30.53-6.35,56.77-24.4,73.83-49.24l68.78-101.97v-.02c7.14-10.55,11.3-23.27,11.3-36.97v-149.98l132.25-28.11v270.4l424.53-90.28Z"/></svg>';
+}
+function fmtMoney(n){
+  const num=new Intl.NumberFormat('en-US').format(Math.round(n||0));
+  const cur=db.settings.currency;
+  if(cur==='ريال'||cur==='SAR'||cur==='ر.س') return num+' '+riyalIcon();
+  return num+' '+cur;
+}
 function daysFromToday(iso){ return Math.round((parseISO(iso)-parseISO(todayISO()))/86400000); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* أيقونات SVG بخط نحيف بلون موحّد (بدلاً من الإيموجي) */
+function svgIcon(name){
+  const p={
+    dashboard:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+    building:'<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M9 15h1.5M13.5 15H15M10 21v-3.5h4V21"/>',
+    door:'<path d="M5 21V5.5A2.5 2.5 0 0 1 7.5 3H14l4 3v15"/><path d="M13 3v18"/><circle cx="10" cy="12" r="1"/>',
+    calculator:'<rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M8 6.5h8"/><circle cx="8.3" cy="11" r=".6"/><circle cx="12" cy="11" r=".6"/><circle cx="15.7" cy="11" r=".6"/><circle cx="8.3" cy="14.5" r=".6"/><circle cx="12" cy="14.5" r=".6"/><circle cx="15.7" cy="14.5" r=".6"/><circle cx="8.3" cy="18" r=".6"/><circle cx="12" cy="18" r=".6"/><circle cx="15.7" cy="18" r=".6"/>',
+    list:'<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.2" cy="6" r="1"/><circle cx="4.2" cy="12" r="1"/><circle cx="4.2" cy="18" r="1"/>',
+    book:'<path d="M4 19V6a2.5 2.5 0 0 1 2.5-2.5H20V17H6.5A2.5 2.5 0 0 0 4 19.5 2.5 2.5 0 0 0 6.5 22H20"/>',
+    settings:'<circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5v-3l-2.2-.4a6.8 6.8 0 0 0-.7-1.7l1.3-1.8-2.1-2.1-1.8 1.3a6.8 6.8 0 0 0-1.7-.7L12 2.6H9l-.4 2.2a6.8 6.8 0 0 0-1.7.7L5.1 4.2 3 6.3l1.3 1.8a6.8 6.8 0 0 0-.7 1.7l-2.2.4v3l2.2.4a6.8 6.8 0 0 0 .7 1.7L3 17.1l2.1 2.1 1.8-1.3a6.8 6.8 0 0 0 1.7.7l.4 2.2h3l.4-2.2a6.8 6.8 0 0 0 1.7-.7l1.8 1.3 2.1-2.1-1.3-1.8a6.8 6.8 0 0 0 .7-1.7Z"/>',
+    check:'<circle cx="12" cy="12" r="9"/><path d="m8.3 12.3 2.6 2.6 5-5.4"/>',
+    warning:'<path d="M10.4 3.8 2.3 18a2 2 0 0 0 1.7 3h16a2 2 0 0 0 1.7-3L13.6 3.8a2 2 0 0 0-3.2 0Z"/><path d="M12 9.5v4M12 17h.01"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>',
+    chart:'<path d="M4 20V4M4 20h16"/><path d="M8 16l3.5-4.5 3 2.5L19 8"/>',
+    trending:'<path d="M4 16l5-5.5 4 3.5 7-8"/><path d="M15 6h5v5"/>',
+    cash:'<rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/>',
+    wallet:'<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a1 1 0 0 1 1 1v2"/><rect x="3" y="7.5" width="18" height="12" rx="2.5"/><circle cx="16.5" cy="14" r="1.4"/>',
+    key:'<circle cx="7.5" cy="15" r="4"/><path d="M10.3 12.3 19 3.5m-4 1 2.5 2.5m-5-.5 2 2"/>'
+  };
+  return `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-.15em;flex-shrink:0">${p[name]||''}</svg>`;
+}
 
 /* ============================ منطق الدفعات ============================
    معادلة الاستحقاق: تاريخ الدفعة (ن) = تاريخ بداية العقد + (ن−1) × 3 أشهر
@@ -443,15 +485,15 @@ function viewDashboard(){
 
   const occupied=units.filter(u=>u.tenantName).length;
 
-  let h=`<div class="page-head"><div><h1>📊 لوحة التحكم</h1>
+  let h=`<div class="page-head"><div><h1>${svgIcon('dashboard')} لوحة التحكم</h1>
     <div class="sub">نظرة عامة على العقارات والمستحقات — ${fmtDate(todayISO())}</div></div></div>`;
 
   h+=`<div class="stats">
-    ${stat('teal','🏢',db.buildings.length,'عدد العقارات',"go('properties')")}
-    ${stat('blue','🚪',units.length,'إجمالي الوحدات',"go('properties')")}
-    ${stat('green','✅',fmtMoney(totalCollected),'إجمالي المحصّل',"go('accounting')")}
-    ${stat('red','⚠️',overdue.length,'دفعات متأخرة',"scrollToPanel('p-overdue')")}
-    ${stat('amber','⏰',dueSoon.length,'دفعات قريبة',"scrollToPanel('p-duesoon')")}
+    ${stat('teal',svgIcon('building'),db.buildings.length,'عدد العقارات',"go('properties')")}
+    ${stat('blue',svgIcon('door'),units.length,'إجمالي الوحدات',"go('properties')")}
+    ${stat('green',svgIcon('check'),fmtMoney(totalCollected),'إجمالي المحصّل',"go('accounting')")}
+    ${stat('red',svgIcon('warning'),overdue.length,'دفعات متأخرة',"scrollToPanel('p-overdue')")}
+    ${stat('amber',svgIcon('clock'),dueSoon.length,'دفعات قريبة',"scrollToPanel('p-duesoon')")}
   </div>`;
 
   // متأخرات
@@ -555,7 +597,7 @@ function viewPaymentsFilter(){
   allDue.sort((a,b)=>a.dueDate<b.dueDate?-1:1);
   const total=allDue.reduce((s,p)=>s+remainingAmt(p),0);
   const filterMap={30:'شهري (30 يوم)',90:'3 أشهر (90 يوم)',180:'6 أشهر (180 يوم)'};
-  let h=`<div class="page-head no-print"><div><h1>📋 جدول المستحقات</h1>
+  let h=`<div class="page-head no-print"><div><h1>${svgIcon('list')} جدول المستحقات</h1>
     <div class="sub">الدفعات المستحقة خلال الفترة المحددة — ${fmtDate(todayISO())}</div></div>
     <button class="btn btn-primary no-print" onclick="window.print()">🖨️ طباعة الكل</button></div>`;
   h+=`<div class="toolbar no-print">${[30,90,180].map(d=>`<button class="btn${paymentFilterDays===d?' btn-primary':''}" onclick="paymentFilterDays=${d};render()">${filterMap[d]}</button>`).join('')}</div>`;
@@ -596,7 +638,7 @@ function sendPaymentWhatsApp(uId,pId){
   const b=db.buildings.find(x=>x.id===u.buildingId);
   const p=(u.payments||[]).find(x=>x.id===pId); if(!p) return;
   const d=daysFromToday(p.dueDate);
-  const msg=`السلام عليكم ${u.tenantName||''}،\nنود تذكيركم بموعد سداد إيجار\n${b.name} — ${u.name}\n\nالدفعة رقم: ${p.n}\nتاريخ الاستحقاق: ${fmtDate(p.dueDate)}\nالمبلغ المتبقي: ${fmtMoney(remainingAmt(p))}${p.status==='partial'?' (من أصل '+fmtMoney(p.amount)+')':''}\n${d>0?'المتبقي: '+d+' يوم':d===0?'مستحقة اليوم ⚠️':'متأخرة '+Math.abs(d)+' يوم ⚠️'}\n\nشكرًا لتعاملكم معنا.`;
+  const msg=`السلام عليكم ${u.tenantName||''}،\nنود تذكيركم بموعد سداد إيجار\n${b.name} — ${u.name}\n\nالدفعة رقم: ${p.n}\nتاريخ الاستحقاق: ${fmtDate(p.dueDate)}\nالمبلغ المتبقي: ${fmtMoneyText(remainingAmt(p))}${p.status==='partial'?' (من أصل '+fmtMoneyText(p.amount)+')':''}\n${d>0?'المتبقي: '+d+' يوم':d===0?'مستحقة اليوم ⚠️':'متأخرة '+Math.abs(d)+' يوم ⚠️'}\n\nشكرًا لتعاملكم معنا.`;
   openWhatsApp(u.tenantPhone,msg);
 }
 function printDueNotice(uId,pId){
@@ -604,12 +646,12 @@ function printDueNotice(uId,pId){
   const b=db.buildings.find(x=>x.id===u.buildingId);
   const p=(u.payments||[]).find(x=>x.id===pId); if(!p) return;
   const d=daysFromToday(p.dueDate);
-  const waMsg=`إشعار استحقاق دفعة إيجار\n${b.name} — ${u.name}\nالمستأجر: ${u.tenantName||''}\nالدفعة رقم: ${p.n}\nتاريخ الاستحقاق: ${fmtDate(p.dueDate)}\nالمبلغ المتبقي: ${fmtMoney(remainingAmt(p))}${p.status==='partial'?' (من أصل '+fmtMoney(p.amount)+')':''}`;
+  const waMsg=`إشعار استحقاق دفعة إيجار\n${b.name} — ${u.name}\nالمستأجر: ${u.tenantName||''}\nالدفعة رقم: ${p.n}\nتاريخ الاستحقاق: ${fmtDate(p.dueDate)}\nالمبلغ المتبقي: ${fmtMoneyText(remainingAmt(p))}${p.status==='partial'?' (من أصل '+fmtMoneyText(p.amount)+')':''}`;
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>إشعار استحقاق</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <style>*{font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}body{padding:40px;color:#0f172a}
-  .vh{background:#0f766e;color:#fff;padding:18px 24px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between}
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>*{font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}body{padding:40px;color:#0f172a}
+  .vh{background:#188078;color:#fff;padding:18px 24px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between}
   .vh h1{margin:0;font-size:22px}.vb{border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;padding:22px}
   .line{display:flex;justify-content:space-between;padding:10px 2px;border-bottom:1px dashed #cbd5e1;font-size:15px}
   .line .l{color:#64748b}.line .v{font-weight:bold}
@@ -620,7 +662,7 @@ function printDueNotice(uId,pId){
   ${waWindowScript(u.tenantPhone,waMsg,'إشعار-استحقاق')}
   </head><body>
   <div class="btnbar noprint">
-    <button style="background:#0f766e;color:#fff" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+    <button style="background:#188078;color:#fff" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
     ${u.tenantPhone?`<button style="background:#25d366;color:#fff" onclick="sendWA()">💬 إرسال واتساب</button>`:''}
   </div>
   <div class="vh"><div><h1>إشعار استحقاق دفعة إيجار</h1></div><div style="font-size:36px">📋</div></div>
@@ -709,7 +751,7 @@ function viewAccounting(){
   const yr=acct(y,null,bId,mode);
   const modeLbl=mode==='annual'?'القيمة الإجمالية السنوية':'القيمة حسب العقود';
 
-  let h=`<div class="page-head"><div><h1>🧮 المحاسبة</h1>
+  let h=`<div class="page-head"><div><h1>${svgIcon('calculator')} المحاسبة</h1>
     <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية${filterBuilding?' — '+esc(filterBuilding.name):''} — ${modeLbl}</div></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label style="font-weight:700;font-size:13px">السنة:</label>
@@ -733,12 +775,12 @@ function viewAccounting(){
   const rateColor = yr.rate>=90?'green':yr.rate>=70?'amber':'red';
   const rateWarn = yr.rate<90 ? `<div style="margin-top:5px;font-size:11px;font-weight:800;color:${yr.rate<70?'var(--danger)':'var(--warning)'}">⚠️ ${yr.rate<70?'يحتاج متابعة':'تحتاج تحسين'}</div>` : '';
   h+=`<div class="stats">
-    ${stat('blue','📊',fmtMoney(yr.expected),'إجمالي قيمة العقود')}
-    ${stat('green','✅',fmtMoney(yr.collected),'إجمالي المحصّل الفعلي')}
-    ${stat('amber','⏳',fmtMoney(yr.outstanding),'غير مُحصَّل')}
-    ${stat(rateColor,'📈',yr.rate+'%','نسبة التحصيل',null,rateWarn)}
-    ${stat('red','💸',fmtMoney(yr.expenses),'المصروفات')}
-    ${stat(yr.net>=0?'green':'red','💰',fmtMoney(yr.net),'صافي الدخل')}
+    ${stat('blue',svgIcon('chart'),fmtMoney(yr.expected),'إجمالي قيمة العقود')}
+    ${stat('green',svgIcon('check'),fmtMoney(yr.collected),'إجمالي المحصّل الفعلي')}
+    ${stat('amber',svgIcon('clock'),fmtMoney(yr.outstanding),'غير مُحصَّل')}
+    ${stat(rateColor,svgIcon('trending'),yr.rate+'%','نسبة التحصيل',null,rateWarn)}
+    ${stat('red',svgIcon('cash'),fmtMoney(yr.expenses),'المصروفات')}
+    ${stat(yr.net>=0?'green':'red',svgIcon('wallet'),fmtMoney(yr.net),'صافي الدخل')}
   </div>`;
 
   const rateAdvice = yr.rate>=90
@@ -900,23 +942,23 @@ function exportAccountingPDF(year,buildingId,mode){
   });
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>التقرير المحاسبي ${year}${filterBuilding?' - '+esc(filterBuilding.name):''}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    *{font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
+    *{font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
     body{padding:34px;color:#0f172a}
-    .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0f766e;padding-bottom:16px;margin-bottom:20px}
-    .hd h1{font-size:24px;color:#0f766e;margin:0}.hd .meta{font-size:13px;color:#64748b;margin-top:4px}.hd .logo{font-size:40px}
+    .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #188078;padding-bottom:16px;margin-bottom:20px}
+    .hd h1{font-size:24px;color:#188078;margin:0}.hd .meta{font-size:13px;color:#64748b;margin-top:4px}.hd .logo{font-size:40px}
     .cards{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
     .cards .c{flex:1;min-width:140px;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;text-align:center}
     .cards .t{font-size:12px;color:#64748b}.cards .v{font-size:19px;font-weight:bold;margin-top:3px}
-    h2{font-size:16px;color:#0f766e;margin:22px 0 8px;border-right:4px solid #0f766e;padding-right:9px}
+    h2{font-size:16px;color:#188078;margin:22px 0 8px;border-right:4px solid #188078;padding-right:9px}
     table{width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:6px}
     th,td{border:1px solid #e2e8f0;padding:9px 11px;text-align:right}
-    th{background:#0f766e;color:#fff}tr:nth-child(even) td{background:#f8fafc}
+    th{background:#188078;color:#fff}tr:nth-child(even) td{background:#f8fafc}
     tfoot td,.tot td{background:#eef2f7!important;font-weight:bold}
     .ft{margin-top:26px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}
     @media print{body{padding:18px}.noprint{display:none}}
-    .btnbar{text-align:center;margin-bottom:18px}.btnbar button{background:#0f766e;color:#fff;border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold}
+    .btnbar{text-align:center;margin-bottom:18px}.btnbar button{background:#188078;color:#fff;border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold}
   </style></head><body>
     <div class="btnbar noprint"><button onclick="window.print()">🖨️ طباعة / حفظ PDF</button></div>
     <div class="hd"><div><h1>التقرير المحاسبي السنوي — ${year}${filterBuilding?' — '+esc(filterBuilding.name):''}</h1>
@@ -944,7 +986,7 @@ function exportAccountingPDF(year,buildingId,mode){
 /* ---------- قائمة العقارات ---------- */
 function viewProperties(){
   if(db.buildings.length===0) return pageEmpty();
-  let h=`<div class="page-head"><div><h1>🏘️ العقارات</h1>
+  let h=`<div class="page-head"><div><h1>${svgIcon('building')} العقارات</h1>
     <div class="sub">${db.buildings.length} عقار • ${db.units.length} وحدة</div></div>
     <button class="btn btn-primary" onclick="openBuildingForm()">➕ إضافة عقار</button></div>`;
   h+=`<div class="bgrid">`;
@@ -953,7 +995,7 @@ function viewProperties(){
     const occupied=us.filter(u=>u.tenantName).length;
     let overdue=0; us.forEach(u=>{ (u.payments||[]).forEach(p=>{ if(payStatus(p)==='overdue') overdue++; }); });
     h+=`<div class="bcard" onclick="go('building','${b.id}')">
-      <div class="top"><div class="name">🏢 ${esc(b.name)}</div>${b.address?`<div class="addr">📍 ${esc(b.address)}</div>`:''}</div>
+      <div class="top"><div class="name">${svgIcon('building')} ${esc(b.name)}</div>${b.address?`<div class="addr">📍 ${esc(b.address)}</div>`:''}</div>
       <div class="body">
         <div class="mini"><span class="n">${us.length}</span><span class="t">وحدة</span></div>
         <div class="mini"><span class="n" style="color:var(--success)">${occupied}</span><span class="t">مؤجّرة</span></div>
@@ -971,7 +1013,7 @@ function viewBuilding(bId){
   if(!b) return pageEmpty();
   const us=unitsOf(bId);
   let h=`<div class="crumbs"><a onclick="go('properties')">العقارات</a><span>›</span><span>${esc(b.name)}</span></div>`;
-  h+=`<div class="page-head"><div><h1>🏢 ${esc(b.name)}</h1>
+  h+=`<div class="page-head"><div><h1>${svgIcon('building')} ${esc(b.name)}</h1>
     <div class="sub">${b.address?'📍 '+esc(b.address)+' • ':''}${us.length} وحدة${b.waterMeter?' • 💧 '+esc(b.waterMeter):''}${b.deliveryDate?' • 🔑 التسليم: '+fmtDate(b.deliveryDate):''}</div></div>
     <div style="display:flex;gap:8px">
       <button class="btn" onclick="openBuildingForm('${b.id}')">✏️ تعديل العقار</button>
@@ -1015,12 +1057,12 @@ function viewBuilding(bId){
   }
 
   if(us.length===0){
-    h+=`<div class="panel"><div class="empty"><div class="em">🚪</div><h3>لا توجد وحدات بعد</h3>
+    h+=`<div class="panel"><div class="empty"><div class="em">${svgIcon('door')}</div><h3>لا توجد وحدات بعد</h3>
       <p>أضف الشقق أو المحلات التابعة لهذا العقار لبدء متابعة الإيجارات.</p>
       <button class="btn btn-primary" onclick="openUnitForm('${b.id}')">➕ إضافة أول وحدة</button></div></div>`;
     return h;
   }
-  h+=`<div class="panel"><div class="panel-head"><h2>🚪 الوحدات</h2><span class="count">${us.length}</span></div>
+  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('door')} الوحدات</h2><span class="count">${us.length}</span></div>
     <div class="panel-body"><table><thead><tr>
       <th>الوحدة</th><th>المستأجر</th><th>الإيجار الكامل</th><th>الدورية</th><th>بداية العقد</th>
       <th>الدفعة القادمة</th><th>الحالة</th><th>التحصيل</th><th></th></tr></thead><tbody>`;
@@ -1051,7 +1093,7 @@ function viewBuilding(bId){
 
 function pageEmpty(){
   return `<div class="panel" style="margin-top:30px"><div class="empty">
-    <div class="em">🏢</div><h3>ابدأ بإضافة أول عقار</h3>
+    <div class="em">${svgIcon('building')}</div><h3>ابدأ بإضافة أول عقار</h3>
     <p>سجّل العمارة أو العقار ثم أضف الشقق التابعة له وتابع دفعات الإيجار الربع سنوية.</p>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="openBuildingForm()">➕ إضافة عقار</button>
@@ -1354,7 +1396,7 @@ function sendUnitWhatsApp(uId){
   const b=db.buildings.find(x=>x.id===u.buildingId);
   const t=unitTotals(u);
   const nx=nextUnpaid(u);
-  const msg=`نظام إدارة الإيجارات 🏢\n\nالعقار: ${b.name}\nالوحدة: ${u.name}\nالمستأجر: ${u.tenantName||'—'}\nالإيجار الكامل: ${fmtMoney(u.rentAmount)}\nقيمة الدفعة (${periodLbl(u)}): ${fmtMoney(periodAmount(u))}\n\nالمحصّل: ${fmtMoney(t.paid)}\nالمتبقّي: ${fmtMoney(t.remaining)}${nx?'\n\nالدفعة القادمة:\nالتاريخ: '+fmtDate(nx.dueDate)+'\nالمبلغ: '+fmtMoney(nx.amount):''}`;
+  const msg=`نظام إدارة الإيجارات 🏢\n\nالعقار: ${b.name}\nالوحدة: ${u.name}\nالمستأجر: ${u.tenantName||'—'}\nالإيجار الكامل: ${fmtMoneyText(u.rentAmount)}\nقيمة الدفعة (${periodLbl(u)}): ${fmtMoneyText(periodAmount(u))}\n\nالمحصّل: ${fmtMoneyText(t.paid)}\nالمتبقّي: ${fmtMoneyText(t.remaining)}${nx?'\n\nالدفعة القادمة:\nالتاريخ: '+fmtDate(nx.dueDate)+'\nالمبلغ: '+fmtMoneyText(nx.amount):''}`;
   openWhatsApp(u.tenantPhone,msg);
 }
 /* تسجيل/التراجع عن سداد كامل. من حالة جزئية أو غير مسدّدة يُكمل الباقي؛ من حالة مسدّدة يعيدها غير مسدّدة */
@@ -1433,7 +1475,7 @@ function paymentReportHTML(b, o){
   const payments=o.payments||[];
   const paidT=payments.reduce((s,p)=>s+(p.paidAmount||0),0);
   const totalT=payments.reduce((s,p)=>s+p.amount,0);
-  const waMsg=`كشف دفعات الإيجار\nالعقار: ${b.name}\nالوحدة: ${o.unitName}\nالمستأجر: ${o.tenant||'—'}\nالإيجار الكامل: ${fmtMoney(o.rent)}${o.periodAmt!=null?'\nقيمة الدفعة'+(o.period?' ('+o.period+')':'')+': '+fmtMoney(o.periodAmt):''}\nبداية العقد: ${fmtDate(o.start)}\nنهاية العقد: ${fmtDate(addMonths(o.start,o.dur||12))}\n\nإجمالي العقد: ${fmtMoney(totalT)}\nالمحصّل: ${fmtMoney(paidT)}\nالمتبقّي: ${fmtMoney(totalT-paidT)}`;
+  const waMsg=`كشف دفعات الإيجار\nالعقار: ${b.name}\nالوحدة: ${o.unitName}\nالمستأجر: ${o.tenant||'—'}\nالإيجار الكامل: ${fmtMoneyText(o.rent)}${o.periodAmt!=null?'\nقيمة الدفعة'+(o.period?' ('+o.period+')':'')+': '+fmtMoneyText(o.periodAmt):''}\nبداية العقد: ${fmtDate(o.start)}\nنهاية العقد: ${fmtDate(addMonths(o.start,o.dur||12))}\n\nإجمالي العقد: ${fmtMoneyText(totalT)}\nالمحصّل: ${fmtMoneyText(paidT)}\nالمتبقّي: ${fmtMoneyText(totalT-paidT)}`;
   let rows='';
   payments.forEach(p=>{
     const st=p.status==='paid'?'paid':p.status==='partial'?'partial':(daysFromToday(p.dueDate)<0?'overdue':(daysFromToday(p.dueDate)<=db.settings.paymentReminderDays?'due':'upcoming'));
@@ -1445,22 +1487,22 @@ function paymentReportHTML(b, o){
       <td>${p.paidDate?fmtDate(p.paidDate):'—'}</td></tr>`;
   });
   return (`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>كشف دفعات - ${esc(o.unitName)}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    *{font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
+    *{font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
     body{padding:34px;color:#0f172a}
-    .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0f766e;padding-bottom:16px;margin-bottom:22px}
-    .hd h1{font-size:24px;color:#0f766e;margin:0}
+    .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #188078;padding-bottom:16px;margin-bottom:22px}
+    .hd h1{font-size:24px;color:#188078;margin:0}
     .hd .meta{font-size:13px;color:#64748b;margin-top:4px}
     .hd .logo{font-size:40px}
     .info{display:grid;grid-template-columns:1fr 1fr;gap:10px 26px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:18px;font-size:14px}
-    .info div b{color:#0f766e}
+    .info div b{color:#188078}
     .sum{display:flex;gap:12px;margin-bottom:18px}
     .sum div{flex:1;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;text-align:center}
     .sum .t{font-size:12px;color:#64748b}.sum .v{font-size:20px;font-weight:bold;margin-top:3px}
     table{width:100%;border-collapse:collapse;font-size:14px}
     th,td{border:1px solid #e2e8f0;padding:10px 12px;text-align:right}
-    th{background:#0f766e;color:#fff}
+    th{background:#188078;color:#fff}
     tr:nth-child(even) td{background:#f8fafc}
     .formula{margin-top:18px;font-size:12.5px;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 14px}
     .ft{margin-top:26px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}
@@ -1469,7 +1511,7 @@ function paymentReportHTML(b, o){
     .btnbar button{border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold;margin:0 5px}
   </style>${waWindowScript(o.phone,waMsg,'كشف-دفعات')}</head><body>
     <div class="btnbar noprint">
-      <button style="background:#0f766e;color:#fff" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+      <button style="background:#188078;color:#fff" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
       ${o.phone?`<button style="background:#25d366;color:#fff" onclick="sendWA()">💬 إرسال واتساب</button>`:''}
     </div>
     <div class="hd"><div><h1>كشف دفعات الإيجار</h1>
@@ -1532,14 +1574,14 @@ function printReceipt(uId,payId,histIdx){
   const p=(src.payments||[]).find(x=>x.id===payId); if(!p) return;
   const recNo='R'+(p.paidDate||todayISO()).replace(/-/g,'')+'-'+String(u.id).slice(-3).toUpperCase()+p.n;
   const cur=db.settings.currency;
-  const rcptMsg=`سند قبض — رقم: ${recNo}\nالتاريخ: ${fmtDate(p.paidDate||todayISO())}\nاستلمنا من: ${src.tenantName||'—'}\nعن إيجار: ${u.name} — ${b.name}\nالدفعة رقم: ${p.n}\nالمبلغ: ${fmtMoney(p.amount)}`;
+  const rcptMsg=`سند قبض — رقم: ${recNo}\nالتاريخ: ${fmtDate(p.paidDate||todayISO())}\nاستلمنا من: ${src.tenantName||'—'}\nعن إيجار: ${u.name} — ${b.name}\nالدفعة رقم: ${p.n}\nالمبلغ: ${fmtMoneyText(p.amount)}`;
   openReportWindow(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>سند قبض ${recNo}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    *{font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
+    *{font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
     body{padding:40px;color:#0f172a}
-    .voucher{max-width:640px;margin:0 auto;border:2px solid #0f766e;border-radius:16px;overflow:hidden}
-    .vh{background:#0f766e;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}
+    .voucher{max-width:640px;margin:0 auto;border:2px solid #188078;border-radius:16px;overflow:hidden}
+    .vh{background:#188078;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}
     .vh h1{margin:0;font-size:24px}.vh .no{font-size:13px;opacity:.9;margin-top:3px}
     .vb{padding:24px}
     .line{display:flex;justify-content:space-between;padding:11px 2px;border-bottom:1px dashed #cbd5e1;font-size:15px}
@@ -1554,7 +1596,7 @@ function printReceipt(uId,payId,histIdx){
     .btnbar{text-align:center;margin-bottom:18px}.btnbar button{border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold;margin:0 5px}
   </style>${waWindowScript(src.tenantPhone,rcptMsg,'سند-قبض')}</head><body>
     <div class="btnbar noprint">
-      <button style="background:#0f766e;color:#fff" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+      <button style="background:#188078;color:#fff" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
       ${src.tenantPhone?`<button style="background:#25d366;color:#fff" onclick="sendWA()">💬 إرسال واتساب</button>`:''}
     </div>
     <div class="voucher">
@@ -2047,7 +2089,7 @@ function updateSyncBadge(){
 function showGate(){
   document.getElementById('modal-root').innerHTML=
     '<div class="overlay gate"><div class="gatebox">'
-    +'<div class="gate-logo">🏢</div>'
+    +'<div class="gate-logo">'+svgIcon('key')+'</div>'
     +'<h2>نظام إدارة الإيجارات</h2>'
     +'<p>أدخل رمز الدخول للوصول إلى بياناتك على كل الأجهزة.<br>'
     +'<span class="gate-hint">أول مرة؟ اختر رمزًا جديدًا (8 خانات على الأقل، حروف وأرقام) واحفظه — هو مفتاح بياناتك.</span></p>'
