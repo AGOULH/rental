@@ -95,7 +95,7 @@
   .ic svg{position:relative;z-index:1}
   .ic::before{
     content:'';position:absolute;inset:0;z-index:1;
-    background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.65) 48%,transparent 66%);
+    background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.4) 48%,transparent 60%);
     transform:translateX(-140%);animation:icShine 4.6s ease-in-out infinite;
   }
   .stat .val{font-family:var(--font-serif);font-size:27px;font-weight:600;line-height:1.15}
@@ -106,11 +106,11 @@
   .stat .stat-go{position:absolute;bottom:14px;left:18px;font-size:12px;font-weight:800;color:var(--primary);opacity:0;transition:.18s}
   .stat.clickable:hover .stat-go{opacity:1}
   tbody tr.rowlink{cursor:pointer}
-  .ic.teal{background:linear-gradient(150deg,rgba(217,119,87,.28),rgba(217,119,87,.07));color:var(--primary-d)}
-  .ic.green{background:linear-gradient(150deg,rgba(63,125,78,.28),rgba(63,125,78,.07));color:var(--success)}
-  .ic.red{background:linear-gradient(150deg,rgba(179,64,46,.28),rgba(179,64,46,.07));color:var(--danger)}
-  .ic.amber{background:linear-gradient(150deg,rgba(184,134,58,.28),rgba(184,134,58,.07));color:var(--warning)}
-  .ic.blue{background:linear-gradient(150deg,rgba(91,107,116,.28),rgba(91,107,116,.07));color:var(--info)}
+  .ic.teal{background:linear-gradient(150deg,rgba(217,119,87,.42),rgba(217,119,87,.22));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(217,119,87,.3);color:var(--primary-d)}
+  .ic.green{background:linear-gradient(150deg,rgba(63,125,78,.42),rgba(63,125,78,.22));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(63,125,78,.3);color:var(--success)}
+  .ic.red{background:linear-gradient(150deg,rgba(179,64,46,.42),rgba(179,64,46,.22));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(179,64,46,.3);color:var(--danger)}
+  .ic.amber{background:linear-gradient(150deg,rgba(184,134,58,.42),rgba(184,134,58,.22));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(184,134,58,.3);color:var(--warning)}
+  .ic.blue{background:linear-gradient(150deg,rgba(91,107,116,.42),rgba(91,107,116,.22));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(91,107,116,.3);color:var(--info)}
   .stats .stat:nth-child(5n+1) .ic{animation-delay:0s}
   .stats .stat:nth-child(5n+1) .ic::before{animation-delay:.4s}
   .stats .stat:nth-child(5n+2) .ic{animation-delay:.3s}
@@ -460,7 +460,31 @@ function svgIcon(name){
     trending:'<path d="M4 16l5-5.5 4 3.5 7-8"/><path d="M15 6h5v5"/>',
     cash:'<rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/>',
     wallet:'<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a1 1 0 0 1 1 1v2"/><rect x="3" y="7.5" width="18" height="12" rx="2.5"/><circle cx="16.5" cy="14" r="1.4"/>',
-    key:'<circle cx="7.5" cy="15" r="4"/><path d="M10.3 12.3 19 3.5m-4 1 2.5 2.5m-5-.5 2 2"/>'
+    key:'<circle cx="7.5" cy="15" r="4"/><path d="M10.3 12.3 19 3.5m-4 1 2.5 2.5m-5-.5 2 2"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    edit:'<path d="M4 20h4.2L18.4 9.8a1.8 1.8 0 0 0 0-2.5l-1.7-1.7a1.8 1.8 0 0 0-2.5 0L4 15.8V20Z"/><path d="M13.2 7.2l3.6 3.6"/>',
+    trash:'<path d="M4 7h16M9.5 7V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v2M6.5 7l1 12.5A2 2 0 0 0 9.5 21.5h5a2 2 0 0 0 2-2L17.5 7"/><path d="M10 11v6M14 11v6"/>',
+    printer:'<path d="M6.5 9V3.5h11V9"/><path d="M6.5 18H5a1.5 1.5 0 0 1-1.5-1.5v-5A2 2 0 0 1 5.5 9.5h13a2 2 0 0 1 2 2v5A1.5 1.5 0 0 1 19 18h-1.5"/><path d="M6.5 14h11v6.5h-11Z"/>',
+    save:'<path d="M5 4.5h10.5L19 8v11.5H5Z"/><path d="M8 4.5v6h7v-6M8 15h8"/>',
+    refresh:'<path d="M19.5 12a7.5 7.5 0 1 1-2.3-5.4"/><path d="M19.5 4v5h-5"/>',
+    receipt:'<path d="M6.5 3h11v18l-2.5-1.5L12.5 21l-2.5-1.5L7.5 21l-1-.5Z"/><path d="M9 8h6M9 12h6"/>',
+    undo:'<path d="M9 15 4.5 10.5 9 6"/><path d="M4.5 10.5H14a5 5 0 0 1 0 10h-1.5"/>',
+    pin:'<path d="M12 21s6.5-5.9 6.5-10.8A6.5 6.5 0 1 0 5.5 10.2C5.5 15.1 12 21 12 21Z"/><circle cx="12" cy="10.2" r="2.1"/>',
+    drop:'<path d="M12 3.3s6 6.9 6 11a6 6 0 1 1-12 0c0-4.1 6-11 6-11Z"/>',
+    bolt:'<path d="M13.2 2.5 4.8 13.5h5.6l-1 8 8.8-11.5h-5.6l1-7.5Z"/>',
+    phone:'<path d="M7 3.2h2.7l1.4 3.6-2 1.9a11.4 11.4 0 0 0 5.2 5.2l1.9-2 3.6 1.4V16a2 2 0 0 1-2.2 2A15.6 15.6 0 0 1 5.2 5.4 2 2 0 0 1 7 3.2Z"/>',
+    package:'<path d="M3.7 7.5 12 3l8.3 4.5-8.3 4.5-8.3-4.5Z"/><path d="M3.7 7.5v9L12 21m0-9v9m8.3-13.5v9L12 21"/>',
+    house:'<path d="M4 11.2 12 4l8 7.2"/><path d="M6 9.8V20h12V9.8"/>',
+    unlock:'<path d="M7 11V7.5a5 5 0 0 1 9-3"/><rect x="5" y="11" width="14" height="9" rx="1.8"/>',
+    lock:'<path d="M7 11V7.5a5 5 0 0 1 10 0V11"/><rect x="5" y="11" width="14" height="9" rx="1.8"/>',
+    doc:'<path d="M6.5 3h7l4 4v14h-11Z"/><path d="M13.5 3v4h4"/><path d="M9 12.5h6M9 16h6"/>',
+    paperclip:'<path d="M8 12.7V7.2a3.8 3.8 0 1 1 7.6 0v8.6a2.4 2.4 0 0 1-4.8 0V8.2"/>',
+    bulb:'<path d="M9 18.5h6"/><path d="M10 21.3h4"/><path d="M8 12.8A4 4 0 1 1 16 12.8c0 1.5-.9 2.2-1.6 3-.5.5-.9 1-.9 1.9h-3c0-.9-.4-1.4-.9-1.9-.7-.8-1.6-1.5-1.6-3Z"/>',
+    info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 11.5h1v5h1"/>',
+    calendar:'<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',
+    chat:'<path d="M4.5 18.5 5.7 15A8 8 0 1 1 9 18.3l-4.5.2Z"/><path d="M8.5 10.5h7M8.5 13.5h4.5"/>',
+    download:'<path d="M12 3v11"/><path d="M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 19.5h15"/>',
+    upload:'<path d="M12 16V5"/><path d="M7.5 9.5 12 5l4.5 4.5"/><path d="M4.5 19.5h15"/>'
   };
   return `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-.15em;flex-shrink:0">${p[name]||''}</svg>`;
 }
@@ -555,9 +579,9 @@ function viewDashboard(){
   </div>`;
 
   // متأخرات
-  h+=`<div class="panel" id="p-overdue"><div class="panel-head"><h2>⚠️ دفعات متأخرة</h2>
+  h+=`<div class="panel" id="p-overdue"><div class="panel-head"><h2>${svgIcon('warning')} دفعات متأخرة</h2>
     <span class="count">${overdue.length} دفعة • ${fmtMoney(overdue.reduce((s,p)=>s+remainingAmt(p),0))}</span></div>`;
-  if(overdue.length===0) h+=`<div class="panel-body pad" style="color:var(--success);font-weight:700">🎉 لا توجد دفعات متأخرة، كل شيء على ما يرام.</div>`;
+  if(overdue.length===0) h+=`<div class="panel-body pad" style="color:var(--success);font-weight:700">${svgIcon('check')} لا توجد دفعات متأخرة، كل شيء على ما يرام.</div>`;
   else{
     h+=`<div class="panel-body"><table><thead><tr><th>العقار</th><th>الوحدة</th><th>المستأجر</th><th>تاريخ الاستحقاق</th><th>التأخير</th><th>المبلغ المتبقي</th><th></th></tr></thead><tbody>`;
     overdue.slice(0,12).forEach(p=>{ h+=`<tr>
@@ -568,9 +592,9 @@ function viewDashboard(){
       <td class="rowlink" onclick="openUnit('${p.unit.id}')"><span class="badge b-red">متأخر ${Math.abs(daysFromToday(p.dueDate))} يوم</span>${p.status==='partial'?'<div class="muted">دفع جزئي</div>':''}</td>
       <td style="font-weight:700" class="rowlink" onclick="openUnit('${p.unit.id}')">${fmtMoney(remainingAmt(p))}</td>
       <td><div style="display:flex;gap:5px;justify-content:flex-end">
-        <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">💰</button>
+        <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">${svgIcon('cash')}</button>
         <button class="btn btn-sm btn-primary" onclick="openUnit('${p.unit.id}')">فتح</button>
-        <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">🚪</button>
+        <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">${svgIcon('door')}</button>
       </div></td>
     </tr>`; });
     h+=`</tbody></table></div>`;
@@ -579,7 +603,7 @@ function viewDashboard(){
 
   // قريبة الاستحقاق
   if(dueSoon.length){
-    h+=`<div class="panel" id="p-duesoon"><div class="panel-head"><h2>⏰ دفعات قريبة الاستحقاق (خلال ${db.settings.paymentReminderDays} يوم)</h2>
+    h+=`<div class="panel" id="p-duesoon"><div class="panel-head"><h2>${svgIcon('clock')} دفعات قريبة الاستحقاق (خلال ${db.settings.paymentReminderDays} يوم)</h2>
       <span class="count">${dueSoon.length} دفعة</span></div><div class="panel-body"><table>
       <thead><tr><th>العقار</th><th>الوحدة</th><th>المستأجر</th><th>تاريخ الاستحقاق</th><th>باقٍ</th><th>المبلغ المتبقي</th><th></th></tr></thead><tbody>`;
     dueSoon.slice(0,12).forEach(p=>{ h+=`<tr>
@@ -588,9 +612,9 @@ function viewDashboard(){
       <td class="rowlink" onclick="openUnit('${p.unit.id}')"><span class="badge b-amber">بعد ${daysFromToday(p.dueDate)} يوم</span>${p.status==='partial'?'<div class="muted">دفع جزئي</div>':''}</td>
       <td style="font-weight:700" class="rowlink" onclick="openUnit('${p.unit.id}')">${fmtMoney(remainingAmt(p))}</td>
       <td><div style="display:flex;gap:5px;justify-content:flex-end">
-        <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">💰</button>
+        <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">${svgIcon('cash')}</button>
         <button class="btn btn-sm btn-primary" onclick="openUnit('${p.unit.id}')">فتح</button>
-        <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">🚪</button>
+        <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">${svgIcon('door')}</button>
       </div></td>
     </tr>`; });
     h+=`</tbody></table></div></div>`;
@@ -598,7 +622,7 @@ function viewDashboard(){
 
   // عقارات قريبة التسليم + عقود قريبة الانتهاء
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="dash-2col">`;
-  h+=`<div class="panel"><div class="panel-head"><h2>🔑 عقارات قريبة التسليم</h2><span class="count">${nearDelivery.length}</span></div><div class="panel-body">`;
+  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('key')} عقارات قريبة التسليم</h2><span class="count">${nearDelivery.length}</span></div><div class="panel-body">`;
   if(nearDelivery.length===0) h+=`<div class="pad" style="padding:18px;color:var(--muted)">لا توجد عقارات قريبة التسليم خلال ${db.settings.deliveryReminderDays} يوم.</div>`;
   else{ h+=`<table><thead><tr><th>العقار</th><th>تاريخ التسليم</th><th>المتبقّي</th></tr></thead><tbody>`;
     nearDelivery.forEach(x=>{ h+=`<tr onclick="go('building','${x.b.id}')" style="cursor:pointer">
@@ -607,7 +631,7 @@ function viewDashboard(){
     h+=`</tbody></table>`; }
   h+=`</div></div>`;
 
-  h+=`<div class="panel"><div class="panel-head"><h2>📅 عقود قريبة الانتهاء</h2><span class="count">${endingSoon.length}</span></div><div class="panel-body">`;
+  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('calendar')} عقود قريبة الانتهاء</h2><span class="count">${endingSoon.length}</span></div><div class="panel-body">`;
   if(endingSoon.length===0) h+=`<div style="padding:18px;color:var(--muted)">لا توجد عقود قريبة الانتهاء أو منتهية.</div>`;
   else{ h+=`<table><thead><tr><th>الوحدة</th><th>المستأجر</th><th>نهاية العقد</th><th></th></tr></thead><tbody>`;
     endingSoon.forEach(x=>{ const expired=x.days<0;
@@ -616,9 +640,9 @@ function viewDashboard(){
       <td>${esc(x.u.tenantName||'—')}</td>
       <td><span class="badge ${expired||x.days<=14?'b-red':'b-amber'}">${expired?'منتهي منذ '+Math.abs(x.days)+' يوم':'بعد '+x.days+' يوم'}</span></td>
       <td><div style="display:flex;gap:5px;justify-content:flex-end">
-        <button class="btn btn-sm btn-primary" onclick="openRenewContract('${x.u.id}')" title="تجديد العقد — تظهر كل بيانات المستأجر الحالية معبّأة مسبقًا">🔁 تجديد</button>
-        <button class="btn btn-sm" onclick="openUnitForm('${x.u.buildingId}','${x.u.id}')" title="تعديل العقد الحالي">✏️ تعديل</button>
-        ${expired?`<button class="btn btn-sm btn-danger" onclick="openEndContract('${x.u.id}')" title="إنهاء وخروج">🚪 إنهاء</button>`:''}
+        <button class="btn btn-sm btn-primary" onclick="openRenewContract('${x.u.id}')" title="تجديد العقد — تظهر كل بيانات المستأجر الحالية معبّأة مسبقًا">${svgIcon('refresh')} تجديد</button>
+        <button class="btn btn-sm" onclick="openUnitForm('${x.u.buildingId}','${x.u.id}')" title="تعديل العقد الحالي">${svgIcon('edit')} تعديل</button>
+        ${expired?`<button class="btn btn-sm btn-danger" onclick="openEndContract('${x.u.id}')" title="إنهاء وخروج">${svgIcon('door')} إنهاء</button>`:''}
       </div></td></tr>`; });
     h+=`</tbody></table>`; }
   h+=`</div></div></div>`;
@@ -657,12 +681,12 @@ function viewPaymentsFilter(){
   const filterMap={30:'شهري (30 يوم)',90:'3 أشهر (90 يوم)',180:'6 أشهر (180 يوم)'};
   let h=`<div class="page-head no-print"><div><h1>${svgIcon('list')} جدول المستحقات</h1>
     <div class="sub">الدفعات المستحقة خلال الفترة المحددة — ${fmtDate(todayISO())}</div></div>
-    <button class="btn btn-primary no-print" onclick="window.print()">🖨️ طباعة الكل</button></div>`;
+    <button class="btn btn-primary no-print" onclick="window.print()">${svgIcon('printer')} طباعة الكل</button></div>`;
   h+=`<div class="toolbar no-print">${[30,90,180].map(d=>`<button class="btn${paymentFilterDays===d?' btn-primary':''}" onclick="paymentFilterDays=${d};render()">${filterMap[d]}</button>`).join('')}</div>`;
-  h+=`<div class="panel"><div class="panel-head"><h2>📋 المستحقات — ${filterMap[paymentFilterDays]}</h2>
+  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('list')} المستحقات — ${filterMap[paymentFilterDays]}</h2>
     <span class="count">${allDue.length} دفعة • ${fmtMoney(total)}</span></div>`;
   if(allDue.length===0){
-    h+=`<div class="panel-body pad" style="color:var(--success);font-weight:700">✅ لا توجد دفعات مستحقة في هذه الفترة.</div>`;
+    h+=`<div class="panel-body pad" style="color:var(--success);font-weight:700">${svgIcon('check')} لا توجد دفعات مستحقة في هذه الفترة.</div>`;
   } else {
     h+=`<div class="panel-body"><table>
       <thead><tr><th>المستأجر</th><th>الجوال</th><th>العقار</th><th>الوحدة</th><th>رقم الدفعة</th><th>تاريخ الاستحقاق</th><th>المبلغ المتبقي</th><th>باقٍ</th><th class="no-print"></th></tr></thead><tbody>`;
@@ -678,10 +702,10 @@ function viewPaymentsFilter(){
         <td style="font-weight:700">${fmtMoney(remainingAmt(p))}${p.status==='partial'?'<div class="muted">من أصل '+fmtMoney(p.amount)+'</div>':''}</td>
         <td><span class="badge ${d===0?'b-red':d<=7?'b-amber':'b-blue'}">بعد ${d} يوم</span></td>
         <td class="no-print"><div style="display:flex;gap:5px">
-          <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">💰</button>
-          <button class="btn btn-sm" onclick="printDueNotice('${p.unit.id}','${p.id}')" title="طباعة">🖨️</button>
-          ${p.unit.tenantPhone?`<button class="btn btn-sm" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')">💬</button>`:''}
-          <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">🚪</button>
+          <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">${svgIcon('cash')}</button>
+          <button class="btn btn-sm" onclick="printDueNotice('${p.unit.id}','${p.id}')" title="طباعة">${svgIcon('printer')}</button>
+          ${p.unit.tenantPhone?`<button class="btn btn-sm" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')">${svgIcon('chat')}</button>`:''}
+          <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">${svgIcon('door')}</button>
         </div></td>
       </tr>`;
     });
@@ -826,12 +850,12 @@ function viewAccounting(){
         <option value="contracts" ${mode==='contracts'?'selected':''}>القيمة حسب العقود</option>
         <option value="annual" ${mode==='annual'?'selected':''}>القيمة الإجمالية السنوية</option>
       </select>
-      <button class="btn" onclick="exportAccountingCSV(${y},${bId?`'${bId}'`:'null'},'${mode}')">📊 تصدير Excel</button>
-      <button class="btn btn-primary" onclick="exportAccountingPDF(${y},${bId?`'${bId}'`:'null'},'${mode}')">📄 تقرير PDF</button>
+      <button class="btn" onclick="exportAccountingCSV(${y},${bId?`'${bId}'`:'null'},'${mode}')">${svgIcon('chart')} تصدير Excel</button>
+      <button class="btn btn-primary" onclick="exportAccountingPDF(${y},${bId?`'${bId}'`:'null'},'${mode}')">${svgIcon('doc')} تقرير PDF</button>
     </div></div>`;
 
   const rateColor = yr.rate>=90?'green':yr.rate>=70?'amber':'red';
-  const rateWarn = yr.rate<90 ? `<div style="margin-top:5px;font-size:11px;font-weight:800;color:${yr.rate<70?'var(--danger)':'var(--warning)'}">⚠️ ${yr.rate<70?'يحتاج متابعة':'تحتاج تحسين'}</div>` : '';
+  const rateWarn = yr.rate<90 ? `<div style="margin-top:5px;font-size:11px;font-weight:800;color:${yr.rate<70?'var(--danger)':'var(--warning)'}">${svgIcon('warning')} ${yr.rate<70?'يحتاج متابعة':'تحتاج تحسين'}</div>` : '';
   h+=`<div class="stats">
     ${stat('blue',svgIcon('chart'),fmtMoney(yr.expected),'إجمالي قيمة العقود')}
     ${stat('green',svgIcon('check'),fmtMoney(yr.collected),'إجمالي المحصّل الفعلي')}
@@ -842,13 +866,13 @@ function viewAccounting(){
   </div>`;
 
   const rateAdvice = yr.rate>=90
-    ? {c:'var(--success)',t:'✅ ممتاز — نسبة تحصيل مرتفعة، معظم المستأجرين سدّدوا بالكامل.'}
+    ? {c:'var(--success)',t:`${svgIcon('check')} ممتاز — نسبة تحصيل مرتفعة، معظم المستأجرين سدّدوا بالكامل.`}
     : yr.rate>=70
-    ? {c:'var(--warning)',t:'🟡 نسبة التحصيل تحتاج تحسين — راجع المتأخرات والمستأجرين المتعثرين.'}
-    : {c:'var(--danger)',t:'🔴 نسبة تحصيل منخفضة — فجوة كبيرة بين قيمة العقود والمحصَّل فعليًا، راجع المتأخرات والوحدات الشاغرة بشكل عاجل.'};
+    ? {c:'var(--warning)',t:`${svgIcon('warning')} نسبة التحصيل تحتاج تحسين — راجع المتأخرات والمستأجرين المتعثرين.`}
+    : {c:'var(--danger)',t:`${svgIcon('warning')} نسبة تحصيل منخفضة — فجوة كبيرة بين قيمة العقود والمحصَّل فعليًا، راجع المتأخرات والوحدات الشاغرة بشكل عاجل.`};
   h+=`<details class="acct-info">
-    <summary>ℹ️ ما الفرق بين «قيمة العقود» و«المحصّل الفعلي»؟ ولماذا نسبة التحصيل هي الأهم</summary>
-    <div class="info-box" style="align-items:flex-start">🧮
+    <summary>${svgIcon('info')} ما الفرق بين «قيمة العقود» و«المحصّل الفعلي»؟ ولماذا نسبة التحصيل هي الأهم</summary>
+    <div class="info-box" style="align-items:flex-start">${svgIcon('calculator')}
       <div>
         <div style="margin-bottom:8px"><b>إجمالي قيمة العقود</b> = مجموع القيم المكتوبة في عقود الإيجار، سواء تم تحصيلها أو لا — يشمل المستحقات غير المدفوعة، ويعكس الدخل التعاقدي (على الورق).</div>
         <div style="margin-bottom:8px"><b>إجمالي المحصّل الفعلي</b> = المبلغ الذي استُلم فعليًا خلال السنة — يستبعد المتأخرات والوحدات الشاغرة، ويعتمد على التدفق النقدي الحقيقي.</div>
@@ -859,13 +883,13 @@ function viewAccounting(){
         </div>
         <div style="margin-top:8px">تتساوى القيمتان فقط عند: سداد كل المستأجرين لكامل الإيجار، بلا تأخير أو تعثر، وبلا وحدات شاغرة.</div>
         <div style="margin-top:8px;font-weight:800;color:${rateAdvice.c}">${rateAdvice.t}</div>
-        <div style="margin-top:8px">💡 <b>نصيحة كمستثمر:</b> ركّز دائمًا على <b>نسبة التحصيل (%)</b> وليس فقط على قيمة العقود — عقود بقيمة أكبر لا تعني دخلًا أكبر ما لم تُحصَّل فعليًا.</div>
+        <div style="margin-top:8px">${svgIcon('bulb')} <b>نصيحة كمستثمر:</b> ركّز دائمًا على <b>نسبة التحصيل (%)</b> وليس فقط على قيمة العقود — عقود بقيمة أكبر لا تعني دخلًا أكبر ما لم تُحصَّل فعليًا.</div>
       </div>
     </div>
   </details>`;
 
   const qNames=['الربع الأول (يناير–مارس)','الربع الثاني (أبريل–يونيو)','الربع الثالث (يوليو–سبتمبر)','الربع الرابع (أكتوبر–ديسمبر)'];
-  h+=`<div class="panel"><div class="panel-head"><h2>📅 التفصيل الربع سنوي — ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}</h2></div><div class="panel-body">
+  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('calendar')} التفصيل الربع سنوي — ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}</h2></div><div class="panel-body">
     <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>نسبة التحصيل</th><th>المصروفات</th><th>الصافي</th></tr></thead><tbody>`;
   for(let q=1;q<=4;q++){ const a=acct(y,q,bId,mode);
     h+=`<tr>
@@ -885,8 +909,8 @@ function viewAccounting(){
       <td style="color:${yr.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(yr.net)}</td></tr>`;
   h+=`</tbody></table></div></div>`;
 
-  h+=`<div class="panel"><div class="panel-head"><h2>🏢 حسب العقار — ${y}</h2></div><div class="panel-body">
-      <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th><th>🔧 الصيانة % من الإيجار</th></tr></thead><tbody>`;
+  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('building')} حسب العقار — ${y}</h2></div><div class="panel-body">
+      <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th><th>الصيانة % من الإيجار</th></tr></thead><tbody>`;
   (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(y,null,b.id,mode);
       const maint=categoryExpenses(y,b.id,'صيانة');
       const maintPct=a.expected?Math.round(maint/a.expected*100):0;
@@ -904,7 +928,7 @@ function viewAccounting(){
 
   if(years.length>1){
     const maxC=Math.max(...years.map(yy=>acct(yy,null,bId,mode).collected),1);
-    h+=`<div class="panel"><div class="panel-head"><h2>📈 المحصّل عبر السنوات${filterBuilding?' — '+esc(filterBuilding.name):''}</h2></div><div class="panel-body pad">`;
+    h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('trending')} المحصّل عبر السنوات${filterBuilding?' — '+esc(filterBuilding.name):''}</h2></div><div class="panel-body pad">`;
     years.slice().sort((a,b)=>a-b).forEach(yy=>{ const c=acct(yy,null,bId,mode).collected;
       h+=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <div style="width:54px;font-weight:700;${yy===y?'color:var(--primary-d)':''}">${yy}</div>
@@ -916,8 +940,8 @@ function viewAccounting(){
   }
 
   const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===y && (!bId || e.buildingId===bId)).sort((a,b)=>a.date<b.date?1:-1);
-  h+=`<div class="panel"><div class="panel-head"><h2>💸 المصروفات — ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}</h2>
-    <button class="btn btn-sm btn-primary" onclick="openExpenseForm(null,${bId?`'${bId}'`:'null'})">➕ إضافة مصروف</button></div><div class="panel-body">`;
+  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('wallet')} المصروفات — ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}</h2>
+    <button class="btn btn-sm btn-primary" onclick="openExpenseForm(null,${bId?`'${bId}'`:'null'})">${svgIcon('plus')} إضافة مصروف</button></div><div class="panel-body">`;
   if(exps.length===0){
     h+=`<div style="padding:20px;color:var(--muted)">لا توجد مصروفات مسجّلة ${filterBuilding?'لهذا العقار في هذه السنة':'لهذه السنة'}. أضِف الصيانة والفواتير والرسوم لاحتساب صافي الدخل بدقة.</div>`;
   } else {
@@ -928,7 +952,7 @@ function viewAccounting(){
         <td><span class="badge b-gray">${esc(e.category||'أخرى')}</span></td>
         <td>${esc(e.note||'—')}</td>
         <td style="font-weight:700;color:var(--danger)">${fmtMoney(e.amount)}</td>
-        <td><button class="btn btn-sm" onclick="openExpenseForm('${e.id}')">✏️</button></td></tr>`;
+        <td><button class="btn btn-sm" onclick="openExpenseForm('${e.id}')">${svgIcon('edit')}</button></td></tr>`;
     });
     h+=`<tr style="background:var(--surface-2);font-weight:800"><td colspan="4">إجمالي المصروفات المعروضة</td><td style="color:var(--danger)">${fmtMoney(exps.reduce((s,e)=>s+(Number(e.amount)||0),0))}</td><td></td></tr>`;
     h+=`</tbody></table>`;
@@ -941,7 +965,7 @@ function viewAccounting(){
 function openExpenseForm(eId,defaultBuildingId){
   const e=eId?(db.expenses.find(x=>x.id===eId)||{}):{date:todayISO(),buildingId:defaultBuildingId||null};
   const cats=['صيانة','كهرباء وماء','رسوم حكومية','ضرائب/زكاة','إدارة','تأمين','تنظيف','أخرى'];
-  openModal(`<div class="modal"><div class="modal-head"><h3>${eId?'✏️ تعديل مصروف':'➕ إضافة مصروف'}</h3><button class="x" onclick="closeModal()">✕</button></div>
+  openModal(`<div class="modal"><div class="modal-head"><h3>${eId?svgIcon('edit')+' تعديل مصروف':svgIcon('plus')+' إضافة مصروف'}</h3><button class="x" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
       <div class="row2">
         <div class="field"><label>العقار</label><select id="e-building"><option value="">عام (غير مخصّص)</option>${db.buildings.map(b=>`<option value="${b.id}" ${e.buildingId===b.id?'selected':''}>${esc(b.name)}</option>`).join('')}</select></div>
@@ -954,9 +978,9 @@ function openExpenseForm(eId,defaultBuildingId){
       <div class="field"><label>الوصف</label><input id="e-note" value="${esc(e.note||'')}" placeholder="تفاصيل المصروف"></div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-primary" onclick="saveExpense('${eId||''}')">💾 حفظ</button>
+      <button class="btn btn-primary" onclick="saveExpense('${eId||''}')">${svgIcon('save')} حفظ</button>
       <button class="btn" onclick="closeModal()">إلغاء</button>
-      ${eId?`<button class="btn btn-danger" style="margin-inline-start:auto" onclick="deleteExpense('${eId}')">🗑️ حذف</button>`:''}
+      ${eId?`<button class="btn btn-danger" style="margin-inline-start:auto" onclick="deleteExpense('${eId}')">${svgIcon('trash')} حذف</button>`:''}
     </div></div>`);
 }
 function saveExpense(eId){
@@ -1046,19 +1070,19 @@ function viewProperties(){
   if(db.buildings.length===0) return pageEmpty();
   let h=`<div class="page-head"><div><h1>${svgIcon('building')} العقارات</h1>
     <div class="sub">${db.buildings.length} عقار • ${db.units.length} وحدة</div></div>
-    <button class="btn btn-primary" onclick="openBuildingForm()">➕ إضافة عقار</button></div>`;
+    <button class="btn btn-primary" onclick="openBuildingForm()">${svgIcon('plus')} إضافة عقار</button></div>`;
   h+=`<div class="bgrid">`;
   db.buildings.forEach(b=>{
     const us=unitsOf(b.id);
     const occupied=us.filter(u=>u.tenantName).length;
     let overdue=0; us.forEach(u=>{ (u.payments||[]).forEach(p=>{ if(payStatus(p)==='overdue') overdue++; }); });
     h+=`<div class="bcard" onclick="go('building','${b.id}')">
-      <div class="top"><div class="name">${svgIcon('building')} ${esc(b.name)}</div>${b.address?`<div class="addr">📍 ${esc(b.address)}</div>`:''}</div>
+      <div class="top"><div class="name">${svgIcon('building')} ${esc(b.name)}</div>${b.address?`<div class="addr">${svgIcon('pin')} ${esc(b.address)}</div>`:''}</div>
       <div class="body">
         <div class="mini"><span class="n">${us.length}</span><span class="t">وحدة</span></div>
         <div class="mini"><span class="n" style="color:var(--success)">${occupied}</span><span class="t">مؤجّرة</span></div>
         <div class="mini"><span class="n" style="color:${overdue?'var(--danger)':'var(--muted)'}">${overdue}</span><span class="t">متأخرات</span></div>
-        ${b.deliveryDate?`<div class="mini"><span class="n" style="font-size:13px;color:var(--info)">🔑 ${fmtDate(b.deliveryDate)}</span><span class="t">تسليم</span></div>`:''}
+        ${b.deliveryDate?`<div class="mini"><span class="n" style="font-size:13px;color:var(--info)">${svgIcon('key')} ${fmtDate(b.deliveryDate)}</span><span class="t">تسليم</span></div>`:''}
       </div></div>`;
   });
   h+=`</div>`;
@@ -1072,41 +1096,41 @@ function viewBuilding(bId){
   const us=unitsOf(bId);
   let h=`<div class="crumbs"><a onclick="go('properties')">العقارات</a><span>›</span><span>${esc(b.name)}</span></div>`;
   h+=`<div class="page-head"><div><h1>${svgIcon('building')} ${esc(b.name)}</h1>
-    <div class="sub">${b.address?'📍 '+esc(b.address)+' • ':''}${us.length} وحدة${b.waterMeter?' • 💧 '+esc(b.waterMeter):''}${b.deliveryDate?' • 🔑 التسليم: '+fmtDate(b.deliveryDate):''}</div></div>
+    <div class="sub">${b.address?svgIcon('pin')+' '+esc(b.address)+' • ':''}${us.length} وحدة${b.waterMeter?' • '+svgIcon('drop')+' '+esc(b.waterMeter):''}${b.deliveryDate?' • '+svgIcon('key')+' التسليم: '+fmtDate(b.deliveryDate):''}</div></div>
     <div style="display:flex;gap:8px">
-      <button class="btn" onclick="openBuildingForm('${b.id}')">✏️ تعديل العقار</button>
-      <button class="btn btn-primary" onclick="openUnitForm('${b.id}')">➕ إضافة وحدة</button>
+      <button class="btn" onclick="openBuildingForm('${b.id}')">${svgIcon('edit')} تعديل العقار</button>
+      <button class="btn btn-primary" onclick="openUnitForm('${b.id}')">${svgIcon('plus')} إضافة وحدة</button>
     </div></div>`;
-  if(b.notes) h+=`<div class="info-box" style="margin-bottom:18px">📝 <div>${esc(b.notes)}</div></div>`;
+  if(b.notes) h+=`<div class="info-box" style="margin-bottom:18px">${svgIcon('doc')} <div>${esc(b.notes)}</div></div>`;
 
   // معلومات الملكية (صك + ماء + مرفقات)
   const _hasPropInfo=b.deedNumber||b.deedDate||b.waterMeter||b.deedImage||(b.attachments&&b.attachments.length);
   if(_hasPropInfo){
-    h+=`<div class="panel" style="margin-bottom:18px"><div class="panel-head"><h2>📋 معلومات الملكية</h2></div><div class="panel-body pad">`;
+    h+=`<div class="panel" style="margin-bottom:18px"><div class="panel-head"><h2>${svgIcon('list')} معلومات الملكية</h2></div><div class="panel-body pad">`;
     if(b.deedNumber||b.deedDate||b.waterMeter){
       h+=`<div class="detail-grid" style="margin-bottom:14px">`;
       if(b.deedNumber) h+=`<div class="dcell"><div class="t">رقم الصك</div><div class="v">${esc(b.deedNumber)}</div></div>`;
       if(b.deedDate) h+=`<div class="dcell"><div class="t">تاريخ الصك</div><div class="v">${fmtDate(b.deedDate)}</div></div>`;
-      if(b.waterMeter) h+=`<div class="dcell"><div class="t">عداد الماء 💧</div><div class="v">${esc(b.waterMeter)}</div></div>`;
+      if(b.waterMeter) h+=`<div class="dcell"><div class="t">عداد الماء ${svgIcon('drop')}</div><div class="v">${esc(b.waterMeter)}</div></div>`;
       h+=`</div>`;
     }
     if(b.deedImage){
       const di=b.deedImage; const diImg=di.type&&di.type.startsWith('image/');
-      h+=`<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">📄 صورة الصك</div>
+      h+=`<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">${svgIcon('doc')} صورة الصك</div>
         <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px">
-          ${diImg?`<img src="${di.data}" style="width:64px;height:64px;object-fit:cover;border-radius:7px;cursor:pointer" onclick="openBuildingFile('${b.id}','deed',0)">`:'<span style="font-size:36px">📄</span>'}
+          ${diImg?`<img src="${di.data}" style="width:64px;height:64px;object-fit:cover;border-radius:7px;cursor:pointer" onclick="openBuildingFile('${b.id}','deed',0)">`:`<span style="font-size:36px">${svgIcon('doc')}</span>`}
           <div style="flex:1;font-size:13px;font-weight:700">${esc(di.name)}</div>
-          <a href="${di.data}" download="${esc(di.name)}" class="btn btn-sm">⬇️ تنزيل</a>
+          <a href="${di.data}" download="${esc(di.name)}" class="btn btn-sm">${svgIcon('download')} تنزيل</a>
         </div></div>`;
     }
     if(b.attachments&&b.attachments.length){
-      h+=`<div><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:7px">📁 مرفقات أخرى (${b.attachments.length})</div>`;
+      h+=`<div><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:7px">${svgIcon('doc')} مرفقات أخرى (${b.attachments.length})</div>`;
       b.attachments.forEach((a,i)=>{
         const aImg=a.type&&a.type.startsWith('image/');
         h+=`<div style="display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
-          ${aImg?`<img src="${a.data}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;cursor:pointer" onclick="openBuildingFile('${b.id}','att',${i})">`:'<span style="font-size:24px">📄</span>'}
+          ${aImg?`<img src="${a.data}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;cursor:pointer" onclick="openBuildingFile('${b.id}','att',${i})">`:`<span style="font-size:24px">${svgIcon('doc')}</span>`}
           <div style="flex:1;font-size:13px;font-weight:700">${esc(a.name)}</div>
-          <a href="${a.data}" download="${esc(a.name)}" class="btn btn-sm">⬇️</a>
+          <a href="${a.data}" download="${esc(a.name)}" class="btn btn-sm">${svgIcon('download')}</a>
         </div>`;
       });
       h+=`</div>`;
@@ -1117,7 +1141,7 @@ function viewBuilding(bId){
   if(us.length===0){
     h+=`<div class="panel"><div class="empty"><div class="em">${svgIcon('door')}</div><h3>لا توجد وحدات بعد</h3>
       <p>أضف الشقق أو المحلات التابعة لهذا العقار لبدء متابعة الإيجارات.</p>
-      <button class="btn btn-primary" onclick="openUnitForm('${b.id}')">➕ إضافة أول وحدة</button></div></div>`;
+      <button class="btn btn-primary" onclick="openUnitForm('${b.id}')">${svgIcon('plus')} إضافة أول وحدة</button></div></div>`;
     return h;
   }
   h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('door')} الوحدات</h2><span class="count">${us.length}</span></div>
@@ -1133,8 +1157,8 @@ function viewBuilding(bId){
     else if(t.remaining===0) statusBadge=`<span class="badge b-green">مسدّد بالكامل</span>`;
     else statusBadge=`<span class="badge b-blue">منتظم</span>`;
     h+=`<tr>
-      <td style="font-weight:800">${esc(u.name)}${u.electricityMeter?`<div class="muted">⚡ ${esc(u.electricityMeter)}</div>`:''}</td>
-      <td>${u.tenantName?esc(u.tenantName):'<span class="muted">— شاغرة —</span>'}${u.tenantPhone?`<div class="muted">📞 ${esc(u.tenantPhone)}</div>`:''}</td>
+      <td style="font-weight:800">${esc(u.name)}${u.electricityMeter?`<div class="muted">${svgIcon('bolt')} ${esc(u.electricityMeter)}</div>`:''}</td>
+      <td>${u.tenantName?esc(u.tenantName):'<span class="muted">— شاغرة —</span>'}${u.tenantPhone?`<div class="muted">${svgIcon('phone')} ${esc(u.tenantPhone)}</div>`:''}</td>
       <td style="font-weight:700">${fmtMoney(u.rentAmount)}<div class="muted">دفعة: ${fmtMoney(periodAmount(u))}</div></td>
       <td><span class="badge b-gray">${periodLbl(u)}</span></td>
       <td>${fmtDate(u.contractStart)}</td>
@@ -1154,9 +1178,9 @@ function pageEmpty(){
     <div class="em">${svgIcon('building')}</div><h3>ابدأ بإضافة أول عقار</h3>
     <p>سجّل العمارة أو العقار ثم أضف الشقق التابعة له وتابع دفعات الإيجار الربع سنوية.</p>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button class="btn btn-primary" onclick="openBuildingForm()">➕ إضافة عقار</button>
-      <button class="btn" onclick="openGuide()">📖 دليل المستخدم</button>
-      <button class="btn" onclick="loadDemo()">📦 تحميل بيانات تجريبية</button>
+      <button class="btn btn-primary" onclick="openBuildingForm()">${svgIcon('plus')} إضافة عقار</button>
+      <button class="btn" onclick="openGuide()">${svgIcon('book')} دليل المستخدم</button>
+      <button class="btn" onclick="loadDemo()">${svgIcon('package')} تحميل بيانات تجريبية</button>
     </div></div></div>`;
 }
 
@@ -1170,10 +1194,10 @@ function _bRenderDeed(){
   if(!_bForm.deedImage){ el.innerHTML=''; return; }
   const d=_bForm.deedImage; const isImg=d.type&&d.type.startsWith('image/');
   el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;margin-top:7px">
-    ${isImg?`<img src="${d.data}" style="width:56px;height:56px;object-fit:cover;border-radius:6px">`:'<span style="font-size:34px">📄</span>'}
+    ${isImg?`<img src="${d.data}" style="width:56px;height:56px;object-fit:cover;border-radius:6px">`:`<span style="font-size:34px">${svgIcon('doc')}</span>`}
     <div style="flex:1;font-size:13px;font-weight:700;word-break:break-all">${esc(d.name)}</div>
-    <a href="${d.data}" download="${esc(d.name)}" class="btn btn-sm" title="تنزيل">⬇️</a>
-    <button class="btn btn-sm" onclick="_bForm.deedImage=null;_bRenderDeed()" title="حذف">🗑️</button>
+    <a href="${d.data}" download="${esc(d.name)}" class="btn btn-sm" title="تنزيل">${svgIcon('download')}</a>
+    <button class="btn btn-sm" onclick="_bForm.deedImage=null;_bRenderDeed()" title="حذف">${svgIcon('trash')}</button>
   </div>`;
 }
 function _bRenderAtts(){
@@ -1182,10 +1206,10 @@ function _bRenderAtts(){
   el.innerHTML=_bForm.attachments.map((a,i)=>{
     const isImg=a.type&&a.type.startsWith('image/');
     return `<div style="display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
-      ${isImg?`<img src="${a.data}" style="width:40px;height:40px;object-fit:cover;border-radius:5px">`:'<span style="font-size:24px">📄</span>'}
+      ${isImg?`<img src="${a.data}" style="width:40px;height:40px;object-fit:cover;border-radius:5px">`:`<span style="font-size:24px">${svgIcon('doc')}</span>`}
       <div style="flex:1;font-size:13px;font-weight:700;word-break:break-all">${esc(a.name)}</div>
-      <a href="${a.data}" download="${esc(a.name)}" class="btn btn-sm" title="تنزيل">⬇️</a>
-      <button class="btn btn-sm" onclick="_bForm.attachments.splice(${i},1);_bRenderAtts()" title="حذف">🗑️</button>
+      <a href="${a.data}" download="${esc(a.name)}" class="btn btn-sm" title="تنزيل">${svgIcon('download')}</a>
+      <button class="btn btn-sm" onclick="_bForm.attachments.splice(${i},1);_bRenderAtts()" title="حذف">${svgIcon('trash')}</button>
     </div>`;
   }).join('');
 }
@@ -1219,7 +1243,7 @@ function openBuildingForm(bId){
   const b=bId?db.buildings.find(x=>x.id===bId):{};
   _bForm.deedImage=b.deedImage||null;
   _bForm.attachments=(b.attachments||[]).map(a=>({...a}));
-  openModal(`<div class="modal lg"><div class="modal-head"><h3>${bId?'✏️ تعديل عقار':'➕ إضافة عقار'}</h3><button class="x" onclick="closeModal()">✕</button></div>
+  openModal(`<div class="modal lg"><div class="modal-head"><h3>${bId?svgIcon('edit')+' تعديل عقار':svgIcon('plus')+' إضافة عقار'}</h3><button class="x" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
       <div class="field"><label>اسم العقار / العمارة *</label><input id="b-name" value="${esc(b.name||'')}" placeholder="مثال: عمارة الياسمين"></div>
       <div class="field"><label>العنوان</label><input id="b-addr" value="${esc(b.address||'')}" placeholder="الحي، المدينة"></div>
@@ -1228,25 +1252,25 @@ function openBuildingForm(bId){
         <div class="field"><label>تاريخ الصك</label><input type="date" id="b-deed-date" value="${b.deedDate||''}"></div>
       </div>
       <div class="row2">
-        <div class="field"><label>عداد الماء 💧</label><input id="b-water" value="${esc(b.waterMeter||'')}" placeholder="رقم عداد الماء (اختياري)"></div>
+        <div class="field"><label>عداد الماء ${svgIcon('drop')}</label><input id="b-water" value="${esc(b.waterMeter||'')}" placeholder="رقم عداد الماء (اختياري)"></div>
         <div class="field"><label>تاريخ التسليم المتوقع <span class="hint">(اختياري)</span></label><input type="date" id="b-deliv" value="${b.deliveryDate||''}"></div>
       </div>
       <div class="field"><label>صورة الصك <span class="hint">(صورة أو PDF)</span></label>
         <input type="file" id="b-deed-file" accept="image/*,application/pdf" style="display:none" onchange="_bDeedFile(this)">
-        <button type="button" class="btn btn-sm" onclick="document.getElementById('b-deed-file').click()">📎 ${b.deedImage?'تغيير صورة الصك':'رفع صورة الصك'}</button>
+        <button type="button" class="btn btn-sm" onclick="document.getElementById('b-deed-file').click()">${svgIcon('paperclip')} ${b.deedImage?'تغيير صورة الصك':'رفع صورة الصك'}</button>
         <div id="b-deed-prev"></div>
       </div>
       <div class="field"><label>مرفقات أخرى <span class="hint">(كل مرفق يُضاف على حدة)</span></label>
         <input type="file" id="b-att-file" accept="image/*,application/pdf,.doc,.docx" style="display:none" onchange="_bAddAtt(this)">
-        <button type="button" class="btn btn-sm" onclick="document.getElementById('b-att-file').click()">➕ إضافة مرفق</button>
+        <button type="button" class="btn btn-sm" onclick="document.getElementById('b-att-file').click()">${svgIcon('plus')} إضافة مرفق</button>
         <div id="b-att-list" style="margin-top:8px"></div>
       </div>
       <div class="field"><label>ملاحظات</label><textarea id="b-notes" rows="2" placeholder="أي ملاحظات عن العقار">${esc(b.notes||'')}</textarea></div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-primary" onclick="saveBuilding('${bId||''}')">💾 حفظ</button>
+      <button class="btn btn-primary" onclick="saveBuilding('${bId||''}')">${svgIcon('save')} حفظ</button>
       <button class="btn" onclick="closeModal()">إلغاء</button>
-      ${bId?`<button class="btn btn-danger" style="margin-inline-start:auto" onclick="deleteBuilding('${bId}')">🗑️ حذف العقار</button>`:''}
+      ${bId?`<button class="btn btn-danger" style="margin-inline-start:auto" onclick="deleteBuilding('${bId}')">${svgIcon('trash')} حذف العقار</button>`:''}
     </div></div>`);
   _bRenderDeed(); _bRenderAtts();
 }
@@ -1277,7 +1301,7 @@ function deleteBuilding(bId){
 function openUnitForm(bId,uId){
   const u=uId?db.units.find(x=>x.id===uId):{durationMonths:12};
   const vacantUnits=uId?[]:db.units.filter(x=>x.buildingId===bId && !x.tenantName);
-  openModal(`<div class="modal"><div class="modal-head"><h3>${uId?'✏️ تعديل وحدة':'➕ إضافة وحدة'}</h3><button class="x" onclick="closeModal()">✕</button></div>
+  openModal(`<div class="modal"><div class="modal-head"><h3>${uId?svgIcon('edit')+' تعديل وحدة':svgIcon('plus')+' إضافة وحدة'}</h3><button class="x" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
       ${vacantUnits.length?`<div class="field">
         <label>وحدة شاغرة موجودة <span class="hint">(اختياري — اختر لإضافة مستأجر إلى وحدة فارغة موجودة بدل إنشاء وحدة جديدة)</span></label>
@@ -1312,12 +1336,12 @@ function openUnitForm(bId,uId){
           ${[6,12,18,24,36].map(m=>`<option value="${m}" ${(u.durationMonths||12)==m?'selected':''}>${m} شهر (${m/12} سنة)</option>`).join('')}
         </select></div>
       <div class="field"><label>ملاحظات</label><input id="u-notes" value="${esc(u.notes||'')}" placeholder="أي ملاحظات عن العقد أو الوحدة"></div>
-      <div class="info-box">🧮 <div><b>كيف تُحسب الدفعات؟</b><div class="formula">قيمة الدفعة الواحدة = <b>القيمة الكاملة للإيجار</b> ÷ عدد الدفعات في السنة (حسب دورية السداد)<br>تاريخ الدفعة (ن) = <b>تاريخ بداية العقد</b> + (ن−1) × <b>فترة السداد</b><br>عدد الدفعات = مدة العقد ÷ فترة السداد — وتُنشأ تلقائيًا عند الحفظ.</div></div></div>
+      <div class="info-box">${svgIcon('calculator')} <div><b>كيف تُحسب الدفعات؟</b><div class="formula">قيمة الدفعة الواحدة = <b>القيمة الكاملة للإيجار</b> ÷ عدد الدفعات في السنة (حسب دورية السداد)<br>تاريخ الدفعة (ن) = <b>تاريخ بداية العقد</b> + (ن−1) × <b>فترة السداد</b><br>عدد الدفعات = مدة العقد ÷ فترة السداد — وتُنشأ تلقائيًا عند الحفظ.</div></div></div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-primary" onclick="saveUnit('${bId}','${uId||''}')">💾 حفظ</button>
+      <button class="btn btn-primary" onclick="saveUnit('${bId}','${uId||''}')">${svgIcon('save')} حفظ</button>
       <button class="btn" onclick="closeModal()">إلغاء</button>
-      ${uId?`<button class="btn btn-danger" style="margin-inline-start:auto" onclick="deleteUnit('${uId}')">🗑️ حذف الوحدة</button>`:''}
+      ${uId?`<button class="btn btn-danger" style="margin-inline-start:auto" onclick="deleteUnit('${uId}')">${svgIcon('trash')} حذف الوحدة</button>`:''}
     </div></div>`);
 }
 function saveUnit(bId,uId){
@@ -1361,7 +1385,7 @@ function openUnit(uId){
   const t=unitTotals(u);
   const pct=t.total?Math.round(t.paid/t.total*100):0;
   let h=`<div class="modal lg"><div class="modal-head">
-    <h3>🚪 ${esc(u.name)} <span style="font-weight:500;color:var(--muted);font-size:14px">— ${esc(b.name)}</span></h3>
+    <h3>${svgIcon('door')} ${esc(u.name)} <span style="font-weight:500;color:var(--muted);font-size:14px">— ${esc(b.name)}</span></h3>
     <button class="x" onclick="closeModal()">✕</button></div><div class="modal-body">`;
 
   h+=`<div class="detail-grid">
@@ -1372,7 +1396,7 @@ function openUnit(uId){
     ${u.contractNumber?`<div class="dcell"><div class="t">رقم عقد الإيجار</div><div class="v">${esc(u.contractNumber)}</div></div>`:''}
     <div class="dcell"><div class="t">بداية العقد</div><div class="v">${fmtDate(u.contractStart)}</div></div>
     <div class="dcell"><div class="t">نهاية العقد</div><div class="v">${fmtDate(contractEnd(u))}${(u.tenantName&&daysFromToday(contractEnd(u))<0)?' <span class="badge b-red" style="margin-inline-start:6px">منتهي</span>':''}</div></div>
-    ${u.electricityMeter?`<div class="dcell"><div class="t">عداد الكهرباء ⚡</div><div class="v">${esc(u.electricityMeter)}</div></div>`:''}
+    ${u.electricityMeter?`<div class="dcell"><div class="t">عداد الكهرباء ${svgIcon('bolt')}</div><div class="v">${esc(u.electricityMeter)}</div></div>`:''}
   </div>`;
 
   h+=`<div class="detail-grid" style="margin-top:14px">
@@ -1382,10 +1406,10 @@ function openUnit(uId){
     <div class="dcell"><div class="t">نسبة السداد</div><div class="v">${pct}%</div><div class="pbar" style="margin-top:6px"><span style="width:${pct}%"></span></div></div>
   </div>`;
 
-  h+=`<div class="panel-head" style="border:none;padding:18px 0 8px"><h2>📋 جدول الدفعات (${periodLbl(u)})</h2>
+  h+=`<div class="panel-head" style="border:none;padding:18px 0 8px"><h2>${svgIcon('list')} جدول الدفعات (${periodLbl(u)})</h2>
     <span class="count">${u.payments.length} دفعة</span></div>`;
   if(u.payments.length===0){
-    h+=`<div class="info-box">🏠 <div>هذه الوحدة شاغرة حاليًا — لا توجد دفعات مستحقة. أضِف اسم المستأجر من «تعديل العقد» لإنشاء جدول الدفعات تلقائيًا.</div></div>`;
+    h+=`<div class="info-box">${svgIcon('house')} <div>هذه الوحدة شاغرة حاليًا — لا توجد دفعات مستحقة. أضِف اسم المستأجر من «تعديل العقد» لإنشاء جدول الدفعات تلقائيًا.</div></div>`;
   } else {
   h+=`<table><thead><tr><th>#</th><th>تاريخ الاستحقاق</th><th>المبلغ</th><th>الحالة</th><th>تاريخ آخر سداد</th><th></th></tr></thead><tbody>`;
   u.payments.forEach(p=>{
@@ -1402,14 +1426,14 @@ function openUnit(uId){
     if(p.status==='partial') amountCell+=`<div class="muted">مدفوع ${fmtMoney(p.paidAmount||0)} • متبقٍ ${fmtMoney(remainingAmt(p))}</div>`;
     let actions;
     if(p.status==='paid'){
-      actions=`<button class="btn btn-sm" onclick="printReceipt('${u.id}','${p.id}')" title="سند قبض">🧾 سند</button><button class="btn btn-sm" onclick="togglePay('${u.id}','${p.id}')" title="التراجع عن السداد">↩️</button>`;
+      actions=`<button class="btn btn-sm" onclick="printReceipt('${u.id}','${p.id}')" title="سند قبض">${svgIcon('receipt')} سند</button><button class="btn btn-sm" onclick="togglePay('${u.id}','${p.id}')" title="التراجع عن السداد">${svgIcon('undo')}</button>`;
     } else if(p.status==='partial'){
       actions=`<button class="btn btn-sm btn-primary" onclick="togglePay('${u.id}','${p.id}')" title="تسجيل باقي المبلغ كمسدّد">✓ إكمال السداد</button>`+
-        `<button class="btn btn-sm" onclick="openPartialPay('${u.id}','${p.id}')" title="تسجيل دفعة جزئية إضافية">💰 جزئي</button>`+
-        `<button class="btn btn-sm" onclick="undoLastPartial('${u.id}','${p.id}')" title="التراجع عن آخر دفعة جزئية">↩️</button>`;
+        `<button class="btn btn-sm" onclick="openPartialPay('${u.id}','${p.id}')" title="تسجيل دفعة جزئية إضافية">${svgIcon('cash')} جزئي</button>`+
+        `<button class="btn btn-sm" onclick="undoLastPartial('${u.id}','${p.id}')" title="التراجع عن آخر دفعة جزئية">${svgIcon('undo')}</button>`;
     } else {
       actions=`<button class="btn btn-sm btn-primary" onclick="togglePay('${u.id}','${p.id}')">✓ تسجيل سداد كامل</button>`+
-        `<button class="btn btn-sm" onclick="openPartialPay('${u.id}','${p.id}')" title="تسجيل دفعة جزئية">💰 دفع جزئي</button>`;
+        `<button class="btn btn-sm" onclick="openPartialPay('${u.id}','${p.id}')" title="تسجيل دفعة جزئية">${svgIcon('cash')} دفع جزئي</button>`;
     }
     h+=`<tr>
       <td style="font-weight:700">${p.n}</td>
@@ -1423,9 +1447,9 @@ function openUnit(uId){
   h+=`</tbody></table>`;
   }
   if((u.history||[]).length){
-    h+=`<div class="panel-head" style="border:none;padding:20px 0 8px"><h2>📜 المستأجرون السابقون</h2><span class="count">${u.history.length}</span></div>`;
+    h+=`<div class="panel-head" style="border:none;padding:20px 0 8px"><h2>${svgIcon('clock')} المستأجرون السابقون</h2><span class="count">${u.history.length}</span></div>`;
     h+=`<table><thead><tr><th>المستأجر</th><th>الفترة</th><th>المحصّل</th><th>الإجمالي</th><th></th></tr></thead><tbody>`;
-    const reasonBadge={renewal:'<span class="badge b-blue" style="margin-inline-start:6px">🔁 تجديد</span>',ended:'<span class="badge b-red" style="margin-inline-start:6px">🚪 إنهاء</span>'};
+    const reasonBadge={renewal:`<span class="badge b-blue" style="margin-inline-start:6px">${svgIcon('refresh')} تجديد</span>`,ended:`<span class="badge b-red" style="margin-inline-start:6px">${svgIcon('door')} إنهاء</span>`};
     u.history.forEach((tn,idx)=>{ const tt=paysTotals(tn.payments||[]);
       h+=`<tr><td style="font-weight:700">${esc(tn.tenantName)}${reasonBadge[tn.reason]||''}</td>
         <td>${fmtDate(tn.contractStart)} — ${fmtDate(addMonths(tn.contractStart, tn.durationMonths||12))}</td>
@@ -1433,18 +1457,18 @@ function openUnit(uId){
         <td>${fmtMoney(tt.total)}</td>
         <td><div style="display:flex;gap:5px;justify-content:flex-end">
           <button class="btn btn-sm" onclick="viewTenancy('${u.id}',${idx})">عرض</button>
-          <button class="btn btn-sm" onclick="exportTenancyPDF('${u.id}',${idx})">📄</button></div></td></tr>`;
+          <button class="btn btn-sm" onclick="exportTenancyPDF('${u.id}',${idx})">${svgIcon('doc')}</button></div></td></tr>`;
     });
     h+=`</tbody></table>`;
   }
-  if(u.notes) h+=`<div class="info-box" style="margin-top:16px">📝 <div>${esc(u.notes)}</div></div>`;
+  if(u.notes) h+=`<div class="info-box" style="margin-top:16px">${svgIcon('doc')} <div>${esc(u.notes)}</div></div>`;
   h+=`</div><div class="modal-foot">
-      <button class="btn btn-primary" onclick="exportUnitPDF('${u.id}')">📄 تصدير PDF</button>
-      ${u.tenantPhone?`<button class="btn" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendUnitWhatsApp('${u.id}')">💬 واتساب</button>`:''}
-      ${u.tenantName?`<button class="btn" onclick="openRenewContract('${u.id}')">🔁 تجديد العقد</button>`:''}
-      ${u.tenantName?`<button class="btn" onclick="openChangeTenant('${u.id}')">🔄 تغيير المستأجر</button>`:''}
-      ${u.tenantName?`<button class="btn btn-danger" onclick="openEndContract('${u.id}')">🚪 إنهاء وخروج</button>`:''}
-      <button class="btn" onclick="openUnitForm('${u.buildingId}','${u.id}')">✏️ تعديل العقد</button>
+      <button class="btn btn-primary" onclick="exportUnitPDF('${u.id}')">${svgIcon('doc')} تصدير PDF</button>
+      ${u.tenantPhone?`<button class="btn" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendUnitWhatsApp('${u.id}')">${svgIcon('chat')} واتساب</button>`:''}
+      ${u.tenantName?`<button class="btn" onclick="openRenewContract('${u.id}')">${svgIcon('refresh')} تجديد العقد</button>`:''}
+      ${u.tenantName?`<button class="btn" onclick="openChangeTenant('${u.id}')">${svgIcon('refresh')} تغيير المستأجر</button>`:''}
+      ${u.tenantName?`<button class="btn btn-danger" onclick="openEndContract('${u.id}')">${svgIcon('door')} إنهاء وخروج</button>`:''}
+      <button class="btn" onclick="openUnitForm('${u.buildingId}','${u.id}')">${svgIcon('edit')} تعديل العقد</button>
       <button class="btn" onclick="closeModal()" style="margin-inline-start:auto">إغلاق</button>
     </div></div>`;
   openModal(h);
@@ -1475,7 +1499,7 @@ function openPartialPay(uId,pId){
   const u=db.units.find(x=>x.id===uId); if(!u) return;
   const p=(u.payments||[]).find(x=>x.id===pId); if(!p) return;
   const rest=remainingAmt(p);
-  openModal(`<div class="modal"><div class="modal-head"><h3>💰 تسجيل دفعة جزئية — الدفعة رقم ${p.n}</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
+  openModal(`<div class="modal"><div class="modal-head"><h3>${svgIcon('cash')} تسجيل دفعة جزئية — الدفعة رقم ${p.n}</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
     <div class="modal-body">
       <div class="detail-grid" style="margin-bottom:14px">
         <div class="dcell"><div class="t">إجمالي الدفعة</div><div class="v">${fmtMoney(p.amount)}</div></div>
@@ -1488,7 +1512,7 @@ function openPartialPay(uId,pId){
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-primary" onclick="savePartialPay('${uId}','${pId}')">💾 حفظ الدفعة</button>
+      <button class="btn btn-primary" onclick="savePartialPay('${uId}','${pId}')">${svgIcon('save')} حفظ الدفعة</button>
       <button class="btn" onclick="openUnit('${uId}')">إلغاء</button>
     </div></div>`);
 }
@@ -1675,9 +1699,9 @@ function printReceipt(uId,payId,histIdx){
 function openChangeTenant(uId){
   const u=db.units.find(x=>x.id===uId);
   const n=(u.payments||[]).length;
-  openModal(`<div class="modal"><div class="modal-head"><h3>🔄 تغيير المستأجر</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
+  openModal(`<div class="modal"><div class="modal-head"><h3>${svgIcon('refresh')} تغيير المستأجر</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
     <div class="modal-body">
-      <div class="info-box" style="background:var(--warning-l);border-color:rgba(245,105,0,.35);color:var(--warning)">⚠️ <div>سيتم <b>أرشفة المستأجر الحالي «${esc(u.tenantName||'')}»</b> مع كامل دفعاته (${n} دفعة) في «المستأجرون السابقون»، ثم إنشاء عقد جديد. لن تُفقد أي بيانات.</div></div>
+      <div class="info-box" style="background:var(--warning-l);border-color:rgba(245,105,0,.35);color:var(--warning)">${svgIcon('warning')} <div>سيتم <b>أرشفة المستأجر الحالي «${esc(u.tenantName||'')}»</b> مع كامل دفعاته (${n} دفعة) في «المستأجرون السابقون»، ثم إنشاء عقد جديد. لن تُفقد أي بيانات.</div></div>
       <div class="row2">
         <div class="field"><label>اسم المستأجر الجديد *</label><input id="ct-name" placeholder="الاسم"></div>
         <div class="field"><label>الجوال</label><input id="ct-phone" placeholder="05xxxxxxxx"></div>
@@ -1697,7 +1721,7 @@ function openChangeTenant(uId){
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-primary" onclick="changeTenant('${uId}')">💾 حفظ وأرشفة السابق</button>
+      <button class="btn btn-primary" onclick="changeTenant('${uId}')">${svgIcon('save')} حفظ وأرشفة السابق</button>
       <button class="btn" onclick="openUnit('${uId}')">إلغاء</button>
     </div></div>`);
 }
@@ -1725,9 +1749,9 @@ function changeTenant(uId){
 function openRenewContract(uId){
   const u=db.units.find(x=>x.id===uId); if(!u) return;
   const suggestedStart=contractEnd(u);
-  openModal(`<div class="modal"><div class="modal-head"><h3>🔁 تجديد العقد — ${esc(u.name)}</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
+  openModal(`<div class="modal"><div class="modal-head"><h3>${svgIcon('refresh')} تجديد العقد — ${esc(u.name)}</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
     <div class="modal-body">
-      <div class="info-box">🔁 <div>سيتم أرشفة الفترة الحالية من العقد (${(u.payments||[]).length} دفعة) في «المستأجرون السابقون»، ثم بدء عقد جديد بالبيانات التي تعدّلها أدناه — يمكنك تغيير أي منها.</div></div>
+      <div class="info-box">${svgIcon('refresh')} <div>سيتم أرشفة الفترة الحالية من العقد (${(u.payments||[]).length} دفعة) في «المستأجرون السابقون»، ثم بدء عقد جديد بالبيانات التي تعدّلها أدناه — يمكنك تغيير أي منها.</div></div>
       <div class="row2">
         <div class="field"><label>اسم المستأجر *</label><input id="rc-name" value="${esc(u.tenantName||'')}"></div>
         <div class="field"><label>الجوال</label><input id="rc-phone" value="${esc(u.tenantPhone||'')}" placeholder="05xxxxxxxx"></div>
@@ -1753,7 +1777,7 @@ function openRenewContract(uId){
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-primary" onclick="renewContract('${uId}')">💾 حفظ وتجديد العقد</button>
+      <button class="btn btn-primary" onclick="renewContract('${uId}')">${svgIcon('save')} حفظ وتجديد العقد</button>
       <button class="btn" onclick="openUnit('${uId}')">إلغاء</button>
     </div></div>`);
 }
@@ -1784,13 +1808,13 @@ function renewContract(uId){
 /* إنهاء العقد وخروج المستأجر: أرشفة كاملة وتحويل الوحدة إلى شاغرة */
 function openEndContract(uId){
   const u=db.units.find(x=>x.id===uId); if(!u) return;
-  openModal(`<div class="modal"><div class="modal-head"><h3>🚪 إنهاء العقد وخروج المستأجر</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
+  openModal(`<div class="modal"><div class="modal-head"><h3>${svgIcon('door')} إنهاء العقد وخروج المستأجر</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
     <div class="modal-body">
-      <div class="info-box" style="background:var(--danger-l);border-color:rgba(255,69,58,.35);color:var(--danger)">⚠️ <div>سيتم إنهاء عقد <b>«${esc(u.tenantName||'')}»</b> وأرشفته مع كامل دفعاته (${(u.payments||[]).length} دفعة) في «المستأجرون السابقون»، وستصبح الوحدة <b>شاغرة</b>. يمكنك لاحقًا إضافة مستأجر جديد أو تجديد العقد من نفس الوحدة.</div></div>
+      <div class="info-box" style="background:var(--danger-l);border-color:rgba(255,69,58,.35);color:var(--danger)">${svgIcon('warning')} <div>سيتم إنهاء عقد <b>«${esc(u.tenantName||'')}»</b> وأرشفته مع كامل دفعاته (${(u.payments||[]).length} دفعة) في «المستأجرون السابقون»، وستصبح الوحدة <b>شاغرة</b>. يمكنك لاحقًا إضافة مستأجر جديد أو تجديد العقد من نفس الوحدة.</div></div>
       <div class="field"><label>تاريخ الخروج / إنهاء العقد</label><input type="date" id="ec-date" value="${todayISO()}"></div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-danger" onclick="endContract('${uId}')">🚪 تأكيد الإنهاء والخروج</button>
+      <button class="btn btn-danger" onclick="endContract('${uId}')">${svgIcon('door')} تأكيد الإنهاء والخروج</button>
       <button class="btn" onclick="openUnit('${uId}')">إلغاء</button>
     </div></div>`);
 }
@@ -1808,7 +1832,7 @@ function endContract(uId){
 function viewTenancy(uId,idx){
   const u=db.units.find(x=>x.id===uId); const tn=u.history[idx];
   const tt=paysTotals(tn.payments||[]);
-  let h=`<div class="modal lg"><div class="modal-head"><h3>📜 ${esc(tn.tenantName)} <span style="font-weight:500;color:var(--muted);font-size:14px">— ${esc(u.name)} · مستأجر سابق</span></h3><button class="x" onclick="openUnit('${uId}')">✕</button></div><div class="modal-body">`;
+  let h=`<div class="modal lg"><div class="modal-head"><h3>${svgIcon('clock')} ${esc(tn.tenantName)} <span style="font-weight:500;color:var(--muted);font-size:14px">— ${esc(u.name)} · مستأجر سابق</span></h3><button class="x" onclick="openUnit('${uId}')">✕</button></div><div class="modal-body">`;
   h+=`<div class="detail-grid">
     <div class="dcell"><div class="t">الجوال</div><div class="v">${esc(tn.tenantPhone||'—')}</div></div>
     <div class="dcell"><div class="t">الإيجار الكامل</div><div class="v">${fmtMoney(tn.rentAmount||tn.quarterlyRent)}</div></div>
@@ -1820,10 +1844,10 @@ function viewTenancy(uId,idx){
     h+=`<tr><td style="font-weight:700">${p.n}</td><td>${fmtDate(p.dueDate)}</td><td style="font-weight:700">${fmtMoney(p.amount)}${partial?'<div class="muted">مدفوع '+fmtMoney(p.paidAmount||0)+'</div>':''}</td>
       <td><span class="badge ${paid?'b-green':partial?'b-blue':'b-gray'}">${paid?'✓ مسدّدة':partial?'جزئي':'غير مسدّدة'}</span></td>
       <td>${p.paidDate?fmtDate(p.paidDate):'<span class="muted">—</span>'}</td>
-      <td>${paid?`<button class="btn btn-sm" onclick="printReceipt('${uId}','${p.id}',${idx})" title="سند قبض">🧾</button>`:''}</td></tr>`;
+      <td>${paid?`<button class="btn btn-sm" onclick="printReceipt('${uId}','${p.id}',${idx})" title="سند قبض">${svgIcon('receipt')}</button>`:''}</td></tr>`;
   });
   h+=`</tbody></table></div><div class="modal-foot">
-    <button class="btn btn-primary" onclick="exportTenancyPDF('${uId}',${idx})">📄 تصدير PDF</button>
+    <button class="btn btn-primary" onclick="exportTenancyPDF('${uId}',${idx})">${svgIcon('doc')} تصدير PDF</button>
     <button class="btn" onclick="openUnit('${uId}')" style="margin-inline-start:auto">رجوع للوحدة</button></div></div>`;
   openModal(h);
 }
@@ -1999,7 +2023,7 @@ function toggleAllGuide(open){
 /* ============================ الإعدادات والنسخ الاحتياطي ============================ */
 function openSettings(){
   const s=db.settings;
-  openModal(`<div class="modal"><div class="modal-head"><h3>⚙️ الإعدادات</h3><button class="x" onclick="closeModal()">✕</button></div>
+  openModal(`<div class="modal"><div class="modal-head"><h3>${svgIcon('settings')} الإعدادات</h3><button class="x" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
       <div class="field"><label>العملة</label><input id="s-cur" value="${esc(s.currency)}"></div>
       <div class="row2">
@@ -2009,17 +2033,17 @@ function openSettings(){
       <hr style="border:none;border-top:1px solid var(--border);margin:18px 0">
       <div class="field"><label>النسخ الاحتياطي للبيانات</label>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn" onclick="exportData()">⬇️ تنزيل نسخة احتياطية</button>
-          <button class="btn" onclick="document.getElementById('imp').click()">⬆️ استيراد نسخة</button>
+          <button class="btn" onclick="exportData()">${svgIcon('download')} تنزيل نسخة احتياطية</button>
+          <button class="btn" onclick="document.getElementById('imp').click()">${svgIcon('upload')} استيراد نسخة</button>
           <input type="file" id="imp" accept="application/json" style="display:none" onchange="importData(this)">
         </div>
-        <div class="hint" style="margin-top:8px">💾 البيانات محفوظة محليًا في هذا المتصفح. نزّل نسخة احتياطية بين فترة وأخرى.</div>
+        <div class="hint" style="margin-top:8px">${svgIcon('save')} البيانات محفوظة محليًا في هذا المتصفح. نزّل نسخة احتياطية بين فترة وأخرى.</div>
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-primary" onclick="saveSettings()">💾 حفظ</button>
+      <button class="btn btn-primary" onclick="saveSettings()">${svgIcon('save')} حفظ</button>
       <button class="btn" onclick="closeModal()">إلغاء</button>
-      <button class="btn btn-danger" style="margin-inline-start:auto" onclick="clearAll()">🗑️ مسح كل البيانات</button>
+      <button class="btn btn-danger" style="margin-inline-start:auto" onclick="clearAll()">${svgIcon('trash')} مسح كل البيانات</button>
     </div></div>`);
 }
 function saveSettings(){
@@ -2139,8 +2163,8 @@ function updateSyncBadge(){
   const el=document.getElementById('syncBadge'); if(!el) return;
   if(!cloud.enabled){ el.style.display='none'; return; }
   el.style.display='inline-flex';
-  if(cloud.online){ el.className='sync-badge ok'; el.innerHTML='🟢 متزامن'; }
-  else{ el.className='sync-badge off'; el.innerHTML='🟠 غير متصل'; }
+  if(cloud.online){ el.className='sync-badge ok'; el.innerHTML='<span class="dot" style="background:var(--success)"></span> متزامن'; }
+  else{ el.className='sync-badge off'; el.innerHTML='<span class="dot" style="background:var(--warning)"></span> غير متصل'; }
 }
 
 /* ---------- شاشة رمز الدخول ---------- */
@@ -2152,8 +2176,8 @@ function showGate(){
     +'<p>أدخل رمز الدخول للوصول إلى بياناتك على كل الأجهزة.<br>'
     +'<span class="gate-hint">أول مرة؟ اختر رمزًا جديدًا (8 خانات على الأقل، حروف وأرقام) واحفظه — هو مفتاح بياناتك.</span></p>'
     +'<input id="gate-code" type="password" inputmode="text" placeholder="رمز الدخول" onkeydown="if(event.key===\'Enter\')submitGate()">'
-    +'<button class="btn btn-primary gate-btn" onclick="submitGate()">🔓 دخول ومزامنة</button>'
-    +'<div class="gate-foot">🔒 بياناتك مرتبطة بهذا الرمز. لا تشاركه إلا مع من تريد أن يطّلع على نفس البيانات أو يعدّلها.</div>'
+    +'<button class="btn btn-primary gate-btn" onclick="submitGate()">'+svgIcon('unlock')+' دخول ومزامنة</button>'
+    +'<div class="gate-foot">'+svgIcon('lock')+' بياناتك مرتبطة بهذا الرمز. لا تشاركه إلا مع من تريد أن يطّلع على نفس البيانات أو يعدّلها.</div>'
     +'</div></div>';
   setTimeout(function(){ var i=document.getElementById('gate-code'); if(i) i.focus(); }, 60);
 }
