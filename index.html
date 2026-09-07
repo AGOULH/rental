@@ -9,23 +9,26 @@
 <title>نظام إدارة الإيجارات v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Serif+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f6f4ef; --surface:#ffffff; --surface-2:#f6f4ee;
-    --primary:#188078; --primary-d:#0f5c56; --primary-l:#e1f2f0;
-    --text:#0f172a; --muted:#64748b; --border:#e5e1d8;
-    --success:#16a34a; --success-l:#dcfce7;
-    --warning:#d97706; --warning-l:#fef3c7;
-    --danger:#dc2626; --danger-l:#fee2e2;
-    --info:#2563eb; --info-l:#dbeafe;
-    --font:'IBM Plex Sans Arabic','Segoe UI',Tahoma,'Helvetica Neue',Arial,sans-serif;
-    --shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.05);
-    --shadow-lg:0 16px 40px rgba(15,23,42,.12);
-    --radius:18px; --radius-sm:10px;
+    /* هوية بصرية مستوحاة من Anthropic: مجلة علمية على ورق دافئ، حبر عاجي هادئ ولون طيني واحد للفعل، بلا ظلال */
+    --bg:#f0eee6; --surface:#faf9f5; --surface-2:#e3dacc; --surface-3:#b0aea5;
+    --primary:#d97757; --primary-d:#c6613f; --primary-l:rgba(217,119,87,.14);
+    --text:#141413; --muted:#87867f; --border:#cccbc8; --border-soft:#87867f;
+    --success:#3f7d4e; --success-l:rgba(63,125,78,.14);
+    --warning:#b8863a; --warning-l:rgba(184,134,58,.14);
+    --danger:#b3402e; --danger-l:rgba(179,64,46,.14);
+    --info:#5b6b74; --info-l:rgba(91,107,116,.14);
+    /* لا يوجد مقابل عربي لثنائي Anthropic Serif/Sans، فاعتُمد IBM Plex Sans Arabic لواجهة التحكم و Noto Serif Arabic للعناوين والصوت التحريري */
+    --font:'IBM Plex Sans Arabic',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    --font-serif:'Noto Serif Arabic','IBM Plex Sans Arabic',Georgia,serif;
+    --shadow:none;
+    --shadow-lg:none;
+    --radius:24px; --radius-sm:12px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html{scrollbar-color:#cbd5e1 transparent}
+  html{scrollbar-color:var(--surface-3) transparent}
   body{
     font-family:var(--font);
     background:var(--bg);color:var(--text);line-height:1.65;
@@ -37,56 +40,57 @@
   :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
   ::-webkit-scrollbar{width:11px;height:11px}
   ::-webkit-scrollbar-track{background:transparent}
-  ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:20px;border:3px solid var(--bg);background-clip:padding-box}
-  ::-webkit-scrollbar-thumb:hover{background:#94a3b8;background-clip:padding-box}
+  ::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:20px;border:3px solid var(--bg);background-clip:padding-box}
+  ::-webkit-scrollbar-thumb:hover{background:var(--muted);background-clip:padding-box}
 
-  /* Header */
+  /* Header — شريط تنقّل مسطّح على لون العاج، بلا كبسولة زجاجية ولا ظل */
   header{
-    background:var(--surface);
-    color:var(--text);padding:0;box-shadow:0 1px 0 var(--border),0 4px 16px rgba(15,23,42,.04);position:sticky;top:0;z-index:50;
+    position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--border);
   }
-  .head-inner{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-  .brand{display:flex;align-items:center;gap:12px;font-size:18px;font-weight:700;letter-spacing:.01em;color:var(--text)}
-  .brand .logo{width:38px;height:38px;background:var(--primary);color:#fff;border-radius:12px;display:grid;place-items:center;font-size:19px}
-  nav{display:flex;gap:4px;margin-inline-start:auto;flex-wrap:wrap}
+  .head-inner{
+    max-width:1280px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.02em}
+  .brand .logo{width:32px;height:32px;background:var(--text);color:var(--surface);border-radius:0 0 8px 8px;display:grid;place-items:center;font-size:16px}
+  nav{display:flex;gap:2px;margin-inline-start:auto;flex-wrap:wrap}
   nav button{
-    background:transparent;color:var(--muted);border:none;padding:10px 15px;border-radius:10px;
-    font-size:14px;font-weight:600;transition:.18s ease;display:inline-flex;align-items:center;gap:7px;
+    background:transparent;color:var(--muted);border:none;padding:9px 14px;border-radius:0;
+    font-size:13px;font-weight:600;transition:.18s ease;display:inline-flex;align-items:center;gap:7px;
   }
-  nav button:hover{background:var(--primary-l);color:var(--primary-d)}
-  nav button.active{background:var(--primary);color:#fff}
+  nav button:hover{color:var(--text)}
+  nav button.active{color:var(--primary)}
   .nav-ic{font-size:15px;line-height:1;display:inline-flex}
 
-  .wrap{max-width:1200px;margin:0 auto;padding:26px 20px 60px}
+  .wrap{max-width:1280px;margin:0 auto;padding:26px 20px 60px}
 
   /* Page heading */
   .page-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:22px;flex-wrap:wrap}
-  .page-head h1{font-size:25px;font-weight:800;letter-spacing:-.01em}
+  .page-head h1{font-family:var(--font-serif);font-size:28px;font-weight:600}
   .page-head .sub{color:var(--muted);font-size:14px;margin-top:3px}
   .crumbs{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin-bottom:8px}
-  .crumbs a{color:var(--primary);cursor:pointer;text-decoration:none;font-weight:700}
-  .crumbs a:hover{text-decoration:underline}
+  .crumbs a{color:var(--text);cursor:pointer;text-decoration:underline;font-weight:600}
+  .crumbs a:hover{color:var(--primary)}
 
-  /* Buttons */
-  .btn{border:none;border-radius:var(--radius-sm);padding:10px 18px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px;transition:.15s ease;background:var(--surface);color:var(--text);border:1px solid var(--border)}
-  .btn:hover{background:var(--surface-2);border-color:#cbd5e1}
+  /* Buttons — طلاء عاجي بحرف سفلي مربّع (توقيع الهوية)، ولون الفعل الطيني الوحيد للأهم فقط، بلا ظلال */
+  .btn{border:none;border-radius:0 0 8px 8px;padding:10px 20px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:.15s ease;background:var(--surface);color:var(--text);border:1px solid var(--border)}
+  .btn:hover{background:var(--surface-2)}
   .btn:active{transform:translateY(1px)}
-  .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 2px 8px rgba(24,128,120,.28)}
-  .btn-primary:hover{background:var(--primary-d);box-shadow:0 4px 14px rgba(24,128,120,.34)}
+  .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .btn-primary:hover{background:var(--primary-d);border-color:var(--primary-d)}
   .btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
-  .btn-danger:hover{filter:brightness(.94)}
-  .btn-sm{padding:6px 12px;font-size:13px;border-radius:9px}
-  .btn-ghost{background:transparent;border-color:transparent}
-  .btn-ghost:hover{background:var(--surface-2)}
+  .btn-danger:hover{filter:brightness(.92)}
+  .btn-sm{padding:6px 14px;font-size:13px}
+  .btn-ghost{background:transparent;border:1px solid var(--border)}
+  .btn-ghost:hover{background:var(--surface)}
 
   /* Cards / stat grid */
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:26px}
   .stat{background:var(--surface);border-radius:var(--radius);padding:19px 20px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden;transition:.18s ease}
-  .stat .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:21px;margin-bottom:12px;box-shadow:inset 0 0 0 1px rgba(15,23,42,.04)}
-  .stat .val{font-size:27px;font-weight:800;line-height:1.15;letter-spacing:-.01em}
+  .stat .ic{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-size:21px;margin-bottom:12px}
+  .stat .val{font-family:var(--font-serif);font-size:27px;font-weight:600;line-height:1.15}
   .stat .lbl{color:var(--muted);font-size:13px;font-weight:600;margin-top:4px}
   .stat.clickable{cursor:pointer}
-  .stat.clickable:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--primary)}
+  .stat.clickable:hover{border-color:var(--primary);background:var(--surface-2)}
   .stat .stat-go{position:absolute;bottom:14px;left:18px;font-size:12px;font-weight:800;color:var(--primary);opacity:0;transition:.18s}
   .stat.clickable:hover .stat-go{opacity:1}
   tbody tr.rowlink{cursor:pointer}
@@ -98,8 +102,8 @@
 
   .panel{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:22px;overflow:hidden}
   .panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .panel-head h2{font-size:16.5px;font-weight:800;display:flex;align-items:center;gap:9px;letter-spacing:.005em}
-  .panel-head .count{background:var(--surface-2);color:var(--muted);font-size:12px;font-weight:700;padding:4px 11px;border-radius:20px;border:1px solid var(--border)}
+  .panel-head h2{font-family:var(--font-serif);font-size:17px;font-weight:600;display:flex;align-items:center;gap:9px;letter-spacing:.005em}
+  .panel-head .count{background:var(--surface-2);color:var(--text);font-size:12px;font-weight:700;padding:4px 11px;border-radius:0;border:1px solid var(--border)}
   .panel-body{padding:6px 0}
   .panel-body.pad{padding:19px 20px}
 
@@ -108,26 +112,26 @@
   th,td{padding:13px 18px;text-align:right;font-size:14px}
   th{color:var(--muted);font-weight:700;font-size:12.5px;letter-spacing:.02em;border-bottom:2px solid var(--border);white-space:nowrap}
   tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
-  tbody tr:nth-child(even){background:rgba(15,23,42,.014)}
+  tbody tr:nth-child(even){background:rgba(20,20,19,.025)}
   tbody tr:last-child{border-bottom:none}
   tbody tr:hover{background:var(--primary-l)}
   td .muted{color:var(--muted);font-size:12.5px}
 
-  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:12.5px;font-weight:700;white-space:nowrap}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:6px;font-size:12.5px;font-weight:700;white-space:nowrap}
   .b-green{background:var(--success-l);color:var(--success)}
   .b-red{background:var(--danger-l);color:var(--danger)}
   .b-amber{background:var(--warning-l);color:var(--warning)}
   .b-blue{background:var(--info-l);color:var(--info)}
-  .b-gray{background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+  .b-gray{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
   .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 
   /* Building cards */
   .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
   .bcard{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:.18s ease}
-  .bcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
-  .bcard .top{background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;padding:17px 19px}
-  .bcard .top .name{font-size:18px;font-weight:800}
-  .bcard .top .addr{font-size:13px;opacity:.9;margin-top:3px}
+  .bcard:hover{border-color:var(--border-soft)}
+  .bcard .top{background:var(--surface-2);color:var(--text);padding:17px 19px;border-bottom:1px solid var(--border)}
+  .bcard .top .name{font-family:var(--font-serif);font-size:18px;font-weight:600}
+  .bcard .top .addr{font-size:13px;opacity:.85;margin-top:3px}
   .bcard .body{padding:15px 19px;display:flex;gap:18px;flex-wrap:wrap}
   .bcard .mini{display:flex;flex-direction:column}
   .bcard .mini .n{font-size:20px;font-weight:800}
@@ -140,18 +144,18 @@
   /* Empty states */
   .empty{text-align:center;padding:56px 20px;color:var(--muted)}
   .empty .em{font-size:56px;margin-bottom:12px}
-  .empty h3{color:var(--text);font-size:18.5px;margin-bottom:7px;font-weight:800}
+  .empty h3{color:var(--text);font-family:var(--font-serif);font-size:19px;margin-bottom:7px;font-weight:600}
   .empty p{margin-bottom:20px}
 
   /* Modal */
-  .overlay{position:fixed;inset:0;background:rgba(15,23,42,.52);backdrop-filter:blur(3px);display:grid;place-items:center;z-index:100;padding:20px}
-  .modal{background:var(--surface);border-radius:20px;box-shadow:0 24px 64px rgba(0,0,0,.32);width:100%;max-width:560px;max-height:92vh;overflow:auto}
+  .overlay{position:fixed;inset:0;background:rgba(20,20,19,.65);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:100;padding:20px}
+  .modal{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);width:100%;max-width:560px;max-height:92vh;overflow:auto}
   .modal.lg{max-width:840px}
   .modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;background:var(--surface);z-index:2}
-  .modal-head h3{font-size:18px;font-weight:800;display:flex;align-items:center;gap:9px}
+  .modal-head h3{font-family:var(--font-serif);font-size:19px;font-weight:600;display:flex;align-items:center;gap:9px}
   .modal-body{padding:22px}
   .modal-foot{padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-start;position:sticky;bottom:0;background:var(--surface)}
-  .x{background:var(--surface-2);border:none;width:34px;height:34px;border-radius:10px;font-size:18px;color:var(--muted);transition:.15s}
+  .x{background:var(--surface-2);border:none;width:34px;height:34px;border-radius:8px;font-size:18px;color:var(--muted);transition:.15s}
   .x:hover{background:var(--danger-l);color:var(--danger)}
 
   /* Forms */
@@ -161,11 +165,11 @@
   .field input,.field select,.field textarea{
     width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-2);transition:.15s;
   }
-  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-l)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);background:var(--surface-2);box-shadow:0 0 0 3px var(--primary-l)}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 
-  .info-box{background:var(--info-l);border:1px solid #bfdbfe;color:#1e40af;border-radius:12px;padding:14px 16px;font-size:13.5px;display:flex;gap:10px;align-items:flex-start}
+  .info-box{background:var(--info-l);border:1px solid var(--border);color:var(--info);border-radius:12px;padding:14px 16px;font-size:13.5px;display:flex;gap:10px;align-items:flex-start}
   .formula{background:var(--surface-2);border:1px dashed var(--border);border-radius:10px;padding:12px 15px;font-size:14px;color:var(--text);margin-top:6px;line-height:1.9}
   .formula b{color:var(--primary-d)}
 
@@ -197,21 +201,21 @@
   @media print{body{background:#fff}.no-print{display:none!important}}
 
   /* مزامنة سحابية + شاشة رمز الدخول */
-  .sync-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid var(--border);color:var(--text);white-space:nowrap;transition:.15s}
+  .sync-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid var(--border);color:var(--text);white-space:nowrap;transition:.15s}
   .sync-badge.ok{background:var(--success-l);color:var(--success);border-color:transparent}
   .sync-badge.off{background:var(--warning-l);color:var(--warning);border-color:transparent}
   .sync-badge:hover{filter:brightness(1.06)}
-  .overlay.gate{background:linear-gradient(135deg,var(--primary),var(--primary-d));z-index:200}
-  .gatebox{background:#fff;border-radius:22px;box-shadow:0 24px 64px rgba(0,0,0,.35);padding:38px 32px;width:100%;max-width:410px;text-align:center}
+  .overlay.gate{background:var(--bg);z-index:200}
+  .gatebox{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:38px 32px;width:100%;max-width:410px;text-align:center}
   .gate-logo{margin-bottom:8px;display:flex;justify-content:center}
-  .gate-logo svg{width:52px;height:52px;color:var(--primary)}
-  .gatebox h2{font-size:21px;font-weight:800;color:var(--text);margin-bottom:8px}
+  .gate-logo svg{width:44px;height:44px;color:var(--primary)}
+  .gatebox h2{font-family:var(--font-serif);font-size:22px;font-weight:600;color:var(--text);margin-bottom:8px}
   .gatebox p{color:var(--muted);font-size:14px;margin-bottom:18px}
-  .gate-hint{color:var(--primary-d);font-size:12.5px;font-weight:600}
-  #gate-code{width:100%;padding:14px 15px;border:1.5px solid var(--border);border-radius:13px;background:var(--surface-2);font-size:17px;text-align:center;letter-spacing:3px;margin-bottom:14px}
-  #gate-code:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px var(--primary-l)}
+  .gate-hint{color:var(--primary);font-size:12.5px;font-weight:600}
+  #gate-code{width:100%;padding:14px 15px;border:1.5px solid var(--border);border-radius:13px;background:var(--surface-2);color:var(--text);font-size:17px;text-align:center;letter-spacing:3px;margin-bottom:14px}
+  #gate-code:focus{outline:none;border-color:var(--primary);background:var(--surface-2);box-shadow:0 0 0 3px var(--primary-l)}
   .gate-btn{width:100%;justify-content:center;padding:14px;font-size:15px}
-  .gate-foot{margin-top:18px;font-size:12px;color:#94a3b8;line-height:1.7}
+  .gate-foot{margin-top:18px;font-size:12px;color:var(--muted);line-height:1.7}
 
   /* أيقونات SVG (مستوحاة من هوية مبيت البصرية) */
   .page-head h1{display:flex;align-items:center;gap:10px}
@@ -755,16 +759,16 @@ function viewAccounting(){
     <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية${filterBuilding?' — '+esc(filterBuilding.name):''} — ${modeLbl}</div></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label style="font-weight:700;font-size:13px">السنة:</label>
-      <select onchange="acctYear=parseInt(this.value);render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-weight:700">
+      <select onchange="acctYear=parseInt(this.value);render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--text);font-weight:700">
         ${years.map(yy=>`<option value="${yy}" ${yy===y?'selected':''}>${yy}</option>`).join('')}
       </select>
       <label style="font-weight:700;font-size:13px">العقار:</label>
-      <select onchange="acctBuildingId=this.value||null;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-weight:700">
+      <select onchange="acctBuildingId=this.value||null;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--text);font-weight:700">
         <option value="" ${!bId?'selected':''}>كل العقارات</option>
         ${db.buildings.map(b=>`<option value="${b.id}" ${bId===b.id?'selected':''}>${esc(b.name)}</option>`).join('')}
       </select>
       <label style="font-weight:700;font-size:13px">أساس الحساب:</label>
-      <select onchange="acctMode=this.value;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-weight:700">
+      <select onchange="acctMode=this.value;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--text);font-weight:700">
         <option value="contracts" ${mode==='contracts'?'selected':''}>القيمة حسب العقود</option>
         <option value="annual" ${mode==='annual'?'selected':''}>القيمة الإجمالية السنوية</option>
       </select>
@@ -1318,9 +1322,9 @@ function openUnit(uId){
   </div>`;
 
   h+=`<div class="detail-grid" style="margin-top:14px">
-    <div class="dcell" style="background:var(--success-l);border-color:#bbf7d0"><div class="t">المحصّل</div><div class="v" style="color:var(--success)">${fmtMoney(t.paid)}</div></div>
-    <div class="dcell" style="background:var(--warning-l);border-color:#fde68a"><div class="t">المتبقّي</div><div class="v" style="color:var(--warning)">${fmtMoney(t.remaining)}</div></div>
-    ${t.overdue?`<div class="dcell" style="background:var(--danger-l);border-color:#fecaca"><div class="t">متأخرات</div><div class="v" style="color:var(--danger)">${fmtMoney(t.overdue)}</div></div>`:''}
+    <div class="dcell" style="background:var(--success-l);border-color:rgba(48,209,88,.35)"><div class="t">المحصّل</div><div class="v" style="color:var(--success)">${fmtMoney(t.paid)}</div></div>
+    <div class="dcell" style="background:var(--warning-l);border-color:rgba(245,105,0,.35)"><div class="t">المتبقّي</div><div class="v" style="color:var(--warning)">${fmtMoney(t.remaining)}</div></div>
+    ${t.overdue?`<div class="dcell" style="background:var(--danger-l);border-color:rgba(255,69,58,.35)"><div class="t">متأخرات</div><div class="v" style="color:var(--danger)">${fmtMoney(t.overdue)}</div></div>`:''}
     <div class="dcell"><div class="t">نسبة السداد</div><div class="v">${pct}%</div><div class="pbar" style="margin-top:6px"><span style="width:${pct}%"></span></div></div>
   </div>`;
 
@@ -1422,7 +1426,7 @@ function openPartialPay(uId,pId){
       <div class="detail-grid" style="margin-bottom:14px">
         <div class="dcell"><div class="t">إجمالي الدفعة</div><div class="v">${fmtMoney(p.amount)}</div></div>
         <div class="dcell"><div class="t">مسدّد سابقًا</div><div class="v">${fmtMoney(p.paidAmount||0)}</div></div>
-        <div class="dcell" style="background:var(--warning-l);border-color:#fde68a"><div class="t">المتبقي</div><div class="v" style="color:var(--warning)">${fmtMoney(rest)}</div></div>
+        <div class="dcell" style="background:var(--warning-l);border-color:rgba(245,105,0,.35)"><div class="t">المتبقي</div><div class="v" style="color:var(--warning)">${fmtMoney(rest)}</div></div>
       </div>
       <div class="row2">
         <div class="field"><label>المبلغ المدفوع الآن ( ${db.settings.currency} ) *</label><input type="number" id="pp-amount" value="${rest}" min="1" max="${rest}"></div>
@@ -1619,7 +1623,7 @@ function openChangeTenant(uId){
   const n=(u.payments||[]).length;
   openModal(`<div class="modal"><div class="modal-head"><h3>🔄 تغيير المستأجر</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
     <div class="modal-body">
-      <div class="info-box" style="background:var(--warning-l);border-color:#fde68a;color:#92400e">⚠️ <div>سيتم <b>أرشفة المستأجر الحالي «${esc(u.tenantName||'')}»</b> مع كامل دفعاته (${n} دفعة) في «المستأجرون السابقون»، ثم إنشاء عقد جديد. لن تُفقد أي بيانات.</div></div>
+      <div class="info-box" style="background:var(--warning-l);border-color:rgba(245,105,0,.35);color:var(--warning)">⚠️ <div>سيتم <b>أرشفة المستأجر الحالي «${esc(u.tenantName||'')}»</b> مع كامل دفعاته (${n} دفعة) في «المستأجرون السابقون»، ثم إنشاء عقد جديد. لن تُفقد أي بيانات.</div></div>
       <div class="row2">
         <div class="field"><label>اسم المستأجر الجديد *</label><input id="ct-name" placeholder="الاسم"></div>
         <div class="field"><label>الجوال</label><input id="ct-phone" placeholder="05xxxxxxxx"></div>
@@ -1728,7 +1732,7 @@ function openEndContract(uId){
   const u=db.units.find(x=>x.id===uId); if(!u) return;
   openModal(`<div class="modal"><div class="modal-head"><h3>🚪 إنهاء العقد وخروج المستأجر</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
     <div class="modal-body">
-      <div class="info-box" style="background:var(--danger-l);border-color:#fecaca;color:#991b1b">⚠️ <div>سيتم إنهاء عقد <b>«${esc(u.tenantName||'')}»</b> وأرشفته مع كامل دفعاته (${(u.payments||[]).length} دفعة) في «المستأجرون السابقون»، وستصبح الوحدة <b>شاغرة</b>. يمكنك لاحقًا إضافة مستأجر جديد أو تجديد العقد من نفس الوحدة.</div></div>
+      <div class="info-box" style="background:var(--danger-l);border-color:rgba(255,69,58,.35);color:var(--danger)">⚠️ <div>سيتم إنهاء عقد <b>«${esc(u.tenantName||'')}»</b> وأرشفته مع كامل دفعاته (${(u.payments||[]).length} دفعة) في «المستأجرون السابقون»، وستصبح الوحدة <b>شاغرة</b>. يمكنك لاحقًا إضافة مستأجر جديد أو تجديد العقد من نفس الوحدة.</div></div>
       <div class="field"><label>تاريخ الخروج / إنهاء العقد</label><input type="date" id="ec-date" value="${todayISO()}"></div>
     </div>
     <div class="modal-foot">
@@ -1755,7 +1759,7 @@ function viewTenancy(uId,idx){
     <div class="dcell"><div class="t">الجوال</div><div class="v">${esc(tn.tenantPhone||'—')}</div></div>
     <div class="dcell"><div class="t">الإيجار الكامل</div><div class="v">${fmtMoney(tn.rentAmount||tn.quarterlyRent)}</div></div>
     <div class="dcell"><div class="t">الفترة</div><div class="v" style="font-size:13px">${fmtDate(tn.contractStart)} — ${fmtDate(addMonths(tn.contractStart,tn.durationMonths||12))}</div></div>
-    <div class="dcell" style="background:var(--success-l);border-color:#bbf7d0"><div class="t">المحصّل</div><div class="v" style="color:var(--success)">${fmtMoney(tt.paid)}</div></div>
+    <div class="dcell" style="background:var(--success-l);border-color:rgba(48,209,88,.35)"><div class="t">المحصّل</div><div class="v" style="color:var(--success)">${fmtMoney(tt.paid)}</div></div>
   </div>`;
   h+=`<table style="margin-top:14px"><thead><tr><th>#</th><th>الاستحقاق</th><th>المبلغ</th><th>الحالة</th><th>السداد</th><th></th></tr></thead><tbody>`;
   (tn.payments||[]).forEach(p=>{ const paid=p.status==='paid'; const partial=p.status==='partial';
@@ -1914,7 +1918,7 @@ function openGuide(){
         .gsec-b ul,.gsec-b ol{margin:0;padding-inline-start:20px}
         .gsec-b li{margin-bottom:6px}
         .gsec-b b{color:var(--primary-d)}
-        .gsec-b .tip{background:var(--info-l);border-radius:8px;padding:8px 11px;margin-top:9px;color:#1e40af;font-size:12.8px}
+        .gsec-b .tip{background:var(--info-l);border-radius:8px;padding:8px 11px;margin-top:9px;color:var(--info);font-size:12.8px}
         .gsec-ar{transition:.2s;color:var(--muted);font-size:13px;flex:none}
       </style>
       <div class="info-box" style="margin-bottom:12px">📖 <div><b>نظام إدارة الإيجارات</b> — دليل كامل لإدارة العقارات والوحدات ومتابعة الدفعات بدوريات متعددة، مع مزامنة سحابية وإرسال واتساب. اضغط أي قسم لفتحه.</div></div>
