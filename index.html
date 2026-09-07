@@ -502,9 +502,10 @@ function viewDashboard(){
 
   return h;
 }
-function stat(c,ic,val,lbl,action){
+function stat(c,ic,val,lbl,action,extra){
   return `<div class="stat${action?' clickable':''}"${action?` onclick="${action}"`:''}>
     <div class="ic ${c}">${ic}</div><div class="val">${val}</div><div class="lbl">${lbl}</div>
+    ${extra||''}
     ${action?'<div class="stat-go">عرض ›</div>':''}</div>`;
 }
 function scrollToPanel(id){
@@ -705,11 +706,13 @@ function viewAccounting(){
       <button class="btn btn-primary" onclick="exportAccountingPDF(${y},${bId?`'${bId}'`:'null'},'${mode}')">📄 تقرير PDF</button>
     </div></div>`;
 
+  const rateColor = yr.rate>=90?'green':yr.rate>=70?'amber':'red';
+  const rateWarn = yr.rate<90 ? `<div style="margin-top:5px;font-size:11px;font-weight:800;color:${yr.rate<70?'var(--danger)':'var(--warning)'}">⚠️ ${yr.rate<70?'يحتاج متابعة':'تحتاج تحسين'}</div>` : '';
   h+=`<div class="stats">
     ${stat('blue','📊',fmtMoney(yr.expected),'المستحق السنوي')}
     ${stat('green','✅',fmtMoney(yr.collected),'المحصّل')}
     ${stat('amber','⏳',fmtMoney(yr.outstanding),'المتبقّي')}
-    ${stat('teal','📈',yr.rate+'%','نسبة التحصيل')}
+    ${stat(rateColor,'📈',yr.rate+'%','نسبة التحصيل',null,rateWarn)}
     ${stat('red','💸',fmtMoney(yr.expenses),'المصروفات')}
     ${stat(yr.net>=0?'green':'red','💰',fmtMoney(yr.net),'صافي الدخل')}
   </div>`;
