@@ -250,8 +250,17 @@ function normalize(d){
     if(u.quarterlyRent!==undefined && u.rentAmount===undefined) u.rentAmount=u.quarterlyRent;
     u.rentAmount=u.rentAmount||0; u.paymentPeriod=u.paymentPeriod||'quarterly'; u.electricityMeter=u.electricityMeter||'';
     u.contractNumber=u.contractNumber||'';
+    u.payments.forEach(normalizePayment);
+    u.history.forEach(tn=>{ (tn.payments||[]).forEach(normalizePayment); });
   });
   return d;
+}
+/* يضمن وجود حقول الدفع الجزئي على كل دفعة (توافقًا مع البيانات القديمة) */
+function normalizePayment(p){
+  p.paymentsLog = p.paymentsLog || [];
+  if(p.paidAmount===undefined) p.paidAmount = p.status==='paid' ? (p.amount||0) : 0;
+  if(p.status!=='paid' && p.status!=='partial') p.status='unpaid';
+  return p;
 }
 function loadLocal(){
   try{ const raw = localStorage.getItem(STORAGE_KEY); db = raw ? JSON.parse(raw) : defaults(); }
@@ -344,7 +353,7 @@ function buildSchedule(unit){
   for(let i=0;i<count;i++){
     const due=addMonths(unit.contractStart,i*mos);
     const ex=prev[due];
-    list.push({id:ex?ex.id:uid(),n:i+1,dueDate:due,amount:periodAmount(unit),status:ex?ex.status:'unpaid',paidDate:ex?ex.paidDate:null});
+    list.push({id:ex?ex.id:uid(),n:i+1,dueDate:due,amount:periodAmount(unit),status:ex?ex.status:'unpaid',paidDate:ex?ex.paidDate:null,paidAmount:ex?(ex.paidAmount||0):0,paymentsLog:ex?(ex.paymentsLog||[]):[]});
   }
   return list;
 }
@@ -359,13 +368,15 @@ function unitsOf(bId){ return db.units.filter(u=>u.buildingId===bId); }
 function nextUnpaid(unit){
   return (unit.payments||[]).filter(p=>p.status!=='paid').sort((a,b)=>a.dueDate<b.dueDate?-1:1)[0]||null;
 }
+function remainingAmt(p){ return Math.max(0,(p.amount||0)-(p.paidAmount||0)); }
 function unitTotals(unit){
   const ps=unit.payments||[];
-  const paid=ps.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const paid=ps.reduce((s,p)=>s+(p.paidAmount||0),0);
   const total=ps.reduce((s,p)=>s+p.amount,0);
-  const overdue=ps.filter(p=>payStatus(p)==='overdue').reduce((s,p)=>s+p.amount,0);
+  const overdue=ps.filter(p=>payStatus(p)==='overdue').reduce((s,p)=>s+remainingAmt(p),0);
   return {paid,total,remaining:total-paid,overdue,
-    overdueCount:ps.filter(p=>payStatus(p)==='overdue').length};
+    overdueCount:ps.filter(p=>payStatus(p)==='overdue').length,
+    partialCount:ps.filter(p=>p.status==='partial').length};
 }
 
 /* ============================ التنقل والعرض ============================ */
@@ -389,7 +400,7 @@ function viewDashboard(){
 
   const overdue=allPayments.filter(p=>payStatus(p)==='overdue').sort((a,b)=>a.dueDate<b.dueDate?-1:1);
   const dueSoon=allPayments.filter(p=>payStatus(p)==='due').sort((a,b)=>a.dueDate<b.dueDate?-1:1);
-  const totalCollected=allPayments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const totalCollected=allPayments.reduce((s,p)=>s+(p.paidAmount||0),0);
   const totalDue=overdue.reduce((s,p)=>s+p.amount,0)+dueSoon.reduce((s,p)=>s+p.amount,0);
 
   // عقارات قريبة التسليم
@@ -422,18 +433,22 @@ function viewDashboard(){
 
   // متأخرات
   h+=`<div class="panel" id="p-overdue"><div class="panel-head"><h2>⚠️ دفعات متأخرة</h2>
-    <span class="count">${overdue.length} دفعة • ${fmtMoney(overdue.reduce((s,p)=>s+p.amount,0))}</span></div>`;
+    <span class="count">${overdue.length} دفعة • ${fmtMoney(overdue.reduce((s,p)=>s+remainingAmt(p),0))}</span></div>`;
   if(overdue.length===0) h+=`<div class="panel-body pad" style="color:var(--success);font-weight:700">🎉 لا توجد دفعات متأخرة، كل شيء على ما يرام.</div>`;
   else{
-    h+=`<div class="panel-body"><table><thead><tr><th>العقار</th><th>الوحدة</th><th>المستأجر</th><th>تاريخ الاستحقاق</th><th>التأخير</th><th>المبلغ</th><th></th></tr></thead><tbody>`;
-    overdue.slice(0,12).forEach(p=>{ h+=`<tr class="rowlink" onclick="openUnit('${p.unit.id}')">
-      <td>${esc(p.building?p.building.name:'—')}</td>
-      <td>${esc(p.unit.name)}</td>
-      <td>${esc(p.unit.tenantName||'—')}</td>
-      <td>${fmtDate(p.dueDate)}</td>
-      <td><span class="badge b-red">متأخر ${Math.abs(daysFromToday(p.dueDate))} يوم</span></td>
-      <td style="font-weight:700">${fmtMoney(p.amount)}</td>
-      <td><button class="btn btn-sm btn-primary" onclick="openUnit('${p.unit.id}')">فتح</button></td>
+    h+=`<div class="panel-body"><table><thead><tr><th>العقار</th><th>الوحدة</th><th>المستأجر</th><th>تاريخ الاستحقاق</th><th>التأخير</th><th>المبلغ المتبقي</th><th></th></tr></thead><tbody>`;
+    overdue.slice(0,12).forEach(p=>{ h+=`<tr>
+      <td class="rowlink" onclick="openUnit('${p.unit.id}')">${esc(p.building?p.building.name:'—')}</td>
+      <td class="rowlink" onclick="openUnit('${p.unit.id}')">${esc(p.unit.name)}</td>
+      <td class="rowlink" onclick="openUnit('${p.unit.id}')">${esc(p.unit.tenantName||'—')}</td>
+      <td class="rowlink" onclick="openUnit('${p.unit.id}')">${fmtDate(p.dueDate)}</td>
+      <td class="rowlink" onclick="openUnit('${p.unit.id}')"><span class="badge b-red">متأخر ${Math.abs(daysFromToday(p.dueDate))} يوم</span>${p.status==='partial'?'<div class="muted">دفع جزئي</div>':''}</td>
+      <td style="font-weight:700" class="rowlink" onclick="openUnit('${p.unit.id}')">${fmtMoney(remainingAmt(p))}</td>
+      <td><div style="display:flex;gap:5px;justify-content:flex-end">
+        <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">💰</button>
+        <button class="btn btn-sm btn-primary" onclick="openUnit('${p.unit.id}')">فتح</button>
+        <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">🚪</button>
+      </div></td>
     </tr>`; });
     h+=`</tbody></table></div>`;
   }
@@ -443,13 +458,17 @@ function viewDashboard(){
   if(dueSoon.length){
     h+=`<div class="panel" id="p-duesoon"><div class="panel-head"><h2>⏰ دفعات قريبة الاستحقاق (خلال ${db.settings.paymentReminderDays} يوم)</h2>
       <span class="count">${dueSoon.length} دفعة</span></div><div class="panel-body"><table>
-      <thead><tr><th>العقار</th><th>الوحدة</th><th>المستأجر</th><th>تاريخ الاستحقاق</th><th>باقٍ</th><th>المبلغ</th><th></th></tr></thead><tbody>`;
-    dueSoon.slice(0,12).forEach(p=>{ h+=`<tr class="rowlink" onclick="openUnit('${p.unit.id}')">
-      <td>${esc(p.building?p.building.name:'—')}</td><td>${esc(p.unit.name)}</td>
-      <td>${esc(p.unit.tenantName||'—')}</td><td>${fmtDate(p.dueDate)}</td>
-      <td><span class="badge b-amber">بعد ${daysFromToday(p.dueDate)} يوم</span></td>
-      <td style="font-weight:700">${fmtMoney(p.amount)}</td>
-      <td><button class="btn btn-sm btn-primary" onclick="openUnit('${p.unit.id}')">فتح</button></td>
+      <thead><tr><th>العقار</th><th>الوحدة</th><th>المستأجر</th><th>تاريخ الاستحقاق</th><th>باقٍ</th><th>المبلغ المتبقي</th><th></th></tr></thead><tbody>`;
+    dueSoon.slice(0,12).forEach(p=>{ h+=`<tr>
+      <td class="rowlink" onclick="openUnit('${p.unit.id}')">${esc(p.building?p.building.name:'—')}</td><td class="rowlink" onclick="openUnit('${p.unit.id}')">${esc(p.unit.name)}</td>
+      <td class="rowlink" onclick="openUnit('${p.unit.id}')">${esc(p.unit.tenantName||'—')}</td><td class="rowlink" onclick="openUnit('${p.unit.id}')">${fmtDate(p.dueDate)}</td>
+      <td class="rowlink" onclick="openUnit('${p.unit.id}')"><span class="badge b-amber">بعد ${daysFromToday(p.dueDate)} يوم</span>${p.status==='partial'?'<div class="muted">دفع جزئي</div>':''}</td>
+      <td style="font-weight:700" class="rowlink" onclick="openUnit('${p.unit.id}')">${fmtMoney(remainingAmt(p))}</td>
+      <td><div style="display:flex;gap:5px;justify-content:flex-end">
+        <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">💰</button>
+        <button class="btn btn-sm btn-primary" onclick="openUnit('${p.unit.id}')">فتح</button>
+        <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">🚪</button>
+      </div></td>
     </tr>`; });
     h+=`</tbody></table></div></div>`;
   }
@@ -474,7 +493,8 @@ function viewDashboard(){
       <td>${esc(x.u.tenantName||'—')}</td>
       <td><span class="badge ${expired||x.days<=14?'b-red':'b-amber'}">${expired?'منتهي منذ '+Math.abs(x.days)+' يوم':'بعد '+x.days+' يوم'}</span></td>
       <td><div style="display:flex;gap:5px;justify-content:flex-end">
-        <button class="btn btn-sm btn-primary" onclick="openRenewContract('${x.u.id}')" title="تجديد العقد">🔁 تجديد</button>
+        <button class="btn btn-sm btn-primary" onclick="openRenewContract('${x.u.id}')" title="تجديد العقد — تظهر كل بيانات المستأجر الحالية معبّأة مسبقًا">🔁 تجديد</button>
+        <button class="btn btn-sm" onclick="openUnitForm('${x.u.buildingId}','${x.u.id}')" title="تعديل العقد الحالي">✏️ تعديل</button>
         ${expired?`<button class="btn btn-sm btn-danger" onclick="openEndContract('${x.u.id}')" title="إنهاء وخروج">🚪 إنهاء</button>`:''}
       </div></td></tr>`; });
     h+=`</tbody></table>`; }
@@ -509,7 +529,7 @@ function viewPaymentsFilter(){
     });
   });
   allDue.sort((a,b)=>a.dueDate<b.dueDate?-1:1);
-  const total=allDue.reduce((s,p)=>s+p.amount,0);
+  const total=allDue.reduce((s,p)=>s+remainingAmt(p),0);
   const filterMap={30:'شهري (30 يوم)',90:'3 أشهر (90 يوم)',180:'6 أشهر (180 يوم)'};
   let h=`<div class="page-head no-print"><div><h1>📋 جدول المستحقات</h1>
     <div class="sub">الدفعات المستحقة خلال الفترة المحددة — ${fmtDate(todayISO())}</div></div>
@@ -521,7 +541,7 @@ function viewPaymentsFilter(){
     h+=`<div class="panel-body pad" style="color:var(--success);font-weight:700">✅ لا توجد دفعات مستحقة في هذه الفترة.</div>`;
   } else {
     h+=`<div class="panel-body"><table>
-      <thead><tr><th>المستأجر</th><th>الجوال</th><th>العقار</th><th>الوحدة</th><th>رقم الدفعة</th><th>تاريخ الاستحقاق</th><th>المبلغ</th><th>باقٍ</th><th class="no-print"></th></tr></thead><tbody>`;
+      <thead><tr><th>المستأجر</th><th>الجوال</th><th>العقار</th><th>الوحدة</th><th>رقم الدفعة</th><th>تاريخ الاستحقاق</th><th>المبلغ المتبقي</th><th>باقٍ</th><th class="no-print"></th></tr></thead><tbody>`;
     allDue.forEach(p=>{
       const d=daysFromToday(p.dueDate);
       h+=`<tr>
@@ -531,11 +551,13 @@ function viewPaymentsFilter(){
         <td>${esc(p.unit.name)}</td>
         <td style="font-weight:700;text-align:center">${p.n}</td>
         <td>${fmtDate(p.dueDate)}</td>
-        <td style="font-weight:700">${fmtMoney(p.amount)}</td>
+        <td style="font-weight:700">${fmtMoney(remainingAmt(p))}${p.status==='partial'?'<div class="muted">من أصل '+fmtMoney(p.amount)+'</div>':''}</td>
         <td><span class="badge ${d===0?'b-red':d<=7?'b-amber':'b-blue'}">بعد ${d} يوم</span></td>
         <td class="no-print"><div style="display:flex;gap:5px">
+          <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">💰</button>
           <button class="btn btn-sm" onclick="printDueNotice('${p.unit.id}','${p.id}')" title="طباعة">🖨️</button>
           ${p.unit.tenantPhone?`<button class="btn btn-sm" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')">💬</button>`:''}
+          <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">🚪</button>
         </div></td>
       </tr>`;
     });
@@ -550,7 +572,7 @@ function sendPaymentWhatsApp(uId,pId){
   const b=db.buildings.find(x=>x.id===u.buildingId);
   const p=(u.payments||[]).find(x=>x.id===pId); if(!p) return;
   const d=daysFromToday(p.dueDate);
-  const msg=`السلام عليكم ${u.tenantName||''}،\nنود تذكيركم بموعد سداد إيجار\n${b.name} — ${u.name}\n\nالدفعة رقم: ${p.n}\nتاريخ الاستحقاق: ${fmtDate(p.dueDate)}\nالمبلغ: ${fmtMoney(p.amount)}\n${d>0?'المتبقي: '+d+' يوم':d===0?'مستحقة اليوم ⚠️':'متأخرة '+Math.abs(d)+' يوم ⚠️'}\n\nشكرًا لتعاملكم معنا.`;
+  const msg=`السلام عليكم ${u.tenantName||''}،\nنود تذكيركم بموعد سداد إيجار\n${b.name} — ${u.name}\n\nالدفعة رقم: ${p.n}\nتاريخ الاستحقاق: ${fmtDate(p.dueDate)}\nالمبلغ المتبقي: ${fmtMoney(remainingAmt(p))}${p.status==='partial'?' (من أصل '+fmtMoney(p.amount)+')':''}\n${d>0?'المتبقي: '+d+' يوم':d===0?'مستحقة اليوم ⚠️':'متأخرة '+Math.abs(d)+' يوم ⚠️'}\n\nشكرًا لتعاملكم معنا.`;
   openWhatsApp(u.tenantPhone,msg);
 }
 function printDueNotice(uId,pId){
@@ -558,7 +580,7 @@ function printDueNotice(uId,pId){
   const b=db.buildings.find(x=>x.id===u.buildingId);
   const p=(u.payments||[]).find(x=>x.id===pId); if(!p) return;
   const d=daysFromToday(p.dueDate);
-  const waMsg=`إشعار استحقاق دفعة إيجار\n${b.name} — ${u.name}\nالمستأجر: ${u.tenantName||''}\nالدفعة رقم: ${p.n}\nتاريخ الاستحقاق: ${fmtDate(p.dueDate)}\nالمبلغ: ${fmtMoney(p.amount)}`;
+  const waMsg=`إشعار استحقاق دفعة إيجار\n${b.name} — ${u.name}\nالمستأجر: ${u.tenantName||''}\nالدفعة رقم: ${p.n}\nتاريخ الاستحقاق: ${fmtDate(p.dueDate)}\nالمبلغ المتبقي: ${fmtMoney(remainingAmt(p))}${p.status==='partial'?' (من أصل '+fmtMoney(p.amount)+')':''}`;
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>إشعار استحقاق</title>
   <style>*{font-family:'Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}body{padding:40px;color:#0f172a}
@@ -584,7 +606,8 @@ function printDueNotice(uId,pId){
     <div class="line"><span class="l">الدفعة رقم</span><span class="v">${p.n}</span></div>
     <div class="line"><span class="l">تاريخ الاستحقاق</span><span class="v">${fmtDate(p.dueDate)}</span></div>
     <div class="line"><span class="l">المتبقي للاستحقاق</span><span class="v">${d===0?'مستحقة اليوم':d>0?'بعد '+d+' يوم':'متأخرة '+Math.abs(d)+' يوم'}</span></div>
-    <div class="amount"><div class="big">${fmtMoney(p.amount)}</div></div>
+    ${p.status==='partial'?`<div class="line"><span class="l">إجمالي الدفعة</span><span class="v">${fmtMoney(p.amount)}</span></div><div class="line"><span class="l">مسدّد سابقًا</span><span class="v">${fmtMoney(p.paidAmount||0)}</span></div>`:''}
+    <div class="amount"><div class="big">${fmtMoney(remainingAmt(p))}</div></div>
   </div>
   <div style="text-align:center;font-size:12px;color:#94a3b8;margin-top:16px">صدر من نظام إدارة الإيجارات • ${fmtDate(todayISO())}</div>
   </body></html>`);
@@ -593,6 +616,7 @@ function printDueNotice(uId,pId){
 
 /* ============================ المحاسبة ============================ */
 let acctYear = null;
+let acctBuildingId = null; // null = كل العقارات
 function yearOf(iso){ return iso ? parseInt(iso.slice(0,4)) : null; }
 function quarterOf(iso){ return iso ? Math.floor((parseInt(iso.slice(5,7))-1)/3)+1 : null; }
 function allYears(){
@@ -613,8 +637,8 @@ function acct(year, quarter, buildingId){
       if(yearOf(p.dueDate)!==year) return;
       if(quarter && quarterOf(p.dueDate)!==quarter) return;
       expected += p.amount;
-      if(p.status==='paid') collected += p.amount;
-      else if(daysFromToday(p.dueDate)<0) overdue += p.amount;
+      collected += (p.paidAmount||0);
+      if(p.status!=='paid' && daysFromToday(p.dueDate)<0) overdue += (p.amount-(p.paidAmount||0));
     });
   });
   let expenses=0;
@@ -636,18 +660,25 @@ function viewAccounting(){
   const years=allYears();
   const nowY=new Date().getFullYear();
   if(!acctYear || years.indexOf(acctYear)<0) acctYear = years.indexOf(nowY)>=0 ? nowY : years[0];
-  const y=acctYear;
-  const yr=acct(y,null,null);
+  if(acctBuildingId && !db.buildings.find(x=>x.id===acctBuildingId)) acctBuildingId=null;
+  const y=acctYear, bId=acctBuildingId;
+  const filterBuilding=bId?db.buildings.find(x=>x.id===bId):null;
+  const yr=acct(y,null,bId);
 
   let h=`<div class="page-head"><div><h1>🧮 المحاسبة</h1>
-    <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية</div></div>
+    <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية${filterBuilding?' — '+esc(filterBuilding.name):''}</div></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label style="font-weight:700;font-size:13px">السنة:</label>
       <select onchange="acctYear=parseInt(this.value);render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-weight:700">
         ${years.map(yy=>`<option value="${yy}" ${yy===y?'selected':''}>${yy}</option>`).join('')}
       </select>
-      <button class="btn" onclick="exportAccountingCSV(${y})">📊 تصدير Excel</button>
-      <button class="btn btn-primary" onclick="exportAccountingPDF(${y})">📄 تقرير PDF</button>
+      <label style="font-weight:700;font-size:13px">العقار:</label>
+      <select onchange="acctBuildingId=this.value||null;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-weight:700">
+        <option value="" ${!bId?'selected':''}>كل العقارات</option>
+        ${db.buildings.map(b=>`<option value="${b.id}" ${bId===b.id?'selected':''}>${esc(b.name)}</option>`).join('')}
+      </select>
+      <button class="btn" onclick="exportAccountingCSV(${y},${bId?`'${bId}'`:'null'})">📊 تصدير Excel</button>
+      <button class="btn btn-primary" onclick="exportAccountingPDF(${y},${bId?`'${bId}'`:'null'})">📄 تقرير PDF</button>
     </div></div>`;
 
   h+=`<div class="stats">
@@ -660,9 +691,9 @@ function viewAccounting(){
   </div>`;
 
   const qNames=['الربع الأول (يناير–مارس)','الربع الثاني (أبريل–يونيو)','الربع الثالث (يوليو–سبتمبر)','الربع الرابع (أكتوبر–ديسمبر)'];
-  h+=`<div class="panel"><div class="panel-head"><h2>📅 التفصيل الربع سنوي — ${y}</h2></div><div class="panel-body">
+  h+=`<div class="panel"><div class="panel-head"><h2>📅 التفصيل الربع سنوي — ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}</h2></div><div class="panel-body">
     <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>نسبة التحصيل</th><th>المصروفات</th><th>الصافي</th></tr></thead><tbody>`;
-  for(let q=1;q<=4;q++){ const a=acct(y,q,null);
+  for(let q=1;q<=4;q++){ const a=acct(y,q,bId);
     h+=`<tr>
       <td style="font-weight:700">${qNames[q-1]}</td>
       <td>${fmtMoney(a.expected)}</td>
@@ -680,24 +711,26 @@ function viewAccounting(){
       <td style="color:${yr.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(yr.net)}</td></tr>`;
   h+=`</tbody></table></div></div>`;
 
-  h+=`<div class="panel"><div class="panel-head"><h2>🏢 حسب العقار — ${y}</h2></div><div class="panel-body">
-    <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th></tr></thead><tbody>`;
-  db.buildings.forEach(b=>{ const a=acct(y,null,b.id);
-    h+=`<tr onclick="go('building','${b.id}')" style="cursor:pointer">
-      <td style="font-weight:700">${esc(b.name)}</td>
-      <td>${fmtMoney(a.expected)}</td>
-      <td style="color:var(--success)">${fmtMoney(a.collected)}</td>
-      <td style="color:${a.outstanding>0?'var(--warning)':'var(--muted)'}">${fmtMoney(a.outstanding)}</td>
-      <td style="color:var(--danger)">${a.expenses?fmtMoney(a.expenses):'—'}</td>
-      <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td>
-      <td>${rateBar(a.rate)}</td></tr>`;
-  });
-  h+=`</tbody></table></div></div>`;
+  if(!filterBuilding){
+    h+=`<div class="panel"><div class="panel-head"><h2>🏢 حسب العقار — ${y}</h2></div><div class="panel-body">
+      <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th></tr></thead><tbody>`;
+    db.buildings.forEach(b=>{ const a=acct(y,null,b.id);
+      h+=`<tr onclick="go('building','${b.id}')" style="cursor:pointer">
+        <td style="font-weight:700">${esc(b.name)}</td>
+        <td>${fmtMoney(a.expected)}</td>
+        <td style="color:var(--success)">${fmtMoney(a.collected)}</td>
+        <td style="color:${a.outstanding>0?'var(--warning)':'var(--muted)'}">${fmtMoney(a.outstanding)}</td>
+        <td style="color:var(--danger)">${a.expenses?fmtMoney(a.expenses):'—'}</td>
+        <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td>
+        <td>${rateBar(a.rate)}</td></tr>`;
+    });
+    h+=`</tbody></table></div></div>`;
+  }
 
   if(years.length>1){
-    const maxC=Math.max(...years.map(yy=>acct(yy,null,null).collected),1);
-    h+=`<div class="panel"><div class="panel-head"><h2>📈 المحصّل عبر السنوات</h2></div><div class="panel-body pad">`;
-    years.slice().sort((a,b)=>a-b).forEach(yy=>{ const c=acct(yy,null,null).collected;
+    const maxC=Math.max(...years.map(yy=>acct(yy,null,bId).collected),1);
+    h+=`<div class="panel"><div class="panel-head"><h2>📈 المحصّل عبر السنوات${filterBuilding?' — '+esc(filterBuilding.name):''}</h2></div><div class="panel-body pad">`;
+    years.slice().sort((a,b)=>a-b).forEach(yy=>{ const c=acct(yy,null,bId).collected;
       h+=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <div style="width:54px;font-weight:700;${yy===y?'color:var(--primary-d)':''}">${yy}</div>
         <div style="flex:1;background:var(--surface-2);border-radius:8px;height:26px;overflow:hidden;border:1px solid var(--border)">
@@ -707,11 +740,11 @@ function viewAccounting(){
     h+=`</div></div>`;
   }
 
-  const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===y).sort((a,b)=>a.date<b.date?1:-1);
-  h+=`<div class="panel"><div class="panel-head"><h2>💸 المصروفات — ${y}</h2>
-    <button class="btn btn-sm btn-primary" onclick="openExpenseForm()">➕ إضافة مصروف</button></div><div class="panel-body">`;
+  const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===y && (!bId || e.buildingId===bId)).sort((a,b)=>a.date<b.date?1:-1);
+  h+=`<div class="panel"><div class="panel-head"><h2>💸 المصروفات — ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}</h2>
+    <button class="btn btn-sm btn-primary" onclick="openExpenseForm(null,${bId?`'${bId}'`:'null'})">➕ إضافة مصروف</button></div><div class="panel-body">`;
   if(exps.length===0){
-    h+=`<div style="padding:20px;color:var(--muted)">لا توجد مصروفات مسجّلة لهذه السنة. أضِف الصيانة والفواتير والرسوم لاحتساب صافي الدخل بدقة.</div>`;
+    h+=`<div style="padding:20px;color:var(--muted)">لا توجد مصروفات مسجّلة ${filterBuilding?'لهذا العقار في هذه السنة':'لهذه السنة'}. أضِف الصيانة والفواتير والرسوم لاحتساب صافي الدخل بدقة.</div>`;
   } else {
     h+=`<table><thead><tr><th>التاريخ</th><th>العقار</th><th>البند</th><th>الوصف</th><th>المبلغ</th><th></th></tr></thead><tbody>`;
     exps.forEach(e=>{ const b=db.buildings.find(x=>x.id===e.buildingId);
@@ -722,7 +755,7 @@ function viewAccounting(){
         <td style="font-weight:700;color:var(--danger)">${fmtMoney(e.amount)}</td>
         <td><button class="btn btn-sm" onclick="openExpenseForm('${e.id}')">✏️</button></td></tr>`;
     });
-    h+=`<tr style="background:var(--surface-2);font-weight:800"><td colspan="4">إجمالي مصروفات ${y}</td><td style="color:var(--danger)">${fmtMoney(exps.reduce((s,e)=>s+(Number(e.amount)||0),0))}</td><td></td></tr>`;
+    h+=`<tr style="background:var(--surface-2);font-weight:800"><td colspan="4">إجمالي المصروفات المعروضة</td><td style="color:var(--danger)">${fmtMoney(exps.reduce((s,e)=>s+(Number(e.amount)||0),0))}</td><td></td></tr>`;
     h+=`</tbody></table>`;
   }
   h+=`</div></div>`;
@@ -730,8 +763,8 @@ function viewAccounting(){
 }
 
 /* ---------- إدارة المصروفات ---------- */
-function openExpenseForm(eId){
-  const e=eId?(db.expenses.find(x=>x.id===eId)||{}):{date:todayISO()};
+function openExpenseForm(eId,defaultBuildingId){
+  const e=eId?(db.expenses.find(x=>x.id===eId)||{}):{date:todayISO(),buildingId:defaultBuildingId||null};
   const cats=['صيانة','كهرباء وماء','رسوم حكومية','ضرائب/زكاة','إدارة','تأمين','تنظيف','أخرى'];
   openModal(`<div class="modal"><div class="modal-head"><h3>${eId?'✏️ تعديل مصروف':'➕ إضافة مصروف'}</h3><button class="x" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
@@ -770,24 +803,25 @@ function deleteExpense(eId){
 }
 
 /* ---------- تقرير محاسبي PDF ---------- */
-function exportAccountingPDF(year){
-  const yr=acct(year,null,null);
+function exportAccountingPDF(year,buildingId){
+  const filterBuilding=buildingId?db.buildings.find(x=>x.id===buildingId):null;
+  const yr=acct(year,null,buildingId||null);
   const qN=['الربع الأول','الربع الثاني','الربع الثالث','الربع الرابع'];
   let qRows='';
-  for(let q=1;q<=4;q++){ const a=acct(year,q,null);
+  for(let q=1;q<=4;q++){ const a=acct(year,q,buildingId||null);
     qRows+=`<tr><td>${qN[q-1]}</td><td>${fmtMoney(a.expected)}</td><td style="color:#16a34a">${fmtMoney(a.collected)}</td><td style="color:#d97706">${fmtMoney(a.outstanding)}</td><td>${a.rate}%</td><td style="color:#dc2626">${a.expenses?fmtMoney(a.expenses):'—'}</td><td style="font-weight:bold">${fmtMoney(a.net)}</td></tr>`;
   }
   let bRows='';
-  db.buildings.forEach(b=>{ const a=acct(year,null,b.id);
+  (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(year,null,b.id);
     bRows+=`<tr><td>${esc(b.name)}</td><td>${fmtMoney(a.expected)}</td><td style="color:#16a34a">${fmtMoney(a.collected)}</td><td style="color:#d97706">${fmtMoney(a.outstanding)}</td><td style="color:#dc2626">${a.expenses?fmtMoney(a.expenses):'—'}</td><td style="font-weight:bold">${fmtMoney(a.net)}</td></tr>`;
   });
-  const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===year).sort((a,b)=>a.date<b.date?1:-1);
+  const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===year && (!buildingId || e.buildingId===buildingId)).sort((a,b)=>a.date<b.date?1:-1);
   let eRows='';
   exps.forEach(e=>{ const b=db.buildings.find(x=>x.id===e.buildingId);
     eRows+=`<tr><td>${fmtDate(e.date)}</td><td>${b?esc(b.name):'عام'}</td><td>${esc(e.category||'أخرى')}</td><td>${esc(e.note||'—')}</td><td style="color:#dc2626">${fmtMoney(e.amount)}</td></tr>`;
   });
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>التقرير المحاسبي ${year}</title>
+  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>التقرير المحاسبي ${year}${filterBuilding?' - '+esc(filterBuilding.name):''}</title>
   <style>
     *{font-family:'Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
     body{padding:34px;color:#0f172a}
@@ -806,7 +840,7 @@ function exportAccountingPDF(year){
     .btnbar{text-align:center;margin-bottom:18px}.btnbar button{background:#0f766e;color:#fff;border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold}
   </style></head><body>
     <div class="btnbar noprint"><button onclick="window.print()">🖨️ طباعة / حفظ PDF</button></div>
-    <div class="hd"><div><h1>التقرير المحاسبي السنوي — ${year}</h1>
+    <div class="hd"><div><h1>التقرير المحاسبي السنوي — ${year}${filterBuilding?' — '+esc(filterBuilding.name):''}</h1>
       <div class="meta">نظام إدارة الإيجارات • تاريخ الإصدار: ${fmtDate(todayISO())}</div></div><div class="logo">🧮</div></div>
     <div class="cards">
       <div class="c"><div class="t">المستحق</div><div class="v">${fmtMoney(yr.expected)}</div></div>
@@ -820,7 +854,7 @@ function exportAccountingPDF(year){
     <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>التحصيل</th><th>المصروفات</th><th>الصافي</th></tr></thead>
       <tbody>${qRows}</tbody>
       <tfoot><tr class="tot"><td>الإجمالي</td><td>${fmtMoney(yr.expected)}</td><td>${fmtMoney(yr.collected)}</td><td>${fmtMoney(yr.outstanding)}</td><td>${yr.rate}%</td><td>${fmtMoney(yr.expenses)}</td><td>${fmtMoney(yr.net)}</td></tr></tfoot></table>
-    <h2>حسب العقار</h2>
+    <h2>${filterBuilding?'العقار':'حسب العقار'}</h2>
     <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th></tr></thead><tbody>${bRows}</tbody></table>
     ${eRows?`<h2>تفاصيل المصروفات</h2><table><thead><tr><th>التاريخ</th><th>العقار</th><th>البند</th><th>الوصف</th><th>المبلغ</th></tr></thead><tbody>${eRows}</tbody></table>`:''}
     <div class="ft">طريقة الاحتساب: التجميع حسب السنة والربع الميلادي لتاريخ استحقاق كل دفعة • صافي الدخل = المحصّل − المصروفات • صدر من نظام إدارة الإيجارات</div>
@@ -1166,22 +1200,37 @@ function openUnit(uId){
   if(u.payments.length===0){
     h+=`<div class="info-box">🏠 <div>هذه الوحدة شاغرة حاليًا — لا توجد دفعات مستحقة. أضِف اسم المستأجر من «تعديل العقد» لإنشاء جدول الدفعات تلقائيًا.</div></div>`;
   } else {
-  h+=`<table><thead><tr><th>#</th><th>تاريخ الاستحقاق</th><th>المبلغ</th><th>الحالة</th><th>تاريخ السداد</th><th></th></tr></thead><tbody>`;
+  h+=`<table><thead><tr><th>#</th><th>تاريخ الاستحقاق</th><th>المبلغ</th><th>الحالة</th><th>تاريخ آخر سداد</th><th></th></tr></thead><tbody>`;
   u.payments.forEach(p=>{
     const st=payStatus(p);
-    const map={paid:['b-green','✓ مسدّدة'],overdue:['b-red','متأخرة'],due:['b-amber','مستحقة قريبًا'],upcoming:['b-gray','قادمة']};
+    const map={paid:['b-green','✓ مسدّدة بالكامل'],overdue:['b-red','متأخرة'],due:['b-amber','مستحقة قريبًا'],upcoming:['b-gray','قادمة']};
     let extra='';
     if(st==='overdue') extra=`<div class="muted">متأخر ${Math.abs(daysFromToday(p.dueDate))} يوم</div>`;
     else if(st==='due') extra=`<div class="muted">بعد ${daysFromToday(p.dueDate)} يوم</div>`;
+    let badge;
+    if(p.status==='paid') badge=map.paid;
+    else if(p.status==='partial') badge=[st==='overdue'?'b-red':'b-blue', st==='overdue'?'جزئي • متأخر':'جزئي'];
+    else badge=map[st];
+    let amountCell=fmtMoney(p.amount);
+    if(p.status==='partial') amountCell+=`<div class="muted">مدفوع ${fmtMoney(p.paidAmount||0)} • متبقٍ ${fmtMoney(remainingAmt(p))}</div>`;
+    let actions;
+    if(p.status==='paid'){
+      actions=`<button class="btn btn-sm" onclick="printReceipt('${u.id}','${p.id}')" title="سند قبض">🧾 سند</button><button class="btn btn-sm" onclick="togglePay('${u.id}','${p.id}')" title="التراجع عن السداد">↩️</button>`;
+    } else if(p.status==='partial'){
+      actions=`<button class="btn btn-sm btn-primary" onclick="togglePay('${u.id}','${p.id}')" title="تسجيل باقي المبلغ كمسدّد">✓ إكمال السداد</button>`+
+        `<button class="btn btn-sm" onclick="openPartialPay('${u.id}','${p.id}')" title="تسجيل دفعة جزئية إضافية">💰 جزئي</button>`+
+        `<button class="btn btn-sm" onclick="undoLastPartial('${u.id}','${p.id}')" title="التراجع عن آخر دفعة جزئية">↩️</button>`;
+    } else {
+      actions=`<button class="btn btn-sm btn-primary" onclick="togglePay('${u.id}','${p.id}')">✓ تسجيل سداد كامل</button>`+
+        `<button class="btn btn-sm" onclick="openPartialPay('${u.id}','${p.id}')" title="تسجيل دفعة جزئية">💰 دفع جزئي</button>`;
+    }
     h+=`<tr>
       <td style="font-weight:700">${p.n}</td>
       <td>${fmtDate(p.dueDate)}${extra}</td>
-      <td style="font-weight:700">${fmtMoney(p.amount)}</td>
-      <td><span class="badge ${map[st][0]}">${map[st][1]}</span></td>
+      <td style="font-weight:700">${amountCell}</td>
+      <td><span class="badge ${badge[0]}">${badge[1]}</span></td>
       <td>${p.paidDate?fmtDate(p.paidDate):'<span class="muted">—</span>'}</td>
-      <td><div style="display:flex;gap:5px;justify-content:flex-end">${p.status==='paid'
-        ? `<button class="btn btn-sm" onclick="printReceipt('${u.id}','${p.id}')" title="سند قبض">🧾 سند</button><button class="btn btn-sm" onclick="togglePay('${u.id}','${p.id}')">↩️</button>`
-        : `<button class="btn btn-sm btn-primary" onclick="togglePay('${u.id}','${p.id}')">✓ تسجيل سداد</button>`}</div></td>
+      <td><div style="display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap">${actions}</div></td>
     </tr>`;
   });
   h+=`</tbody></table>`;
@@ -1221,12 +1270,66 @@ function sendUnitWhatsApp(uId){
   const msg=`نظام إدارة الإيجارات 🏢\n\nالعقار: ${b.name}\nالوحدة: ${u.name}\nالمستأجر: ${u.tenantName||'—'}\nالإيجار الكامل: ${fmtMoney(u.rentAmount)}\nقيمة الدفعة (${periodLbl(u)}): ${fmtMoney(periodAmount(u))}\n\nالمحصّل: ${fmtMoney(t.paid)}\nالمتبقّي: ${fmtMoney(t.remaining)}${nx?'\n\nالدفعة القادمة:\nالتاريخ: '+fmtDate(nx.dueDate)+'\nالمبلغ: '+fmtMoney(nx.amount):''}`;
   openWhatsApp(u.tenantPhone,msg);
 }
+/* تسجيل/التراجع عن سداد كامل. من حالة جزئية أو غير مسدّدة يُكمل الباقي؛ من حالة مسدّدة يعيدها غير مسدّدة */
 function togglePay(uId,pId){
   const u=db.units.find(x=>x.id===uId);
   const p=u.payments.find(x=>x.id===pId);
-  if(p.status==='paid'){ p.status='unpaid'; p.paidDate=null; }
-  else{ p.status='paid'; p.paidDate=todayISO(); }
+  if(p.status==='paid'){
+    p.status='unpaid'; p.paidDate=null; p.paidAmount=0; p.paymentsLog=[];
+  } else {
+    const rest=remainingAmt(p);
+    if(rest>0) (p.paymentsLog=p.paymentsLog||[]).push({id:uid(),date:todayISO(),amount:rest});
+    p.status='paid'; p.paidAmount=p.amount; p.paidDate=todayISO();
+  }
   save(); openUnit(uId); // إعادة فتح النافذة بنفس الحالة
+}
+/* نافذة تسجيل دفعة جزئية */
+function openPartialPay(uId,pId){
+  const u=db.units.find(x=>x.id===uId); if(!u) return;
+  const p=(u.payments||[]).find(x=>x.id===pId); if(!p) return;
+  const rest=remainingAmt(p);
+  openModal(`<div class="modal"><div class="modal-head"><h3>💰 تسجيل دفعة جزئية — الدفعة رقم ${p.n}</h3><button class="x" onclick="openUnit('${uId}')">✕</button></div>
+    <div class="modal-body">
+      <div class="detail-grid" style="margin-bottom:14px">
+        <div class="dcell"><div class="t">إجمالي الدفعة</div><div class="v">${fmtMoney(p.amount)}</div></div>
+        <div class="dcell"><div class="t">مسدّد سابقًا</div><div class="v">${fmtMoney(p.paidAmount||0)}</div></div>
+        <div class="dcell" style="background:var(--warning-l);border-color:#fde68a"><div class="t">المتبقي</div><div class="v" style="color:var(--warning)">${fmtMoney(rest)}</div></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>المبلغ المدفوع الآن ( ${db.settings.currency} ) *</label><input type="number" id="pp-amount" value="${rest}" min="1" max="${rest}"></div>
+        <div class="field"><label>تاريخ الدفع</label><input type="date" id="pp-date" value="${todayISO()}"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="savePartialPay('${uId}','${pId}')">💾 حفظ الدفعة</button>
+      <button class="btn" onclick="openUnit('${uId}')">إلغاء</button>
+    </div></div>`);
+}
+function savePartialPay(uId,pId){
+  const u=db.units.find(x=>x.id===uId); if(!u) return;
+  const p=(u.payments||[]).find(x=>x.id===pId); if(!p) return;
+  const rest=remainingAmt(p);
+  let amt=parseFloat(document.getElementById('pp-amount').value)||0;
+  const date=document.getElementById('pp-date').value||todayISO();
+  if(amt<=0){ alert('أدخل مبلغًا صحيحًا'); return; }
+  if(amt>rest) amt=rest; // لا يمكن تجاوز المتبقي
+  p.paidAmount=(p.paidAmount||0)+amt;
+  (p.paymentsLog=p.paymentsLog||[]).push({id:uid(),date,amount:amt});
+  p.paidDate=date;
+  p.status = p.paidAmount>=p.amount-0.01 ? 'paid' : 'partial';
+  if(p.status==='paid') p.paidAmount=p.amount;
+  save(); openUnit(uId);
+}
+/* التراجع عن آخر دفعة جزئية مسجّلة على الدفعة */
+function undoLastPartial(uId,pId){
+  const u=db.units.find(x=>x.id===uId); if(!u) return;
+  const p=(u.payments||[]).find(x=>x.id===pId); if(!p||!(p.paymentsLog&&p.paymentsLog.length)) return;
+  if(!confirm('التراجع عن آخر دفعة جزئية مسجّلة؟')) return;
+  const last=p.paymentsLog.pop();
+  p.paidAmount=Math.max(0,(p.paidAmount||0)-last.amount);
+  p.paidDate=p.paymentsLog.length?p.paymentsLog[p.paymentsLog.length-1].date:null;
+  p.status = p.paidAmount<=0.009 ? 'unpaid' : (p.paidAmount>=p.amount-0.01?'paid':'partial');
+  save(); openUnit(uId);
 }
 
 /* ============================ تصدير PDF ============================ */
@@ -1241,16 +1344,16 @@ function exportTenancyPDF(uId,idx){
 }
 function paymentReportHTML(b, o){
   const payments=o.payments||[];
-  const paidT=payments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const paidT=payments.reduce((s,p)=>s+(p.paidAmount||0),0);
   const totalT=payments.reduce((s,p)=>s+p.amount,0);
   const waMsg=`كشف دفعات الإيجار\nالعقار: ${b.name}\nالوحدة: ${o.unitName}\nالمستأجر: ${o.tenant||'—'}\nالإيجار الكامل: ${fmtMoney(o.rent)}${o.periodAmt!=null?'\nقيمة الدفعة'+(o.period?' ('+o.period+')':'')+': '+fmtMoney(o.periodAmt):''}\nبداية العقد: ${fmtDate(o.start)}\nنهاية العقد: ${fmtDate(addMonths(o.start,o.dur||12))}\n\nإجمالي العقد: ${fmtMoney(totalT)}\nالمحصّل: ${fmtMoney(paidT)}\nالمتبقّي: ${fmtMoney(totalT-paidT)}`;
   let rows='';
   payments.forEach(p=>{
-    const st=p.status==='paid'?'paid':(daysFromToday(p.dueDate)<0?'overdue':(daysFromToday(p.dueDate)<=db.settings.paymentReminderDays?'due':'upcoming'));
-    const lbl={paid:'مسدّدة',overdue:'متأخرة',due:'مستحقة قريبًا',upcoming:'قادمة'}[st];
-    const col={paid:'#16a34a',overdue:'#dc2626',due:'#d97706',upcoming:'#64748b'}[st];
+    const st=p.status==='paid'?'paid':p.status==='partial'?'partial':(daysFromToday(p.dueDate)<0?'overdue':(daysFromToday(p.dueDate)<=db.settings.paymentReminderDays?'due':'upcoming'));
+    const lbl={paid:'مسدّدة',partial:'دفع جزئي',overdue:'متأخرة',due:'مستحقة قريبًا',upcoming:'قادمة'}[st];
+    const col={paid:'#16a34a',partial:'#2563eb',overdue:'#dc2626',due:'#d97706',upcoming:'#64748b'}[st];
     rows+=`<tr>
-      <td>${p.n}</td><td>${fmtDate(p.dueDate)}</td><td>${fmtMoney(p.amount)}</td>
+      <td>${p.n}</td><td>${fmtDate(p.dueDate)}</td><td>${fmtMoney(p.amount)}${p.status==='partial'?' <span style="color:#64748b">(مدفوع '+fmtMoney(p.paidAmount||0)+')</span>':''}</td>
       <td style="color:${col};font-weight:bold">${lbl}</td>
       <td>${p.paidDate?fmtDate(p.paidDate):'—'}</td></tr>`;
   });
@@ -1311,7 +1414,7 @@ function paymentReportHTML(b, o){
 /* ============================ سند القبض + تغيير المستأجر + تصدير Excel ============================ */
 function paysTotals(payments){
   payments=payments||[];
-  const paid=payments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const paid=payments.reduce((s,p)=>s+(p.paidAmount!=null?p.paidAmount:(p.status==='paid'?p.amount:0)),0);
   const total=payments.reduce((s,p)=>s+p.amount,0);
   return { paid, total, remaining:total-paid };
 }
@@ -1524,9 +1627,9 @@ function viewTenancy(uId,idx){
     <div class="dcell" style="background:var(--success-l);border-color:#bbf7d0"><div class="t">المحصّل</div><div class="v" style="color:var(--success)">${fmtMoney(tt.paid)}</div></div>
   </div>`;
   h+=`<table style="margin-top:14px"><thead><tr><th>#</th><th>الاستحقاق</th><th>المبلغ</th><th>الحالة</th><th>السداد</th><th></th></tr></thead><tbody>`;
-  (tn.payments||[]).forEach(p=>{ const paid=p.status==='paid';
-    h+=`<tr><td style="font-weight:700">${p.n}</td><td>${fmtDate(p.dueDate)}</td><td style="font-weight:700">${fmtMoney(p.amount)}</td>
-      <td><span class="badge ${paid?'b-green':'b-gray'}">${paid?'✓ مسدّدة':'غير مسدّدة'}</span></td>
+  (tn.payments||[]).forEach(p=>{ const paid=p.status==='paid'; const partial=p.status==='partial';
+    h+=`<tr><td style="font-weight:700">${p.n}</td><td>${fmtDate(p.dueDate)}</td><td style="font-weight:700">${fmtMoney(p.amount)}${partial?'<div class="muted">مدفوع '+fmtMoney(p.paidAmount||0)+'</div>':''}</td>
+      <td><span class="badge ${paid?'b-green':partial?'b-blue':'b-gray'}">${paid?'✓ مسدّدة':partial?'جزئي':'غير مسدّدة'}</span></td>
       <td>${p.paidDate?fmtDate(p.paidDate):'<span class="muted">—</span>'}</td>
       <td>${paid?`<button class="btn btn-sm" onclick="printReceipt('${uId}','${p.id}',${idx})" title="سند قبض">🧾</button>`:''}</td></tr>`;
   });
@@ -1536,31 +1639,32 @@ function viewTenancy(uId,idx){
   openModal(h);
 }
 /* تصدير المحاسبة Excel/CSV */
-function exportAccountingCSV(year){
+function exportAccountingCSV(year,buildingId){
+  const filterBuilding=buildingId?db.buildings.find(x=>x.id===buildingId):null;
   const cell=(v)=> (typeof v==='number')? v : '"'+String(v==null?'':v).replace(/"/g,'""')+'"';
   const rows=[];
-  rows.push(['التقرير المحاسبي السنوي', year]);
+  rows.push(['التقرير المحاسبي السنوي', year].concat(filterBuilding?[filterBuilding.name]:[]));
   rows.push([]);
   rows.push(['التفصيل الربع سنوي']);
   rows.push(['الربع','المستحق','المحصّل','المتبقّي','نسبة التحصيل %','المصروفات','الصافي']);
   const qN=['الربع الأول','الربع الثاني','الربع الثالث','الربع الرابع'];
-  for(let i=1;i<=4;i++){ const a=acct(year,i,null); rows.push([qN[i-1],a.expected,a.collected,a.outstanding,a.rate,a.expenses,a.net]); }
-  const yr=acct(year,null,null);
+  for(let i=1;i<=4;i++){ const a=acct(year,i,buildingId||null); rows.push([qN[i-1],a.expected,a.collected,a.outstanding,a.rate,a.expenses,a.net]); }
+  const yr=acct(year,null,buildingId||null);
   rows.push(['الإجمالي السنوي',yr.expected,yr.collected,yr.outstanding,yr.rate,yr.expenses,yr.net]);
   rows.push([]);
-  rows.push(['حسب العقار']);
+  rows.push([filterBuilding?'العقار':'حسب العقار']);
   rows.push(['العقار','المستحق','المحصّل','المتبقّي','المصروفات','الصافي']);
-  db.buildings.forEach(b=>{ const a=acct(year,null,b.id); rows.push([b.name,a.expected,a.collected,a.outstanding,a.expenses,a.net]); });
+  (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(year,null,b.id); rows.push([b.name,a.expected,a.collected,a.outstanding,a.expenses,a.net]); });
   rows.push([]);
   rows.push(['المصروفات']);
   rows.push(['التاريخ','العقار','البند','الوصف','المبلغ']);
-  (db.expenses||[]).filter(e=>yearOf(e.date)===year).sort((a,b)=>a.date<b.date?1:-1).forEach(e=>{
+  (db.expenses||[]).filter(e=>yearOf(e.date)===year && (!buildingId || e.buildingId===buildingId)).sort((a,b)=>a.date<b.date?1:-1).forEach(e=>{
     const b=db.buildings.find(x=>x.id===e.buildingId);
     rows.push([e.date,(b?b.name:'عام'),e.category||'أخرى',e.note||'',Number(e.amount)||0]);
   });
   const csv='﻿'+rows.map(r=>r.map(cell).join(',')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='محاسبة-'+year+'.csv'; a.click();
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='محاسبة-'+year+(filterBuilding?'-'+filterBuilding.name:'')+'.csv'; a.click();
 }
 
 /* ============================ دليل المستخدم ============================ */
@@ -1747,12 +1851,17 @@ function loadDemo(){
     mk(b1,'شقة 3','','',24000,addMonths(todayISO(),-1),12),
     mk(b2,'محل أرضي 1','مؤسسة النور','0555555555',60000,addMonths(todayISO(),-7),24)
   ];
-  // سداد واقعي: أغلب المستحقات الماضية مسدّدة مع ترك بعض المتأخرات لبعض الوحدات
+  // سداد واقعي: أغلب المستحقات الماضية مسدّدة، مع ترك بعض المتأخرات ودفعة جزئية واحدة للتوضيح
   db.units.forEach((u,ui)=>{
     const past=u.payments.filter(p=>daysFromToday(p.dueDate)<0);
     past.forEach((p,i)=>{
       const leaveUnpaid=(ui%2===0)&&i===past.length-1; // اترك آخر متأخرة لوحدات معيّنة
-      if(!leaveUnpaid){ p.status='paid'; p.paidDate=p.dueDate; }
+      if(leaveUnpaid) return;
+      if(ui===1 && i===past.length-1){ // مثال دفعة جزئية
+        p.status='partial'; p.paidAmount=Math.round(p.amount*0.4); p.paidDate=p.dueDate;
+        p.paymentsLog=[{id:uid(),date:p.dueDate,amount:p.paidAmount}];
+      } else { p.status='paid'; p.paidAmount=p.amount; p.paidDate=p.dueDate;
+        p.paymentsLog=[{id:uid(),date:p.dueDate,amount:p.amount}]; }
     });
   });
   // مصروفات تجريبية
