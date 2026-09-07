@@ -1097,8 +1097,16 @@ function deleteBuilding(bId){
 /* ---------- نموذج الوحدة ---------- */
 function openUnitForm(bId,uId){
   const u=uId?db.units.find(x=>x.id===uId):{durationMonths:12};
+  const vacantUnits=uId?[]:db.units.filter(x=>x.buildingId===bId && !x.tenantName);
   openModal(`<div class="modal"><div class="modal-head"><h3>${uId?'✏️ تعديل وحدة':'➕ إضافة وحدة'}</h3><button class="x" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
+      ${vacantUnits.length?`<div class="field">
+        <label>وحدة شاغرة موجودة <span class="hint">(اختياري — اختر لإضافة مستأجر إلى وحدة فارغة موجودة بدل إنشاء وحدة جديدة)</span></label>
+        <select id="u-pick-vacant" onchange="if(this.value) openUnitForm('${bId}', this.value)">
+          <option value="">+ إنشاء وحدة جديدة</option>
+          ${vacantUnits.map(v=>`<option value="${v.id}">${esc(v.name)}</option>`).join('')}
+        </select>
+      </div>`:''}
       <div class="row2">
         <div class="field"><label>اسم/رقم الوحدة *</label><input id="u-name" value="${esc(u.name||'')}" placeholder="مثال: شقة 1 / محل أرضي"></div>
         <div class="field"><label>اسم المستأجر</label><input id="u-tenant" value="${esc(u.tenantName||'')}" placeholder="اتركه فارغًا إن كانت شاغرة"></div>
