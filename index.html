@@ -653,15 +653,16 @@ function acct(year, quarter, buildingId, mode){
       if(p.status!=='paid' && daysFromToday(p.dueDate)<0) overdue += (p.amount-(p.paidAmount||0));
     });
     if(mode==='annual'){
+      // قيمة سنوية واحدة كحد أقصى لكل وحدة: نفضّل المستأجر الحالي، وإلا آخر عقد مؤرشف تقاطع مع هذه السنة
+      // (تجنّبًا لاحتساب قيمة الإيجار مرتين لنفس الوحدة عند تغيّر المستأجر خلال نفس السنة)
+      let rentForYear=null;
       if(u.tenantName && overlapsYear(u.contractStart, contractEnd(u), year)){
-        expected += (Number(u.rentAmount)||0) / (quarter?4:1);
+        rentForYear = Number(u.rentAmount)||0;
+      } else {
+        const hist=(u.history||[]).filter(tn=>overlapsYear(tn.contractStart, addMonths(tn.contractStart, tn.durationMonths||12), year));
+        if(hist.length) rentForYear = Number(hist[hist.length-1].rentAmount||hist[hist.length-1].quarterlyRent)||0;
       }
-      (u.history||[]).forEach(tn=>{
-        const tEnd=addMonths(tn.contractStart, tn.durationMonths||12);
-        if(overlapsYear(tn.contractStart, tEnd, year)){
-          expected += (Number(tn.rentAmount||tn.quarterlyRent)||0) / (quarter?4:1);
-        }
-      });
+      if(rentForYear!=null) expected += rentForYear/(quarter?4:1);
     }
   });
   const expenses=categoryExpenses(year,buildingId,null);
