@@ -86,19 +86,44 @@
   /* Cards / stat grid */
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:26px}
   .stat{background:var(--surface);border-radius:var(--radius);padding:19px 20px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden;transition:.18s ease}
-  .stat .ic{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-size:21px;margin-bottom:12px}
+  .stat .ic{
+    width:48px;height:48px;border-radius:13px;display:grid;place-items:center;margin-bottom:12px;
+    position:relative;overflow:hidden;isolation:isolate;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(20,20,19,.04);
+    animation:icFloat 4s ease-in-out infinite;
+  }
+  .ic svg{position:relative;z-index:1}
+  .ic::before{
+    content:'';position:absolute;inset:0;z-index:1;
+    background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.65) 48%,transparent 66%);
+    transform:translateX(-140%);animation:icShine 4.6s ease-in-out infinite;
+  }
   .stat .val{font-family:var(--font-serif);font-size:27px;font-weight:600;line-height:1.15}
   .stat .lbl{color:var(--muted);font-size:13px;font-weight:600;margin-top:4px}
   .stat.clickable{cursor:pointer}
   .stat.clickable:hover{border-color:var(--primary);background:var(--surface-2)}
+  .stat.clickable:hover .ic{transform:scale(1.08) rotate(-4deg)}
   .stat .stat-go{position:absolute;bottom:14px;left:18px;font-size:12px;font-weight:800;color:var(--primary);opacity:0;transition:.18s}
   .stat.clickable:hover .stat-go{opacity:1}
   tbody tr.rowlink{cursor:pointer}
-  .ic.teal{background:var(--primary-l);color:var(--primary-d)}
-  .ic.green{background:var(--success-l);color:var(--success)}
-  .ic.red{background:var(--danger-l);color:var(--danger)}
-  .ic.amber{background:var(--warning-l);color:var(--warning)}
-  .ic.blue{background:var(--info-l);color:var(--info)}
+  .ic.teal{background:linear-gradient(150deg,rgba(217,119,87,.28),rgba(217,119,87,.07));color:var(--primary-d)}
+  .ic.green{background:linear-gradient(150deg,rgba(63,125,78,.28),rgba(63,125,78,.07));color:var(--success)}
+  .ic.red{background:linear-gradient(150deg,rgba(179,64,46,.28),rgba(179,64,46,.07));color:var(--danger)}
+  .ic.amber{background:linear-gradient(150deg,rgba(184,134,58,.28),rgba(184,134,58,.07));color:var(--warning)}
+  .ic.blue{background:linear-gradient(150deg,rgba(91,107,116,.28),rgba(91,107,116,.07));color:var(--info)}
+  .stats .stat:nth-child(5n+1) .ic{animation-delay:0s}
+  .stats .stat:nth-child(5n+1) .ic::before{animation-delay:.4s}
+  .stats .stat:nth-child(5n+2) .ic{animation-delay:.3s}
+  .stats .stat:nth-child(5n+2) .ic::before{animation-delay:1.3s}
+  .stats .stat:nth-child(5n+3) .ic{animation-delay:.6s}
+  .stats .stat:nth-child(5n+3) .ic::before{animation-delay:2.2s}
+  .stats .stat:nth-child(5n+4) .ic{animation-delay:.9s}
+  .stats .stat:nth-child(5n+4) .ic::before{animation-delay:3.1s}
+  .stats .stat:nth-child(5n+5) .ic{animation-delay:1.2s}
+  .stats .stat:nth-child(5n+5) .ic::before{animation-delay:4s}
+  @keyframes icFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  @keyframes icShine{0%,58%{transform:translateX(-140%)}82%,100%{transform:translateX(140%)}}
+  @media (prefers-reduced-motion:reduce){.ic,.ic::before{animation:none!important}}
 
   .panel{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:22px;overflow:hidden}
   .panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -220,11 +245,40 @@
   /* أيقونات SVG (مستوحاة من هوية مبيت البصرية) */
   .page-head h1{display:flex;align-items:center;gap:10px}
   .page-head h1 svg,.crumbs svg{color:var(--primary);width:22px;height:22px;flex-shrink:0}
-  .ic svg{width:22px;height:22px}
+  .ic svg{width:26px;height:26px}
   .empty .em{display:flex;justify-content:center;margin-bottom:14px;color:var(--primary)}
   .empty .em svg{width:52px;height:52px;opacity:.55}
   .bcard .top .name{display:flex;align-items:center;gap:7px}
   .bcard .top .name svg{width:17px;height:17px;flex-shrink:0}
+
+  /* لمسة تفاعلية موحّدة: كل أيقونة قابلة للنقر تبرز بحركة نابضة وومضة خفيفة عند المرور أو الضغط، بدل الجمود الساكن */
+  @keyframes iconPop{0%{transform:scale(1)}40%{transform:scale(1.24)}65%{transform:scale(.93)}100%{transform:scale(1)}}
+  @keyframes iconFlash{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}35%{opacity:.6}100%{opacity:0;transform:translate(-50%,-50%) scale(2.4)}}
+  .nav-ic,.brand .logo,.x{position:relative}
+  .nav-ic::after,.brand .logo::after,.x::after,.btn::after{
+    content:'';position:absolute;top:50%;left:50%;width:100%;padding-top:100%;
+    transform:translate(-50%,-50%) scale(.3);border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,var(--primary-l) 0%,transparent 72%);opacity:0;
+  }
+  .btn{position:relative;overflow:hidden}
+  .btn svg{transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+  nav button:hover .nav-ic svg,nav button:active .nav-ic svg,
+  .btn:hover svg,.btn:active svg{animation:iconPop .45s cubic-bezier(.34,1.56,.64,1)}
+  nav button:hover .nav-ic::after,nav button:active .nav-ic::after,
+  .btn:hover::after,.btn:active::after,
+  .x:hover::after,.x:active::after{animation:iconFlash .55s ease-out}
+  .brand{cursor:default}
+  .brand .logo{overflow:hidden;animation:icFloat 5s ease-in-out infinite}
+  .brand .logo::before{
+    content:'';position:absolute;inset:0;z-index:1;border-radius:inherit;
+    background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 48%,transparent 66%);
+    transform:translateX(-140%);animation:icShine 5.5s ease-in-out infinite;
+  }
+  .brand .logo svg{position:relative;z-index:1}
+  @media (prefers-reduced-motion:reduce){
+    .nav-ic svg,.btn svg,.brand .logo{animation:none!important}
+    .nav-ic::after,.brand .logo::after,.x::after,.btn::after,.brand .logo::before{display:none!important}
+  }
 </style>
 </head>
 <body>
