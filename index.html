@@ -249,6 +249,7 @@ function normalize(d){
     u.payments=u.payments||[]; u.history=u.history||[];
     if(u.quarterlyRent!==undefined && u.rentAmount===undefined) u.rentAmount=u.quarterlyRent;
     u.rentAmount=u.rentAmount||0; u.paymentPeriod=u.paymentPeriod||'quarterly'; u.electricityMeter=u.electricityMeter||'';
+    u.contractNumber=u.contractNumber||'';
   });
   return d;
 }
@@ -264,6 +265,9 @@ function save(){
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function periodMos(u){ return {monthly:1,quarterly:3,semiannual:6,annual:12}[u.paymentPeriod||'quarterly']||3; }
 function periodLbl(u){ return {monthly:'شهري',quarterly:'ربع سنوي',semiannual:'نصف سنوي',annual:'سنوي'}[u.paymentPeriod||'quarterly']||'ربع سنوي'; }
+/* قيمة الإيجار المُدخلة = القيمة الكاملة (السنوية) للإيجار، وتُقسم على عدد الدفعات في السنة حسب دورية السداد */
+function periodsPerYear(u){ return 12/periodMos(u); }
+function periodAmount(u){ return (Number(u.rentAmount)||0)/periodsPerYear(u); }
 
 /* واتساب — يفتح الجوال مباشرة على الرقم، الجهاز الثابت يفتح واتساب ويب */
 function isMobile(){ return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
@@ -340,7 +344,7 @@ function buildSchedule(unit){
   for(let i=0;i<count;i++){
     const due=addMonths(unit.contractStart,i*mos);
     const ex=prev[due];
-    list.push({id:ex?ex.id:uid(),n:i+1,dueDate:due,amount:Number(unit.rentAmount)||0,status:ex?ex.status:'unpaid',paidDate:ex?ex.paidDate:null});
+    list.push({id:ex?ex.id:uid(),n:i+1,dueDate:due,amount:periodAmount(unit),status:ex?ex.status:'unpaid',paidDate:ex?ex.paidDate:null});
   }
   return list;
 }
@@ -905,7 +909,7 @@ function viewBuilding(bId){
   }
   h+=`<div class="panel"><div class="panel-head"><h2>🚪 الوحدات</h2><span class="count">${us.length}</span></div>
     <div class="panel-body"><table><thead><tr>
-      <th>الوحدة</th><th>المستأجر</th><th>الإيجار</th><th>الدورية</th><th>بداية العقد</th>
+      <th>الوحدة</th><th>المستأجر</th><th>الإيجار الكامل</th><th>الدورية</th><th>بداية العقد</th>
       <th>الدفعة القادمة</th><th>الحالة</th><th>التحصيل</th><th></th></tr></thead><tbody>`;
   us.forEach(u=>{
     const t=unitTotals(u); const nx=nextUnpaid(u);
@@ -918,7 +922,7 @@ function viewBuilding(bId){
     h+=`<tr>
       <td style="font-weight:800">${esc(u.name)}${u.electricityMeter?`<div class="muted">⚡ ${esc(u.electricityMeter)}</div>`:''}</td>
       <td>${u.tenantName?esc(u.tenantName):'<span class="muted">— شاغرة —</span>'}${u.tenantPhone?`<div class="muted">📞 ${esc(u.tenantPhone)}</div>`:''}</td>
-      <td style="font-weight:700">${fmtMoney(u.rentAmount)}</td>
+      <td style="font-weight:700">${fmtMoney(u.rentAmount)}<div class="muted">دفعة: ${fmtMoney(periodAmount(u))}</div></td>
       <td><span class="badge b-gray">${periodLbl(u)}</span></td>
       <td>${fmtDate(u.contractStart)}</td>
       <td>${nx?fmtDate(nx.dueDate):'<span class="muted">—</span>'}</td>
@@ -1075,18 +1079,19 @@ function openUnitForm(bId,uId){
         </select></div>
       </div>
       <div class="row2">
-        <div class="field"><label>قيمة الإيجار ( ${db.settings.currency} ) *</label><input type="number" id="u-rent" value="${u.rentAmount||''}" placeholder="مثال: 6000"></div>
-        <div class="field"><label>رقم عداد الكهرباء</label><input id="u-meter" value="${esc(u.electricityMeter||'')}" placeholder="رقم العداد (اختياري)"></div>
+        <div class="field"><label>القيمة الكاملة للإيجار ( ${db.settings.currency} ) * <span class="hint">(تُقسم على دورية السداد)</span></label><input type="number" id="u-rent" value="${u.rentAmount||''}" placeholder="مثال: 24000"></div>
+        <div class="field"><label>رقم عقد الإيجار</label><input id="u-contract" value="${esc(u.contractNumber||'')}" placeholder="رقم العقد (اختياري)"></div>
       </div>
       <div class="row2">
+        <div class="field"><label>رقم عداد الكهرباء</label><input id="u-meter" value="${esc(u.electricityMeter||'')}" placeholder="رقم العداد (اختياري)"></div>
         <div class="field"><label>تاريخ بداية العقد *</label><input type="date" id="u-start" value="${u.contractStart||todayISO()}"></div>
-        <div class="field"><label>مدة العقد <span class="hint">(بالأشهر)</span></label>
-          <select id="u-dur">
-            ${[6,12,18,24,36].map(m=>`<option value="${m}" ${(u.durationMonths||12)==m?'selected':''}>${m} شهر (${m/12} سنة)</option>`).join('')}
-          </select></div>
       </div>
+      <div class="field"><label>مدة العقد <span class="hint">(بالأشهر)</span></label>
+        <select id="u-dur">
+          ${[6,12,18,24,36].map(m=>`<option value="${m}" ${(u.durationMonths||12)==m?'selected':''}>${m} شهر (${m/12} سنة)</option>`).join('')}
+        </select></div>
       <div class="field"><label>ملاحظات</label><input id="u-notes" value="${esc(u.notes||'')}" placeholder="أي ملاحظات عن العقد أو الوحدة"></div>
-      <div class="info-box">🧮 <div><b>كيف تُحسب الدفعات؟</b><div class="formula">تاريخ الدفعة (ن) = <b>تاريخ بداية العقد</b> + (ن−1) × <b>فترة السداد</b><br>عدد الدفعات = مدة العقد ÷ فترة السداد — وتُنشأ تلقائيًا عند الحفظ.</div></div></div>
+      <div class="info-box">🧮 <div><b>كيف تُحسب الدفعات؟</b><div class="formula">قيمة الدفعة الواحدة = <b>القيمة الكاملة للإيجار</b> ÷ عدد الدفعات في السنة (حسب دورية السداد)<br>تاريخ الدفعة (ن) = <b>تاريخ بداية العقد</b> + (ن−1) × <b>فترة السداد</b><br>عدد الدفعات = مدة العقد ÷ فترة السداد — وتُنشأ تلقائيًا عند الحفظ.</div></div></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-primary" onclick="saveUnit('${bId}','${uId||''}')">💾 حفظ</button>
@@ -1106,6 +1111,7 @@ function saveUnit(bId,uId){
     tenantName:document.getElementById('u-tenant').value.trim(),
     tenantPhone:document.getElementById('u-phone').value.trim(),
     rentAmount:rent, quarterlyRent:rent,
+    contractNumber:document.getElementById('u-contract').value.trim(),
     paymentPeriod:document.getElementById('u-period').value,
     electricityMeter:document.getElementById('u-meter').value.trim(),
     contractStart:start,
@@ -1140,7 +1146,9 @@ function openUnit(uId){
   h+=`<div class="detail-grid">
     <div class="dcell"><div class="t">المستأجر</div><div class="v">${u.tenantName?esc(u.tenantName):'<span style="color:var(--muted)">شاغرة</span>'}</div></div>
     ${u.tenantPhone?`<div class="dcell"><div class="t">الجوال</div><div class="v">${esc(u.tenantPhone)}</div></div>`:''}
-    <div class="dcell"><div class="t">الإيجار (${periodLbl(u)})</div><div class="v">${fmtMoney(u.rentAmount)}</div></div>
+    <div class="dcell"><div class="t">الإيجار الكامل</div><div class="v">${fmtMoney(u.rentAmount)}</div></div>
+    <div class="dcell"><div class="t">قيمة الدفعة (${periodLbl(u)})</div><div class="v">${fmtMoney(periodAmount(u))}</div></div>
+    ${u.contractNumber?`<div class="dcell"><div class="t">رقم عقد الإيجار</div><div class="v">${esc(u.contractNumber)}</div></div>`:''}
     <div class="dcell"><div class="t">بداية العقد</div><div class="v">${fmtDate(u.contractStart)}</div></div>
     <div class="dcell"><div class="t">نهاية العقد</div><div class="v">${fmtDate(contractEnd(u))}${(u.tenantName&&daysFromToday(contractEnd(u))<0)?' <span class="badge b-red" style="margin-inline-start:6px">منتهي</span>':''}</div></div>
     ${u.electricityMeter?`<div class="dcell"><div class="t">عداد الكهرباء ⚡</div><div class="v">${esc(u.electricityMeter)}</div></div>`:''}
@@ -1210,7 +1218,7 @@ function sendUnitWhatsApp(uId){
   const b=db.buildings.find(x=>x.id===u.buildingId);
   const t=unitTotals(u);
   const nx=nextUnpaid(u);
-  const msg=`نظام إدارة الإيجارات 🏢\n\nالعقار: ${b.name}\nالوحدة: ${u.name}\nالمستأجر: ${u.tenantName||'—'}\nالإيجار: ${fmtMoney(u.rentAmount)} — ${periodLbl(u)}\n\nالمحصّل: ${fmtMoney(t.paid)}\nالمتبقّي: ${fmtMoney(t.remaining)}${nx?'\n\nالدفعة القادمة:\nالتاريخ: '+fmtDate(nx.dueDate)+'\nالمبلغ: '+fmtMoney(nx.amount):''}`;
+  const msg=`نظام إدارة الإيجارات 🏢\n\nالعقار: ${b.name}\nالوحدة: ${u.name}\nالمستأجر: ${u.tenantName||'—'}\nالإيجار الكامل: ${fmtMoney(u.rentAmount)}\nقيمة الدفعة (${periodLbl(u)}): ${fmtMoney(periodAmount(u))}\n\nالمحصّل: ${fmtMoney(t.paid)}\nالمتبقّي: ${fmtMoney(t.remaining)}${nx?'\n\nالدفعة القادمة:\nالتاريخ: '+fmtDate(nx.dueDate)+'\nالمبلغ: '+fmtMoney(nx.amount):''}`;
   openWhatsApp(u.tenantPhone,msg);
 }
 function togglePay(uId,pId){
@@ -1225,7 +1233,7 @@ function togglePay(uId,pId){
 function openReportWindow(html){ const w=window.open('','_blank'); w.document.write(html); w.document.close(); }
 function exportUnitPDF(uId){
   const u=db.units.find(x=>x.id===uId); const b=db.buildings.find(x=>x.id===u.buildingId);
-  openReportWindow(paymentReportHTML(b,{unitName:u.name,tenant:u.tenantName,phone:u.tenantPhone,start:u.contractStart,dur:u.durationMonths,rent:u.rentAmount,period:periodLbl(u),meter:u.electricityMeter,payments:u.payments}));
+  openReportWindow(paymentReportHTML(b,{unitName:u.name,tenant:u.tenantName,phone:u.tenantPhone,start:u.contractStart,dur:u.durationMonths,rent:u.rentAmount,periodAmt:periodAmount(u),period:periodLbl(u),contractNumber:u.contractNumber,meter:u.electricityMeter,payments:u.payments}));
 }
 function exportTenancyPDF(uId,idx){
   const u=db.units.find(x=>x.id===uId); const b=db.buildings.find(x=>x.id===u.buildingId); const tn=u.history[idx];
@@ -1235,7 +1243,7 @@ function paymentReportHTML(b, o){
   const payments=o.payments||[];
   const paidT=payments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
   const totalT=payments.reduce((s,p)=>s+p.amount,0);
-  const waMsg=`كشف دفعات الإيجار\nالعقار: ${b.name}\nالوحدة: ${o.unitName}\nالمستأجر: ${o.tenant||'—'}\nالإيجار: ${fmtMoney(o.rent)}${o.period?' ('+o.period+')':''}\nبداية العقد: ${fmtDate(o.start)}\nنهاية العقد: ${fmtDate(addMonths(o.start,o.dur||12))}\n\nإجمالي العقد: ${fmtMoney(totalT)}\nالمحصّل: ${fmtMoney(paidT)}\nالمتبقّي: ${fmtMoney(totalT-paidT)}`;
+  const waMsg=`كشف دفعات الإيجار\nالعقار: ${b.name}\nالوحدة: ${o.unitName}\nالمستأجر: ${o.tenant||'—'}\nالإيجار الكامل: ${fmtMoney(o.rent)}${o.periodAmt!=null?'\nقيمة الدفعة'+(o.period?' ('+o.period+')':'')+': '+fmtMoney(o.periodAmt):''}\nبداية العقد: ${fmtDate(o.start)}\nنهاية العقد: ${fmtDate(addMonths(o.start,o.dur||12))}\n\nإجمالي العقد: ${fmtMoney(totalT)}\nالمحصّل: ${fmtMoney(paidT)}\nالمتبقّي: ${fmtMoney(totalT-paidT)}`;
   let rows='';
   payments.forEach(p=>{
     const st=p.status==='paid'?'paid':(daysFromToday(p.dueDate)<0?'overdue':(daysFromToday(p.dueDate)<=db.settings.paymentReminderDays?'due':'upcoming'));
@@ -1281,7 +1289,9 @@ function paymentReportHTML(b, o){
       <div><b>الوحدة:</b> ${esc(o.unitName)}</div>
       <div><b>المستأجر:</b> ${esc(o.tenant||'—')}</div>
       <div><b>الجوال:</b> ${esc(o.phone||'—')}</div>
-      <div><b>الإيجار${o.period?' ('+o.period+')':''}:</b> ${fmtMoney(o.rent)}</div>
+      <div><b>الإيجار الكامل:</b> ${fmtMoney(o.rent)}</div>
+      ${o.periodAmt!=null?`<div><b>قيمة الدفعة${o.period?' ('+o.period+')':''}:</b> ${fmtMoney(o.periodAmt)}</div>`:''}
+      ${o.contractNumber?`<div><b>رقم عقد الإيجار:</b> ${esc(o.contractNumber)}</div>`:''}
       ${o.meter?`<div><b>عداد الكهرباء:</b> ${esc(o.meter)}</div>`:''}
       <div><b>بداية العقد:</b> ${fmtDate(o.start)}</div>
       <div><b>نهاية العقد:</b> ${fmtDate(addMonths(o.start, o.dur||12))}</div>
@@ -1381,7 +1391,7 @@ function openChangeTenant(uId){
         <div class="field"><label>الجوال</label><input id="ct-phone" placeholder="05xxxxxxxx"></div>
       </div>
       <div class="row2">
-        <div class="field"><label>الإيجار ( ${db.settings.currency} ) *</label><input type="number" id="ct-rent" value="${u.rentAmount||u.quarterlyRent||''}"></div>
+        <div class="field"><label>القيمة الكاملة للإيجار ( ${db.settings.currency} ) * <span class="hint">(تُقسم على دورية السداد)</span></label><input type="number" id="ct-rent" value="${u.rentAmount||u.quarterlyRent||''}"></div>
         <div class="field"><label>بداية العقد الجديد *</label><input type="date" id="ct-start" value="${todayISO()}"></div>
       </div>
       <div class="row2">
@@ -1431,7 +1441,7 @@ function openRenewContract(uId){
         <div class="field"><label>الجوال</label><input id="rc-phone" value="${esc(u.tenantPhone||'')}" placeholder="05xxxxxxxx"></div>
       </div>
       <div class="row2">
-        <div class="field"><label>قيمة الإيجار ( ${db.settings.currency} ) *</label><input type="number" id="rc-rent" value="${u.rentAmount||''}"></div>
+        <div class="field"><label>القيمة الكاملة للإيجار ( ${db.settings.currency} ) * <span class="hint">(تُقسم على دورية السداد)</span></label><input type="number" id="rc-rent" value="${u.rentAmount||''}"></div>
         <div class="field"><label>دورية السداد</label><select id="rc-period">
           <option value="monthly" ${(u.paymentPeriod||'quarterly')==='monthly'?'selected':''}>شهري</option>
           <option value="quarterly" ${(u.paymentPeriod||'quarterly')==='quarterly'?'selected':''}>ربع سنوي</option>
@@ -1509,7 +1519,7 @@ function viewTenancy(uId,idx){
   let h=`<div class="modal lg"><div class="modal-head"><h3>📜 ${esc(tn.tenantName)} <span style="font-weight:500;color:var(--muted);font-size:14px">— ${esc(u.name)} · مستأجر سابق</span></h3><button class="x" onclick="openUnit('${uId}')">✕</button></div><div class="modal-body">`;
   h+=`<div class="detail-grid">
     <div class="dcell"><div class="t">الجوال</div><div class="v">${esc(tn.tenantPhone||'—')}</div></div>
-    <div class="dcell"><div class="t">الإيجار</div><div class="v">${fmtMoney(tn.rentAmount||tn.quarterlyRent)}</div></div>
+    <div class="dcell"><div class="t">الإيجار الكامل</div><div class="v">${fmtMoney(tn.rentAmount||tn.quarterlyRent)}</div></div>
     <div class="dcell"><div class="t">الفترة</div><div class="v" style="font-size:13px">${fmtDate(tn.contractStart)} — ${fmtDate(addMonths(tn.contractStart,tn.durationMonths||12))}</div></div>
     <div class="dcell" style="background:var(--success-l);border-color:#bbf7d0"><div class="t">المحصّل</div><div class="v" style="color:var(--success)">${fmtMoney(tt.paid)}</div></div>
   </div>`;
@@ -1732,10 +1742,10 @@ function loadDemo(){
     u.payments=u.tenantName?buildSchedule(u):[]; return u;
   };
   db.units=[
-    mk(b1,'شقة 1','أحمد العتيبي','0501234567',6000,addMonths(todayISO(),-10),12),
-    mk(b1,'شقة 2','خالد الدوسري','0509876543',6500,addMonths(todayISO(),-4),12),
-    mk(b1,'شقة 3','','',6000,addMonths(todayISO(),-1),12),
-    mk(b2,'محل أرضي 1','مؤسسة النور','0555555555',15000,addMonths(todayISO(),-7),24)
+    mk(b1,'شقة 1','أحمد العتيبي','0501234567',24000,addMonths(todayISO(),-10),12),
+    mk(b1,'شقة 2','خالد الدوسري','0509876543',26000,addMonths(todayISO(),-4),12),
+    mk(b1,'شقة 3','','',24000,addMonths(todayISO(),-1),12),
+    mk(b2,'محل أرضي 1','مؤسسة النور','0555555555',60000,addMonths(todayISO(),-7),24)
   ];
   // سداد واقعي: أغلب المستحقات الماضية مسدّدة مع ترك بعض المتأخرات لبعض الوحدات
   db.units.forEach((u,ui)=>{
