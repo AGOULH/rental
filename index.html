@@ -154,6 +154,14 @@
   .formula{background:var(--surface-2);border:1px dashed var(--border);border-radius:10px;padding:12px 15px;font-size:14px;color:var(--text);margin-top:6px}
   .formula b{color:var(--primary-d)}
 
+  details.acct-info{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px}
+  details.acct-info summary{cursor:pointer;padding:14px 18px;font-weight:800;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px}
+  details.acct-info summary::-webkit-details-marker{display:none}
+  details.acct-info summary::before{content:'▸';color:var(--primary);font-size:12px}
+  details.acct-info[open] summary::before{content:'▾'}
+  details.acct-info summary:hover{color:var(--primary-d)}
+  details.acct-info .info-box{margin:0 18px 16px}
+
   .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:6px}
   .dcell{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
   .dcell .t{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:3px}
@@ -709,13 +717,36 @@ function viewAccounting(){
   const rateColor = yr.rate>=90?'green':yr.rate>=70?'amber':'red';
   const rateWarn = yr.rate<90 ? `<div style="margin-top:5px;font-size:11px;font-weight:800;color:${yr.rate<70?'var(--danger)':'var(--warning)'}">⚠️ ${yr.rate<70?'يحتاج متابعة':'تحتاج تحسين'}</div>` : '';
   h+=`<div class="stats">
-    ${stat('blue','📊',fmtMoney(yr.expected),'المستحق السنوي')}
-    ${stat('green','✅',fmtMoney(yr.collected),'المحصّل')}
-    ${stat('amber','⏳',fmtMoney(yr.outstanding),'المتبقّي')}
+    ${stat('blue','📊',fmtMoney(yr.expected),'إجمالي قيمة العقود')}
+    ${stat('green','✅',fmtMoney(yr.collected),'إجمالي المحصّل الفعلي')}
+    ${stat('amber','⏳',fmtMoney(yr.outstanding),'غير مُحصَّل')}
     ${stat(rateColor,'📈',yr.rate+'%','نسبة التحصيل',null,rateWarn)}
     ${stat('red','💸',fmtMoney(yr.expenses),'المصروفات')}
     ${stat(yr.net>=0?'green':'red','💰',fmtMoney(yr.net),'صافي الدخل')}
   </div>`;
+
+  const rateAdvice = yr.rate>=90
+    ? {c:'var(--success)',t:'✅ ممتاز — نسبة تحصيل مرتفعة، معظم المستأجرين سدّدوا بالكامل.'}
+    : yr.rate>=70
+    ? {c:'var(--warning)',t:'🟡 نسبة التحصيل تحتاج تحسين — راجع المتأخرات والمستأجرين المتعثرين.'}
+    : {c:'var(--danger)',t:'🔴 نسبة تحصيل منخفضة — فجوة كبيرة بين قيمة العقود والمحصَّل فعليًا، راجع المتأخرات والوحدات الشاغرة بشكل عاجل.'};
+  h+=`<details class="acct-info">
+    <summary>ℹ️ ما الفرق بين «قيمة العقود» و«المحصّل الفعلي»؟ ولماذا نسبة التحصيل هي الأهم</summary>
+    <div class="info-box" style="align-items:flex-start">🧮
+      <div>
+        <div style="margin-bottom:8px"><b>إجمالي قيمة العقود</b> = مجموع القيم المكتوبة في عقود الإيجار، سواء تم تحصيلها أو لا — يشمل المستحقات غير المدفوعة، ويعكس الدخل التعاقدي (على الورق).</div>
+        <div style="margin-bottom:8px"><b>إجمالي المحصّل الفعلي</b> = المبلغ الذي استُلم فعليًا خلال السنة — يستبعد المتأخرات والوحدات الشاغرة، ويعتمد على التدفق النقدي الحقيقي.</div>
+        <div class="formula">
+          سنة ${y}${filterBuilding?' — '+esc(filterBuilding.name):''} (${modeLbl}):<br>
+          إجمالي قيمة العقود = <b>${fmtMoney(yr.expected)}</b> — إجمالي المحصّل = <b>${fmtMoney(yr.collected)}</b> — غير مُحصَّل = <b>${fmtMoney(yr.outstanding)}</b><br>
+          نسبة التحصيل = المحصّل ÷ قيمة العقود × 100 = <b style="color:${rateAdvice.c}">${yr.rate}%</b>
+        </div>
+        <div style="margin-top:8px">تتساوى القيمتان فقط عند: سداد كل المستأجرين لكامل الإيجار، بلا تأخير أو تعثر، وبلا وحدات شاغرة.</div>
+        <div style="margin-top:8px;font-weight:800;color:${rateAdvice.c}">${rateAdvice.t}</div>
+        <div style="margin-top:8px">💡 <b>نصيحة كمستثمر:</b> ركّز دائمًا على <b>نسبة التحصيل (%)</b> وليس فقط على قيمة العقود — عقود بقيمة أكبر لا تعني دخلًا أكبر ما لم تُحصَّل فعليًا.</div>
+      </div>
+    </div>
+  </details>`;
 
   const qNames=['الربع الأول (يناير–مارس)','الربع الثاني (أبريل–يونيو)','الربع الثالث (يوليو–سبتمبر)','الربع الرابع (أكتوبر–ديسمبر)'];
   h+=`<div class="panel"><div class="panel-head"><h2>📅 التفصيل الربع سنوي — ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}</h2></div><div class="panel-body">
