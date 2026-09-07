@@ -617,6 +617,7 @@ function printDueNotice(uId,pId){
 /* ============================ المحاسبة ============================ */
 let acctYear = null;
 let acctBuildingId = null; // null = كل العقارات
+let acctMode = 'contracts'; // 'contracts' = حسب دفعات العقود الفعلية، 'annual' = القيمة الكاملة السنوية للإيجار
 function yearOf(iso){ return iso ? parseInt(iso.slice(0,4)) : null; }
 function quarterOf(iso){ return iso ? Math.floor((parseInt(iso.slice(5,7))-1)/3)+1 : null; }
 function allYears(){
@@ -626,8 +627,19 @@ function allYears(){
   ys.add(new Date().getFullYear());
   return [...ys].sort((a,b)=>b-a);
 }
-/* تجميع محاسبي لفترة (سنة/ربع/عقار) بحسب تاريخ الاستحقاق الميلادي */
-function acct(year, quarter, buildingId){
+/* هل تتقاطع فترة (بداية-نهاية) مع السنة الميلادية المحددة؟ */
+function overlapsYear(startISO,endISO,year){
+  if(!startISO) return false;
+  return startISO<=(year+'-12-31') && (endISO||startISO)>=(year+'-01-01');
+}
+/* إجمالي مصروفات بند معيّن (افتراضيًا: صيانة) لعقار/سنة */
+function categoryExpenses(year, buildingId, category){
+  return (db.expenses||[]).filter(e=>yearOf(e.date)===year && (!buildingId||e.buildingId===buildingId) && (!category||e.category===category))
+    .reduce((s,e)=>s+(Number(e.amount)||0),0);
+}
+/* تجميع محاسبي لفترة (سنة/ربع/عقار) — mode: 'contracts' حسب دفعات العقود الفعلية، أو 'annual' حسب القيمة الكاملة السنوية للإيجار */
+function acct(year, quarter, buildingId, mode){
+  mode = mode || 'contracts';
   let expected=0, collected=0, overdue=0;
   db.units.forEach(u=>{
     if(buildingId && u.buildingId!==buildingId) return;
@@ -636,18 +648,23 @@ function acct(year, quarter, buildingId){
     pays.forEach(p=>{
       if(yearOf(p.dueDate)!==year) return;
       if(quarter && quarterOf(p.dueDate)!==quarter) return;
-      expected += p.amount;
+      if(mode==='contracts') expected += p.amount;
       collected += (p.paidAmount||0);
       if(p.status!=='paid' && daysFromToday(p.dueDate)<0) overdue += (p.amount-(p.paidAmount||0));
     });
+    if(mode==='annual'){
+      if(u.tenantName && overlapsYear(u.contractStart, contractEnd(u), year)){
+        expected += (Number(u.rentAmount)||0) / (quarter?4:1);
+      }
+      (u.history||[]).forEach(tn=>{
+        const tEnd=addMonths(tn.contractStart, tn.durationMonths||12);
+        if(overlapsYear(tn.contractStart, tEnd, year)){
+          expected += (Number(tn.rentAmount||tn.quarterlyRent)||0) / (quarter?4:1);
+        }
+      });
+    }
   });
-  let expenses=0;
-  (db.expenses||[]).forEach(e=>{
-    if(buildingId && e.buildingId!==buildingId) return;
-    if(yearOf(e.date)!==year) return;
-    if(quarter && quarterOf(e.date)!==quarter) return;
-    expenses += Number(e.amount)||0;
-  });
+  const expenses=categoryExpenses(year,buildingId,null);
   return { expected, collected, outstanding:expected-collected, overdue, expenses, net:collected-expenses, rate: expected?Math.round(collected/expected*100):0 };
 }
 function rateBar(rate){
@@ -661,12 +678,13 @@ function viewAccounting(){
   const nowY=new Date().getFullYear();
   if(!acctYear || years.indexOf(acctYear)<0) acctYear = years.indexOf(nowY)>=0 ? nowY : years[0];
   if(acctBuildingId && !db.buildings.find(x=>x.id===acctBuildingId)) acctBuildingId=null;
-  const y=acctYear, bId=acctBuildingId;
+  const y=acctYear, bId=acctBuildingId, mode=acctMode;
   const filterBuilding=bId?db.buildings.find(x=>x.id===bId):null;
-  const yr=acct(y,null,bId);
+  const yr=acct(y,null,bId,mode);
+  const modeLbl=mode==='annual'?'القيمة الإجمالية السنوية':'القيمة حسب العقود';
 
   let h=`<div class="page-head"><div><h1>🧮 المحاسبة</h1>
-    <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية${filterBuilding?' — '+esc(filterBuilding.name):''}</div></div>
+    <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية${filterBuilding?' — '+esc(filterBuilding.name):''} — ${modeLbl}</div></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label style="font-weight:700;font-size:13px">السنة:</label>
       <select onchange="acctYear=parseInt(this.value);render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-weight:700">
@@ -677,8 +695,13 @@ function viewAccounting(){
         <option value="" ${!bId?'selected':''}>كل العقارات</option>
         ${db.buildings.map(b=>`<option value="${b.id}" ${bId===b.id?'selected':''}>${esc(b.name)}</option>`).join('')}
       </select>
-      <button class="btn" onclick="exportAccountingCSV(${y},${bId?`'${bId}'`:'null'})">📊 تصدير Excel</button>
-      <button class="btn btn-primary" onclick="exportAccountingPDF(${y},${bId?`'${bId}'`:'null'})">📄 تقرير PDF</button>
+      <label style="font-weight:700;font-size:13px">أساس الحساب:</label>
+      <select onchange="acctMode=this.value;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-weight:700">
+        <option value="contracts" ${mode==='contracts'?'selected':''}>القيمة حسب العقود</option>
+        <option value="annual" ${mode==='annual'?'selected':''}>القيمة الإجمالية السنوية</option>
+      </select>
+      <button class="btn" onclick="exportAccountingCSV(${y},${bId?`'${bId}'`:'null'},'${mode}')">📊 تصدير Excel</button>
+      <button class="btn btn-primary" onclick="exportAccountingPDF(${y},${bId?`'${bId}'`:'null'},'${mode}')">📄 تقرير PDF</button>
     </div></div>`;
 
   h+=`<div class="stats">
@@ -693,7 +716,7 @@ function viewAccounting(){
   const qNames=['الربع الأول (يناير–مارس)','الربع الثاني (أبريل–يونيو)','الربع الثالث (يوليو–سبتمبر)','الربع الرابع (أكتوبر–ديسمبر)'];
   h+=`<div class="panel"><div class="panel-head"><h2>📅 التفصيل الربع سنوي — ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}</h2></div><div class="panel-body">
     <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>نسبة التحصيل</th><th>المصروفات</th><th>الصافي</th></tr></thead><tbody>`;
-  for(let q=1;q<=4;q++){ const a=acct(y,q,bId);
+  for(let q=1;q<=4;q++){ const a=acct(y,q,bId,mode);
     h+=`<tr>
       <td style="font-weight:700">${qNames[q-1]}</td>
       <td>${fmtMoney(a.expected)}</td>
@@ -711,10 +734,11 @@ function viewAccounting(){
       <td style="color:${yr.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(yr.net)}</td></tr>`;
   h+=`</tbody></table></div></div>`;
 
-  if(!filterBuilding){
-    h+=`<div class="panel"><div class="panel-head"><h2>🏢 حسب العقار — ${y}</h2></div><div class="panel-body">
-      <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th></tr></thead><tbody>`;
-    db.buildings.forEach(b=>{ const a=acct(y,null,b.id);
+  h+=`<div class="panel"><div class="panel-head"><h2>🏢 حسب العقار — ${y}</h2></div><div class="panel-body">
+      <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th><th>🔧 الصيانة % من الإيجار</th></tr></thead><tbody>`;
+  (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(y,null,b.id,mode);
+      const maint=categoryExpenses(y,b.id,'صيانة');
+      const maintPct=a.expected?Math.round(maint/a.expected*100):0;
       h+=`<tr onclick="go('building','${b.id}')" style="cursor:pointer">
         <td style="font-weight:700">${esc(b.name)}</td>
         <td>${fmtMoney(a.expected)}</td>
@@ -722,15 +746,15 @@ function viewAccounting(){
         <td style="color:${a.outstanding>0?'var(--warning)':'var(--muted)'}">${fmtMoney(a.outstanding)}</td>
         <td style="color:var(--danger)">${a.expenses?fmtMoney(a.expenses):'—'}</td>
         <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td>
-        <td>${rateBar(a.rate)}</td></tr>`;
-    });
-    h+=`</tbody></table></div></div>`;
-  }
+        <td>${rateBar(a.rate)}</td>
+        <td style="font-weight:700">${maintPct}%<div class="muted">محصّل: ${fmtMoney(a.collected)}</div></td></tr>`;
+  });
+  h+=`</tbody></table></div></div>`;
 
   if(years.length>1){
-    const maxC=Math.max(...years.map(yy=>acct(yy,null,bId).collected),1);
+    const maxC=Math.max(...years.map(yy=>acct(yy,null,bId,mode).collected),1);
     h+=`<div class="panel"><div class="panel-head"><h2>📈 المحصّل عبر السنوات${filterBuilding?' — '+esc(filterBuilding.name):''}</h2></div><div class="panel-body pad">`;
-    years.slice().sort((a,b)=>a-b).forEach(yy=>{ const c=acct(yy,null,bId).collected;
+    years.slice().sort((a,b)=>a-b).forEach(yy=>{ const c=acct(yy,null,bId,mode).collected;
       h+=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <div style="width:54px;font-weight:700;${yy===y?'color:var(--primary-d)':''}">${yy}</div>
         <div style="flex:1;background:var(--surface-2);border-radius:8px;height:26px;overflow:hidden;border:1px solid var(--border)">
@@ -803,17 +827,20 @@ function deleteExpense(eId){
 }
 
 /* ---------- تقرير محاسبي PDF ---------- */
-function exportAccountingPDF(year,buildingId){
+function exportAccountingPDF(year,buildingId,mode){
+  mode = mode || 'contracts';
+  const modeLbl=mode==='annual'?'القيمة الإجمالية السنوية':'القيمة حسب العقود';
   const filterBuilding=buildingId?db.buildings.find(x=>x.id===buildingId):null;
-  const yr=acct(year,null,buildingId||null);
+  const yr=acct(year,null,buildingId||null,mode);
   const qN=['الربع الأول','الربع الثاني','الربع الثالث','الربع الرابع'];
   let qRows='';
-  for(let q=1;q<=4;q++){ const a=acct(year,q,buildingId||null);
+  for(let q=1;q<=4;q++){ const a=acct(year,q,buildingId||null,mode);
     qRows+=`<tr><td>${qN[q-1]}</td><td>${fmtMoney(a.expected)}</td><td style="color:#16a34a">${fmtMoney(a.collected)}</td><td style="color:#d97706">${fmtMoney(a.outstanding)}</td><td>${a.rate}%</td><td style="color:#dc2626">${a.expenses?fmtMoney(a.expenses):'—'}</td><td style="font-weight:bold">${fmtMoney(a.net)}</td></tr>`;
   }
   let bRows='';
-  (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(year,null,b.id);
-    bRows+=`<tr><td>${esc(b.name)}</td><td>${fmtMoney(a.expected)}</td><td style="color:#16a34a">${fmtMoney(a.collected)}</td><td style="color:#d97706">${fmtMoney(a.outstanding)}</td><td style="color:#dc2626">${a.expenses?fmtMoney(a.expenses):'—'}</td><td style="font-weight:bold">${fmtMoney(a.net)}</td></tr>`;
+  (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(year,null,b.id,mode);
+    const maint=categoryExpenses(year,b.id,'صيانة'); const maintPct=a.expected?Math.round(maint/a.expected*100):0;
+    bRows+=`<tr><td>${esc(b.name)}</td><td>${fmtMoney(a.expected)}</td><td style="color:#16a34a">${fmtMoney(a.collected)}</td><td style="color:#d97706">${fmtMoney(a.outstanding)}</td><td style="color:#dc2626">${a.expenses?fmtMoney(a.expenses):'—'}</td><td style="font-weight:bold">${fmtMoney(a.net)}</td><td>${maintPct}%</td></tr>`;
   });
   const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===year && (!buildingId || e.buildingId===buildingId)).sort((a,b)=>a.date<b.date?1:-1);
   let eRows='';
@@ -841,7 +868,7 @@ function exportAccountingPDF(year,buildingId){
   </style></head><body>
     <div class="btnbar noprint"><button onclick="window.print()">🖨️ طباعة / حفظ PDF</button></div>
     <div class="hd"><div><h1>التقرير المحاسبي السنوي — ${year}${filterBuilding?' — '+esc(filterBuilding.name):''}</h1>
-      <div class="meta">نظام إدارة الإيجارات • تاريخ الإصدار: ${fmtDate(todayISO())}</div></div><div class="logo">🧮</div></div>
+      <div class="meta">نظام إدارة الإيجارات • أساس الاحتساب: ${modeLbl} • تاريخ الإصدار: ${fmtDate(todayISO())}</div></div><div class="logo">🧮</div></div>
     <div class="cards">
       <div class="c"><div class="t">المستحق</div><div class="v">${fmtMoney(yr.expected)}</div></div>
       <div class="c"><div class="t">المحصّل</div><div class="v" style="color:#16a34a">${fmtMoney(yr.collected)}</div></div>
@@ -855,9 +882,9 @@ function exportAccountingPDF(year,buildingId){
       <tbody>${qRows}</tbody>
       <tfoot><tr class="tot"><td>الإجمالي</td><td>${fmtMoney(yr.expected)}</td><td>${fmtMoney(yr.collected)}</td><td>${fmtMoney(yr.outstanding)}</td><td>${yr.rate}%</td><td>${fmtMoney(yr.expenses)}</td><td>${fmtMoney(yr.net)}</td></tr></tfoot></table>
     <h2>${filterBuilding?'العقار':'حسب العقار'}</h2>
-    <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th></tr></thead><tbody>${bRows}</tbody></table>
+    <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>الصيانة % من الإيجار</th></tr></thead><tbody>${bRows}</tbody></table>
     ${eRows?`<h2>تفاصيل المصروفات</h2><table><thead><tr><th>التاريخ</th><th>العقار</th><th>البند</th><th>الوصف</th><th>المبلغ</th></tr></thead><tbody>${eRows}</tbody></table>`:''}
-    <div class="ft">طريقة الاحتساب: التجميع حسب السنة والربع الميلادي لتاريخ استحقاق كل دفعة • صافي الدخل = المحصّل − المصروفات • صدر من نظام إدارة الإيجارات</div>
+    <div class="ft">طريقة الاحتساب: ${mode==='annual'?'المستحق = القيمة الكاملة السنوية للإيجار لكل وحدة لها مستأجر خلال السنة':'المستحق = التجميع حسب السنة والربع الميلادي لتاريخ استحقاق كل دفعة'} • صافي الدخل = المحصّل − المصروفات • صدر من نظام إدارة الإيجارات</div>
   </body></html>`);
   w.document.close();
 }
@@ -1647,22 +1674,26 @@ function viewTenancy(uId,idx){
   openModal(h);
 }
 /* تصدير المحاسبة Excel/CSV */
-function exportAccountingCSV(year,buildingId){
+function exportAccountingCSV(year,buildingId,mode){
+  mode = mode || 'contracts';
+  const modeLbl=mode==='annual'?'القيمة الإجمالية السنوية':'القيمة حسب العقود';
   const filterBuilding=buildingId?db.buildings.find(x=>x.id===buildingId):null;
   const cell=(v)=> (typeof v==='number')? v : '"'+String(v==null?'':v).replace(/"/g,'""')+'"';
   const rows=[];
-  rows.push(['التقرير المحاسبي السنوي', year].concat(filterBuilding?[filterBuilding.name]:[]));
+  rows.push(['التقرير المحاسبي السنوي', year, modeLbl].concat(filterBuilding?[filterBuilding.name]:[]));
   rows.push([]);
   rows.push(['التفصيل الربع سنوي']);
   rows.push(['الربع','المستحق','المحصّل','المتبقّي','نسبة التحصيل %','المصروفات','الصافي']);
   const qN=['الربع الأول','الربع الثاني','الربع الثالث','الربع الرابع'];
-  for(let i=1;i<=4;i++){ const a=acct(year,i,buildingId||null); rows.push([qN[i-1],a.expected,a.collected,a.outstanding,a.rate,a.expenses,a.net]); }
-  const yr=acct(year,null,buildingId||null);
+  for(let i=1;i<=4;i++){ const a=acct(year,i,buildingId||null,mode); rows.push([qN[i-1],a.expected,a.collected,a.outstanding,a.rate,a.expenses,a.net]); }
+  const yr=acct(year,null,buildingId||null,mode);
   rows.push(['الإجمالي السنوي',yr.expected,yr.collected,yr.outstanding,yr.rate,yr.expenses,yr.net]);
   rows.push([]);
   rows.push([filterBuilding?'العقار':'حسب العقار']);
-  rows.push(['العقار','المستحق','المحصّل','المتبقّي','المصروفات','الصافي']);
-  (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(year,null,b.id); rows.push([b.name,a.expected,a.collected,a.outstanding,a.expenses,a.net]); });
+  rows.push(['العقار','المستحق','المحصّل','المتبقّي','المصروفات','الصافي','الصيانة % من الإيجار']);
+  (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(year,null,b.id,mode);
+    const maint=categoryExpenses(year,b.id,'صيانة'); const maintPct=a.expected?Math.round(maint/a.expected*100):0;
+    rows.push([b.name,a.expected,a.collected,a.outstanding,a.expenses,a.net,maintPct]); });
   rows.push([]);
   rows.push(['المصروفات']);
   rows.push(['التاريخ','العقار','البند','الوصف','المبلغ']);
