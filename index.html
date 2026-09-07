@@ -9,70 +9,88 @@
 <title>نظام إدارة الإيجارات v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Serif+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    /* هوية بصرية مستوحاة من Anthropic: مجلة علمية على ورق دافئ، حبر عاجي هادئ ولون طيني واحد للفعل، بلا ظلال */
-    --bg:#f0eee6; --surface:#faf9f5; --surface-2:#e3dacc; --surface-3:#b0aea5;
-    --primary:#d97757; --primary-d:#c6613f; --primary-l:rgba(217,119,87,.14);
-    --text:#141413; --muted:#87867f; --border:#cccbc8; --border-soft:#87867f;
-    --success:#3f7d4e; --success-l:rgba(63,125,78,.14);
-    --warning:#b8863a; --warning-l:rgba(184,134,58,.14);
-    --danger:#b3402e; --danger-l:rgba(179,64,46,.14);
-    --info:#5b6b74; --info-l:rgba(91,107,116,.14);
-    /* لا يوجد مقابل عربي لثنائي Anthropic Serif/Sans، فاعتُمد IBM Plex Sans Arabic لواجهة التحكم و Noto Serif Arabic للعناوين والصوت التحريري */
-    --font:'IBM Plex Sans Arabic',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
-    --font-serif:'Noto Serif Arabic','IBM Plex Sans Arabic',Georgia,serif;
+    /* هوية "Blueprint / مخطط هندسي": رمادي فولاذي محايد، لون واحد فقط (accent)، بلا زوايا وبلا ظلال */
+    --bg:#f2f2f3; --surface:transparent; --surface-2:#e9e9ea; --surface-3:#b7b7ba;
+    --primary:#5980a6; --primary-d:#416180; --primary-l:rgba(89,128,166,.14);
+    --text:#1d1f20; --muted:#5d5d60; --faint:#7a7a7d; --border:rgba(29,31,32,.16); --border-soft:rgba(29,31,32,.16); --line-soft:rgba(29,31,32,.08);
+    --accent-300:#b5d9fd; --accent-500:#749dc4; --accent-700:#416180; --accent-900:#1d2d3d;
+    --neutral-300:#d4d4d7; --neutral-400:#b7b7ba;
+    /* لا ألوان دلالية مختلفة (أخضر/أحمر/أصفر) — الحالات تُميَّز بدرجة الفولاذي والوزن فقط */
+    --success:#5d5d60; --success-l:rgba(29,31,32,.06);
+    --warning:#1d2d3d; --warning-l:#b5d9fd;
+    --danger:#1d2d3d; --danger-l:rgba(29,31,32,.08);
+    --info:#416180; --info-l:rgba(89,128,166,.12);
+    --font:'IBM Plex Sans Arabic','Barlow',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    --font-serif:'Barlow Condensed','IBM Plex Sans Arabic',sans-serif;
     --shadow:none;
     --shadow-lg:none;
-    --radius:24px; --radius-sm:12px;
+    --radius:0; --radius-sm:0;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scrollbar-color:var(--surface-3) transparent}
   body{
-    font-family:var(--font);
-    background:var(--bg);color:var(--text);line-height:1.65;
+    font-family:var(--font);font-size:15px;
+    background:var(--bg);color:var(--text);line-height:1.55;
+    font-variant-numeric:tabular-nums;
     -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
   }
   button{font-family:inherit;cursor:pointer}
   input,select,textarea{font-family:inherit;font-size:14px}
   a{color:inherit}
-  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:0}
   ::-webkit-scrollbar{width:11px;height:11px}
   ::-webkit-scrollbar-track{background:transparent}
-  ::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:20px;border:3px solid var(--bg);background-clip:padding-box}
+  ::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:0;border:3px solid var(--bg);background-clip:padding-box}
   ::-webkit-scrollbar-thumb:hover{background:var(--muted);background-clip:padding-box}
 
-  /* Header — شريط تنقّل مسطّح على لون العاج، بلا كبسولة زجاجية ولا ظل */
+  /* علامات تسجيل زوايا (Blueprint corner ticks) — تُضاف تلقائيًا على البطاقات/الجداول/النوافذ دون أي تعديل في البنية */
+  .panel,.bcard,.modal,.stats,.bp{position:relative}
+  .panel::before,.panel::after,.bcard::before,.bcard::after,.modal::before,.modal::after,.stats::before,.stats::after,.bp::before,.bp::after{
+    content:'';position:absolute;width:11px;height:11px;pointer-events:none;z-index:3;
+    background:
+      linear-gradient(currentColor,currentColor) center/1px 100% no-repeat,
+      linear-gradient(currentColor,currentColor) center/100% 1px no-repeat;
+    color:rgba(29,31,32,.55);
+  }
+  .panel::before,.bcard::before,.modal::before,.stats::before,.bp::before{top:-6px;left:-6px}
+  .panel::after,.bcard::after,.modal::after,.stats::after,.bp::after{bottom:-6px;right:-6px}
+
+  /* Header — شريط تقني مسطّح، بلا كبسولة وبلا ظل */
   header{
-    position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--border);height:60px;
   }
   .head-inner{
-    max-width:1280px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    max-width:1280px;height:60px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
   }
   .brand{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.02em}
-  .brand .logo{width:32px;height:32px;background:var(--text);color:var(--surface);border-radius:0 0 8px 8px;display:grid;place-items:center;font-size:16px}
+  .brand .logo{width:30px;height:30px;background:transparent;color:var(--text);border:1px solid var(--text);border-radius:0;display:grid;place-items:center;font-size:16px}
   nav{display:flex;gap:2px;margin-inline-start:auto;flex-wrap:wrap}
   nav button{
-    background:transparent;color:var(--muted);border:none;padding:9px 14px;border-radius:0;
-    font-size:13px;font-weight:600;transition:.18s ease;display:inline-flex;align-items:center;gap:7px;
+    background:transparent;color:var(--muted);border:none;border-bottom:2px solid transparent;padding:9px 14px;border-radius:0;
+    font-size:14px;font-weight:600;transition:.18s ease;display:inline-flex;align-items:center;gap:7px;
   }
   nav button:hover{color:var(--text)}
-  nav button.active{color:var(--primary)}
-  .nav-ic{font-size:15px;line-height:1;display:inline-flex}
+  nav button.active{color:var(--primary);border-bottom-color:var(--primary)}
+  .nav-ic{font-size:15px;line-height:1;display:inline-flex;opacity:.6}
+  nav button.active .nav-ic{opacity:1}
 
   .wrap{max-width:1280px;margin:0 auto;padding:26px 20px 60px}
 
-  /* Page heading */
+  /* Page heading — سطر ترقيم تقني علوي بدل أيقونة العنوان */
   .page-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+  .page-head::before{content:attr(data-eyebrow);display:block;font-size:11px;letter-spacing:.14em;color:var(--faint);font-weight:600;margin-bottom:4px;width:100%}
   .page-head h1{font-family:var(--font-serif);font-size:28px;font-weight:600}
+  .page-head h1 svg{display:none}
   .page-head .sub{color:var(--muted);font-size:14px;margin-top:3px}
   .crumbs{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin-bottom:8px}
   .crumbs a{color:var(--text);cursor:pointer;text-decoration:underline;font-weight:600}
   .crumbs a:hover{color:var(--primary)}
 
-  /* Buttons — طلاء عاجي بحرف سفلي مربّع (توقيع الهوية)، ولون الفعل الطيني الوحيد للأهم فقط، بلا ظلال */
-  .btn{border:none;border-radius:0 0 8px 8px;padding:10px 20px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:.15s ease;background:var(--surface);color:var(--text);border:1px solid var(--border)}
+  /* Buttons — مستطيل صارم بلا زوايا، لون واحد للفعل الأساسي */
+  .btn{border:none;border-radius:0;padding:8px 14px;font-family:var(--font-serif);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:.15s ease;background:var(--surface);color:var(--text);border:1px solid var(--border)}
   .btn:hover{background:var(--surface-2)}
   .btn:active{transform:translateY(1px)}
   .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
@@ -83,47 +101,33 @@
   .btn-ghost{background:transparent;border:1px solid var(--border)}
   .btn-ghost:hover{background:var(--surface)}
 
-  /* Cards / stat grid */
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:26px}
-  .stat{background:var(--surface);border-radius:var(--radius);padding:19px 20px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden;transition:.18s ease}
-  .stat .ic{
-    width:48px;height:48px;border-radius:13px;display:grid;place-items:center;margin-bottom:12px;
-    position:relative;overflow:hidden;isolation:isolate;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(20,20,19,.04);
-    animation:icFloat 4s ease-in-out infinite;
-  }
-  .ic svg{position:relative;z-index:1}
-  .ic::before{
-    content:'';position:absolute;inset:0;z-index:1;
-    background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.4) 48%,transparent 60%);
-    transform:translateX(-140%);animation:icShine 4.6s ease-in-out infinite;
-  }
-  .stat .val{font-family:var(--font-serif);font-size:27px;font-weight:600;line-height:1.15}
-  .stat .lbl{color:var(--muted);font-size:13px;font-weight:600;margin-top:4px}
+  /* شريط المؤشرات الموحّد — بلا مربعات ملوّنة، بلا زوايا، خط شعري واحد يفصل الخلايا */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border:1px solid var(--border);margin-bottom:26px}
+  @media (max-width:900px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  .stat{background:transparent;padding:16px 18px;position:relative;transition:.15s ease;border-inline-start:1px solid var(--border)}
+  .stat:first-child{border-inline-start:none}
+  @media (max-width:900px){ .stat:nth-child(2n+1){border-inline-start:none} .stat{border-top:1px solid var(--border)} .stat:nth-child(-n+2){border-top:none} }
+  .stat .lbl{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:12px}
+  .stat .lbl .ic{width:16px;height:16px;flex:none;display:inline-flex;color:var(--muted)}
+  .stat .lbl .ic svg{width:16px;height:16px}
+  .stat .val{font-family:var(--font-serif);font-size:44px;font-weight:600;line-height:1;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .stat .val .sec{font-family:var(--font);font-size:14px;font-weight:500;color:var(--muted)}
+  .stat .ctx{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .stat .mbar{height:4px;background:var(--neutral-300);margin-top:10px;overflow:hidden}
+  .stat .mbar>span{display:block;height:100%;background:var(--primary)}
+  .stat .mspark{display:flex;align-items:flex-end;gap:3px;height:22px;margin-top:10px}
+  .stat .mspark span{flex:1;background:rgba(29,31,32,.14);min-height:3px}
   .stat.clickable{cursor:pointer}
-  .stat.clickable:hover{border-color:var(--primary);background:var(--surface-2)}
-  .stat.clickable:hover .ic{transform:scale(1.08) rotate(-4deg)}
-  .stat .stat-go{position:absolute;bottom:14px;left:18px;font-size:12px;font-weight:800;color:var(--primary);opacity:0;transition:.18s}
+  .stat.clickable:hover{background:var(--surface-2)}
+  .stat .stat-go{position:absolute;bottom:14px;left:18px;font-size:11px;font-weight:700;color:var(--primary);opacity:0;transition:.18s}
   .stat.clickable:hover .stat-go{opacity:1}
+  .stat.dark{background:var(--accent-900);color:var(--bg)}
+  .stat.dark .lbl,.stat.dark .lbl .ic,.stat.dark .ctx,.stat.dark .val .sec{color:rgba(242,242,243,.65)}
+  .stat.dark .mspark span{background:rgba(242,242,243,.3)}
+  .stat.dark .mspark span:last-child{background:var(--bg)}
+  .stat.dark.clickable:hover{background:var(--accent-700)}
+  .stat.dark .stat-go{color:var(--bg)}
   tbody tr.rowlink{cursor:pointer}
-  .ic.teal{background:linear-gradient(150deg,rgba(217,119,87,.42),rgba(217,119,87,.22));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(217,119,87,.3);color:var(--primary-d)}
-  .ic.green{background:linear-gradient(150deg,rgba(63,125,78,.42),rgba(63,125,78,.22));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(63,125,78,.3);color:var(--success)}
-  .ic.red{background:linear-gradient(150deg,rgba(179,64,46,.42),rgba(179,64,46,.22));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(179,64,46,.3);color:var(--danger)}
-  .ic.amber{background:linear-gradient(150deg,rgba(184,134,58,.42),rgba(184,134,58,.22));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(184,134,58,.3);color:var(--warning)}
-  .ic.blue{background:linear-gradient(150deg,rgba(91,107,116,.42),rgba(91,107,116,.22));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(91,107,116,.3);color:var(--info)}
-  .stats .stat:nth-child(5n+1) .ic{animation-delay:0s}
-  .stats .stat:nth-child(5n+1) .ic::before{animation-delay:.4s}
-  .stats .stat:nth-child(5n+2) .ic{animation-delay:.3s}
-  .stats .stat:nth-child(5n+2) .ic::before{animation-delay:1.3s}
-  .stats .stat:nth-child(5n+3) .ic{animation-delay:.6s}
-  .stats .stat:nth-child(5n+3) .ic::before{animation-delay:2.2s}
-  .stats .stat:nth-child(5n+4) .ic{animation-delay:.9s}
-  .stats .stat:nth-child(5n+4) .ic::before{animation-delay:3.1s}
-  .stats .stat:nth-child(5n+5) .ic{animation-delay:1.2s}
-  .stats .stat:nth-child(5n+5) .ic::before{animation-delay:4s}
-  @keyframes icFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-  @keyframes icShine{0%,58%{transform:translateX(-140%)}82%,100%{transform:translateX(140%)}}
-  @media (prefers-reduced-motion:reduce){.ic,.ic::before{animation:none!important}}
 
   .panel{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:22px;overflow:hidden}
   .panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -142,13 +146,13 @@
   tbody tr:hover{background:var(--primary-l)}
   td .muted{color:var(--muted);font-size:12.5px}
 
-  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:6px;font-size:12.5px;font-weight:700;white-space:nowrap}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:0;font-size:12.5px;font-weight:700;white-space:nowrap}
   .b-green{background:var(--success-l);color:var(--success)}
   .b-red{background:var(--danger-l);color:var(--danger)}
   .b-amber{background:var(--warning-l);color:var(--warning)}
   .b-blue{background:var(--info-l);color:var(--info)}
   .b-gray{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
-  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .dot{width:6px;height:6px;border-radius:0;display:inline-block}
 
   /* Building cards */
   .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
@@ -163,7 +167,7 @@
   .bcard .mini .t{font-size:12px;color:var(--muted);font-weight:600}
 
   /* progress bar */
-  .pbar{height:8px;border-radius:8px;background:var(--surface-2);overflow:hidden;border:1px solid var(--border)}
+  .pbar{height:8px;border-radius:0;background:var(--surface-2);overflow:hidden;border:1px solid var(--border)}
   .pbar > span{display:block;height:100%;background:var(--success);transition:width .3s ease}
 
   /* Empty states */
@@ -180,7 +184,7 @@
   .modal-head h3{font-family:var(--font-serif);font-size:19px;font-weight:600;display:flex;align-items:center;gap:9px}
   .modal-body{padding:22px}
   .modal-foot{padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-start;position:sticky;bottom:0;background:var(--surface)}
-  .x{background:var(--surface-2);border:none;width:34px;height:34px;border-radius:8px;font-size:18px;color:var(--muted);transition:.15s}
+  .x{background:var(--surface-2);border:none;width:34px;height:34px;border-radius:0;font-size:18px;color:var(--muted);transition:.15s}
   .x:hover{background:var(--danger-l);color:var(--danger)}
 
   /* Forms */
@@ -190,12 +194,12 @@
   .field input,.field select,.field textarea{
     width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-2);transition:.15s;
   }
-  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);background:var(--surface-2);box-shadow:0 0 0 3px var(--primary-l)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);background:var(--surface-2)}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 
-  .info-box{background:var(--info-l);border:1px solid var(--border);color:var(--info);border-radius:12px;padding:14px 16px;font-size:13.5px;display:flex;gap:10px;align-items:flex-start}
-  .formula{background:var(--surface-2);border:1px dashed var(--border);border-radius:10px;padding:12px 15px;font-size:14px;color:var(--text);margin-top:6px;line-height:1.9}
+  .info-box{background:var(--info-l);border:1px solid var(--border);color:var(--info);border-radius:0;padding:14px 16px;font-size:13.5px;display:flex;gap:10px;align-items:flex-start}
+  .formula{background:var(--surface-2);border:1px dashed var(--border);border-radius:0;padding:12px 15px;font-size:14px;color:var(--text);margin-top:6px;line-height:1.9}
   .formula b{color:var(--primary-d)}
 
   details.acct-info{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:22px}
@@ -207,7 +211,7 @@
   details.acct-info .info-box{margin:0 19px 17px}
 
   .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:6px}
-  .dcell{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:13px 15px}
+  .dcell{background:var(--surface-2);border:1px solid var(--border);border-radius:0;padding:13px 15px}
   .dcell .t{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:4px}
   .dcell .v{font-size:15px;font-weight:700}
 
@@ -226,7 +230,7 @@
   @media print{body{background:#fff}.no-print{display:none!important}}
 
   /* مزامنة سحابية + شاشة رمز الدخول */
-  .sync-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid var(--border);color:var(--text);white-space:nowrap;transition:.15s}
+  .sync-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:0;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);color:var(--text);white-space:nowrap;transition:.15s}
   .sync-badge.ok{background:var(--success-l);color:var(--success);border-color:transparent}
   .sync-badge.off{background:var(--warning-l);color:var(--warning);border-color:transparent}
   .sync-badge:hover{filter:brightness(1.06)}
@@ -237,62 +241,35 @@
   .gatebox h2{font-family:var(--font-serif);font-size:22px;font-weight:600;color:var(--text);margin-bottom:8px}
   .gatebox p{color:var(--muted);font-size:14px;margin-bottom:18px}
   .gate-hint{color:var(--primary);font-size:12.5px;font-weight:600}
-  #gate-code{width:100%;padding:14px 15px;border:1.5px solid var(--border);border-radius:13px;background:var(--surface-2);color:var(--text);font-size:17px;text-align:center;letter-spacing:3px;margin-bottom:14px}
-  #gate-code:focus{outline:none;border-color:var(--primary);background:var(--surface-2);box-shadow:0 0 0 3px var(--primary-l)}
+  #gate-code{width:100%;padding:14px 15px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-size:17px;text-align:center;letter-spacing:3px;margin-bottom:14px}
+  #gate-code:focus{outline:none;border-color:var(--primary);background:var(--surface-2)}
   .gate-btn{width:100%;justify-content:center;padding:14px;font-size:15px}
   .gate-foot{margin-top:18px;font-size:12px;color:var(--muted);line-height:1.7}
 
-  /* أيقونات SVG (مستوحاة من هوية مبيت البصرية) */
+  /* أيقونات — خطية موحّدة 17px، بلا خلفية ملوّنة وبلا حركات زخرفية (هوية Blueprint تقنية ساكنة) */
   .page-head h1{display:flex;align-items:center;gap:10px}
-  .page-head h1 svg,.crumbs svg{color:var(--primary);width:22px;height:22px;flex-shrink:0}
-  .ic svg{width:26px;height:26px}
-  .empty .em{display:flex;justify-content:center;margin-bottom:14px;color:var(--primary)}
-  .empty .em svg{width:52px;height:52px;opacity:.55}
+  .crumbs svg{color:var(--muted);width:17px;height:17px;flex-shrink:0}
+  .empty .em{display:flex;justify-content:center;margin-bottom:14px;color:var(--muted)}
+  .empty .em svg{width:44px;height:44px;opacity:.55}
   .bcard .top .name{display:flex;align-items:center;gap:7px}
-  .bcard .top .name svg{width:17px;height:17px;flex-shrink:0}
-
-  /* لمسة تفاعلية موحّدة: كل أيقونة قابلة للنقر تبرز بحركة نابضة وومضة خفيفة عند المرور أو الضغط، بدل الجمود الساكن */
-  @keyframes iconPop{0%{transform:scale(1)}40%{transform:scale(1.24)}65%{transform:scale(.93)}100%{transform:scale(1)}}
-  @keyframes iconFlash{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}35%{opacity:.6}100%{opacity:0;transform:translate(-50%,-50%) scale(2.4)}}
-  .nav-ic,.brand .logo,.x{position:relative}
-  .nav-ic::after,.brand .logo::after,.x::after,.btn::after{
-    content:'';position:absolute;top:50%;left:50%;width:100%;padding-top:100%;
-    transform:translate(-50%,-50%) scale(.3);border-radius:50%;pointer-events:none;
-    background:radial-gradient(circle,var(--primary-l) 0%,transparent 72%);opacity:0;
-  }
-  .btn{position:relative;overflow:hidden}
-  .btn svg{transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
-  nav button:hover .nav-ic svg,nav button:active .nav-ic svg,
-  .btn:hover svg,.btn:active svg{animation:iconPop .45s cubic-bezier(.34,1.56,.64,1)}
-  nav button:hover .nav-ic::after,nav button:active .nav-ic::after,
-  .btn:hover::after,.btn:active::after,
-  .x:hover::after,.x:active::after{animation:iconFlash .55s ease-out}
+  .bcard .top .name svg{width:17px;height:17px;flex-shrink:0;opacity:.7}
   .brand{cursor:default}
-  .brand .logo{overflow:hidden;animation:icFloat 5s ease-in-out infinite}
-  .brand .logo::before{
-    content:'';position:absolute;inset:0;z-index:1;border-radius:inherit;
-    background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 48%,transparent 66%);
-    transform:translateX(-140%);animation:icShine 5.5s ease-in-out infinite;
-  }
-  .brand .logo svg{position:relative;z-index:1}
-  @media (prefers-reduced-motion:reduce){
-    .nav-ic svg,.btn svg,.brand .logo{animation:none!important}
-    .nav-ic::after,.brand .logo::after,.x::after,.btn::after,.brand .logo::before{display:none!important}
-  }
+  nav button .nav-ic{transition:opacity .15s}
+  nav button:hover .nav-ic{opacity:1}
 </style>
 </head>
 <body>
 <header>
   <div class="head-inner">
-    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M9 15h1.5M13.5 15H15M10 21v-3.5h4V21"/></svg></span><span>نظام إدارة الإيجارات</span></div>
+    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M9 15h1.5M13.5 15H15M10 21v-3.5h4V21"/></svg></span><span>نظام إدارة الإيجارات</span></div>
     <span id="syncBadge" class="sync-badge" style="display:none" onclick="cloudLogout()" title="اضغط لتغيير الرمز / تسجيل الخروج"></span>
     <nav id="nav">
-      <button data-v="dashboard" onclick="go('dashboard')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>لوحة التحكم</button>
-      <button data-v="properties" onclick="go('properties')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M9 15h1.5M13.5 15H15M10 21v-3.5h4V21"/></svg></span>العقارات</button>
-      <button data-v="accounting" onclick="go('accounting')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M8 6.5h8"/><circle cx="8.3" cy="11" r=".6"/><circle cx="12" cy="11" r=".6"/><circle cx="15.7" cy="11" r=".6"/><circle cx="8.3" cy="14.5" r=".6"/><circle cx="12" cy="14.5" r=".6"/><circle cx="15.7" cy="14.5" r=".6"/><circle cx="8.3" cy="18" r=".6"/><circle cx="12" cy="18" r=".6"/><circle cx="15.7" cy="18" r=".6"/></svg></span>المحاسبة</button>
-      <button data-v="payments" onclick="go('payments')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.2" cy="6" r="1"/><circle cx="4.2" cy="12" r="1"/><circle cx="4.2" cy="18" r="1"/></svg></span>المستحقات</button>
-      <button onclick="openGuide()"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V6a2.5 2.5 0 0 1 2.5-2.5H20V17H6.5A2.5 2.5 0 0 0 4 19.5 2.5 2.5 0 0 0 6.5 22H20"/></svg></span>دليل المستخدم</button>
-      <button onclick="openSettings()"><span class="nav-ic"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5v-3l-2.2-.4a6.8 6.8 0 0 0-.7-1.7l1.3-1.8-2.1-2.1-1.8 1.3a6.8 6.8 0 0 0-1.7-.7L12 2.6H9l-.4 2.2a6.8 6.8 0 0 0-1.7.7L5.1 4.2 3 6.3l1.3 1.8a6.8 6.8 0 0 0-.7 1.7l-2.2.4v3l2.2.4a6.8 6.8 0 0 0 .7 1.7L3 17.1l2.1 2.1 1.8-1.3a6.8 6.8 0 0 0 1.7.7l.4 2.2h3l.4-2.2a6.8 6.8 0 0 0 1.7-.7l1.8 1.3 2.1-2.1-1.3-1.8a6.8 6.8 0 0 0 .7-1.7Z"/></svg></span>الإعدادات</button>
+      <button data-v="dashboard" onclick="go('dashboard')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>لوحة التحكم</button>
+      <button data-v="properties" onclick="go('properties')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M9 15h1.5M13.5 15H15M10 21v-3.5h4V21"/></svg></span>العقارات</button>
+      <button data-v="accounting" onclick="go('accounting')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M8 6.5h8"/><circle cx="8.3" cy="11" r=".6"/><circle cx="12" cy="11" r=".6"/><circle cx="15.7" cy="11" r=".6"/><circle cx="8.3" cy="14.5" r=".6"/><circle cx="12" cy="14.5" r=".6"/><circle cx="15.7" cy="14.5" r=".6"/><circle cx="8.3" cy="18" r=".6"/><circle cx="12" cy="18" r=".6"/><circle cx="15.7" cy="18" r=".6"/></svg></span>المحاسبة</button>
+      <button data-v="payments" onclick="go('payments')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.2" cy="6" r="1"/><circle cx="4.2" cy="12" r="1"/><circle cx="4.2" cy="18" r="1"/></svg></span>المستحقات</button>
+      <button onclick="openGuide()"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V6a2.5 2.5 0 0 1 2.5-2.5H20V17H6.5A2.5 2.5 0 0 0 4 19.5 2.5 2.5 0 0 0 6.5 22H20"/></svg></span>دليل المستخدم</button>
+      <button onclick="openSettings()"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5v-3l-2.2-.4a6.8 6.8 0 0 0-.7-1.7l1.3-1.8-2.1-2.1-1.8 1.3a6.8 6.8 0 0 0-1.7-.7L12 2.6H9l-.4 2.2a6.8 6.8 0 0 0-1.7.7L5.1 4.2 3 6.3l1.3 1.8a6.8 6.8 0 0 0-.7 1.7l-2.2.4v3l2.2.4a6.8 6.8 0 0 0 .7 1.7L3 17.1l2.1 2.1 1.8-1.3a6.8 6.8 0 0 0 1.7.7l.4 2.2h3l.4-2.2a6.8 6.8 0 0 0 1.7-.7l1.8 1.3 2.1-2.1-1.3-1.8a6.8 6.8 0 0 0 .7-1.7Z"/></svg></span>الإعدادات</button>
     </nav>
   </div>
 </header>
@@ -486,7 +463,7 @@ function svgIcon(name){
     download:'<path d="M12 3v11"/><path d="M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 19.5h15"/>',
     upload:'<path d="M12 16V5"/><path d="M7.5 9.5 12 5l4.5 4.5"/><path d="M4.5 19.5h15"/>'
   };
-  return `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-.15em;flex-shrink:0">${p[name]||''}</svg>`;
+  return `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-.15em;flex-shrink:0">${p[name]||''}</svg>`;
 }
 
 /* ============================ منطق الدفعات ============================
@@ -566,16 +543,19 @@ function viewDashboard(){
   if(db.buildings.length===0) return pageEmpty();
 
   const occupied=units.filter(u=>u.tenantName).length;
+  const occPct=units.length?Math.round(occupied/units.length*100):0;
+  const maxOverdueDays=overdue.length?Math.max(...overdue.map(p=>Math.abs(daysFromToday(p.dueDate)))):0;
+  const collectedPct=(totalCollected+totalDue)?Math.round(totalCollected/(totalCollected+totalDue)*100):100;
 
-  let h=`<div class="page-head"><div><h1>${svgIcon('dashboard')} لوحة التحكم</h1>
+  let h=`<div class="page-head" data-eyebrow="DASHBOARD / 01"><div><h1>${svgIcon('dashboard')} لوحة التحكم</h1>
     <div class="sub">نظرة عامة على العقارات والمستحقات — ${fmtDate(todayISO())}</div></div></div>`;
 
   h+=`<div class="stats">
-    ${stat('teal',svgIcon('building'),db.buildings.length,'عدد العقارات',"go('properties')")}
-    ${stat('blue',svgIcon('door'),units.length,'إجمالي الوحدات',"go('properties')")}
-    ${stat('green',svgIcon('check'),fmtMoney(totalCollected),'إجمالي المحصّل',"go('accounting')")}
-    ${stat('red',svgIcon('warning'),overdue.length,'دفعات متأخرة',"scrollToPanel('p-overdue')")}
-    ${stat('amber',svgIcon('clock'),dueSoon.length,'دفعات قريبة',"scrollToPanel('p-duesoon')")}
+    ${stat(svgIcon('building'),db.buildings.length,'عدد العقارات',nearDelivery.length?`${nearDelivery.length} قريبة التسليم`:'لا عقارات قيد التسليم',"go('properties')")}
+    ${stat(svgIcon('door'),units.length,'إجمالي الوحدات',`${occupied} مؤجّرة · ${units.length-occupied} شاغرة — إشغال ${occPct}٪`,"go('properties')",{ratio:occPct})}
+    ${stat(svgIcon('check'),fmtMoney(totalCollected),'إجمالي المحصّل',`${collectedPct}٪ من المستحق`,"go('accounting')",{dark:true,spark:last7MonthsCollected()})}
+    ${stat(svgIcon('warning'),overdue.length,'دفعات متأخرة',overdue.length?`أقدمها متأخر ${maxOverdueDays} يوم`:'لا توجد دفعات متأخرة',"scrollToPanel('p-overdue')")}
+    ${stat(svgIcon('clock'),dueSoon.length,'دفعات قريبة',`خلال ${db.settings.paymentReminderDays} يوم القادمة`,"scrollToPanel('p-duesoon')")}
   </div>`;
 
   // متأخرات
@@ -592,9 +572,8 @@ function viewDashboard(){
       <td class="rowlink" onclick="openUnit('${p.unit.id}')"><span class="badge b-red">متأخر ${Math.abs(daysFromToday(p.dueDate))} يوم</span>${p.status==='partial'?'<div class="muted">دفع جزئي</div>':''}</td>
       <td style="font-weight:700" class="rowlink" onclick="openUnit('${p.unit.id}')">${fmtMoney(remainingAmt(p))}</td>
       <td><div style="display:flex;gap:5px;justify-content:flex-end">
-        <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">${svgIcon('cash')}</button>
-        <button class="btn btn-sm btn-primary" onclick="openUnit('${p.unit.id}')">فتح</button>
-        <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">${svgIcon('door')}</button>
+        <button class="btn btn-sm" onclick="openUnit('${p.unit.id}')">تفاصيل</button>
+        <button class="btn btn-sm btn-primary" onclick="openPartialPay('${p.unit.id}','${p.id}')">تحصيل</button>
       </div></td>
     </tr>`; });
     h+=`</tbody></table></div>`;
@@ -612,9 +591,8 @@ function viewDashboard(){
       <td class="rowlink" onclick="openUnit('${p.unit.id}')"><span class="badge b-amber">بعد ${daysFromToday(p.dueDate)} يوم</span>${p.status==='partial'?'<div class="muted">دفع جزئي</div>':''}</td>
       <td style="font-weight:700" class="rowlink" onclick="openUnit('${p.unit.id}')">${fmtMoney(remainingAmt(p))}</td>
       <td><div style="display:flex;gap:5px;justify-content:flex-end">
-        <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">${svgIcon('cash')}</button>
-        <button class="btn btn-sm btn-primary" onclick="openUnit('${p.unit.id}')">فتح</button>
-        <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">${svgIcon('door')}</button>
+        <button class="btn btn-sm" onclick="openUnit('${p.unit.id}')">تفاصيل</button>
+        <button class="btn btn-sm btn-primary" onclick="openPartialPay('${p.unit.id}','${p.id}')">تحصيل</button>
       </div></td>
     </tr>`; });
     h+=`</tbody></table></div></div>`;
@@ -649,11 +627,31 @@ function viewDashboard(){
 
   return h;
 }
-function stat(c,ic,val,lbl,action,extra){
-  return `<div class="stat${action?' clickable':''}"${action?` onclick="${action}"`:''}>
-    <div class="ic ${c}">${ic}</div><div class="val">${val}</div><div class="lbl">${lbl}</div>
-    ${extra||''}
+function stat(ic,val,lbl,ctx,action,opts){
+  opts=opts||{};
+  let barHtml='';
+  if(opts.spark && opts.spark.length){
+    const max=Math.max(...opts.spark,1);
+    barHtml=`<div class="mspark">${opts.spark.map(v=>`<span style="height:${Math.max(8,Math.round(v/max*100))}%"></span>`).join('')}</div>`;
+  } else if(opts.ratio!=null){
+    barHtml=`<div class="mbar"><span style="width:${Math.max(0,Math.min(100,opts.ratio))}%"></span></div>`;
+  }
+  return `<div class="stat${opts.dark?' dark':''}${action?' clickable':''}"${action?` onclick="${action}"`:''}>
+    <div class="lbl">${ic?`<span class="ic">${ic}</span>`:''}${lbl}</div>
+    <div class="val">${val}${opts.sec?`<span class="sec">${opts.sec}</span>`:''}</div>
+    ${ctx?`<div class="ctx">${ctx}</div>`:''}
+    ${barHtml}
     ${action?'<div class="stat-go">عرض ›</div>':''}</div>`;
+}
+/* مجموع المحصّل شهريًا لآخر 7 أشهر — من سجل الدفعات الفعلي (paymentsLog)، للرسم المصغّر في بطاقة «إجمالي المحصّل» */
+function last7MonthsCollected(){
+  const now=new Date();
+  const months=[];
+  for(let i=6;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+  const sums={}; months.forEach(m=>sums[m]=0);
+  const addLogs=(payments)=>{ (payments||[]).forEach(p=>{ (p.paymentsLog||[]).forEach(l=>{ const m=(l.date||'').slice(0,7); if(m in sums) sums[m]+=Number(l.amount)||0; }); }); };
+  db.units.forEach(u=>{ addLogs(u.payments); (u.history||[]).forEach(tn=>addLogs(tn.payments)); });
+  return months.map(m=>sums[m]);
 }
 function scrollToPanel(id){
   const el=document.getElementById(id); if(!el) return;
@@ -679,7 +677,7 @@ function viewPaymentsFilter(){
   allDue.sort((a,b)=>a.dueDate<b.dueDate?-1:1);
   const total=allDue.reduce((s,p)=>s+remainingAmt(p),0);
   const filterMap={30:'شهري (30 يوم)',90:'3 أشهر (90 يوم)',180:'6 أشهر (180 يوم)'};
-  let h=`<div class="page-head no-print"><div><h1>${svgIcon('list')} جدول المستحقات</h1>
+  let h=`<div class="page-head no-print" data-eyebrow="DUE PAYMENTS / 04"><div><h1>${svgIcon('list')} جدول المستحقات</h1>
     <div class="sub">الدفعات المستحقة خلال الفترة المحددة — ${fmtDate(todayISO())}</div></div>
     <button class="btn btn-primary no-print" onclick="window.print()">${svgIcon('printer')} طباعة الكل</button></div>`;
   h+=`<div class="toolbar no-print">${[30,90,180].map(d=>`<button class="btn${paymentFilterDays===d?' btn-primary':''}" onclick="paymentFilterDays=${d};render()">${filterMap[d]}</button>`).join('')}</div>`;
@@ -702,10 +700,10 @@ function viewPaymentsFilter(){
         <td style="font-weight:700">${fmtMoney(remainingAmt(p))}${p.status==='partial'?'<div class="muted">من أصل '+fmtMoney(p.amount)+'</div>':''}</td>
         <td><span class="badge ${d===0?'b-red':d<=7?'b-amber':'b-blue'}">بعد ${d} يوم</span></td>
         <td class="no-print"><div style="display:flex;gap:5px">
-          <button class="btn btn-sm" onclick="openPartialPay('${p.unit.id}','${p.id}')" title="تسجيل دفعة جزئية">${svgIcon('cash')}</button>
+          <button class="btn btn-sm" onclick="openUnit('${p.unit.id}')">تفاصيل</button>
+          <button class="btn btn-sm btn-primary" onclick="openPartialPay('${p.unit.id}','${p.id}')">تحصيل</button>
           <button class="btn btn-sm" onclick="printDueNotice('${p.unit.id}','${p.id}')" title="طباعة">${svgIcon('printer')}</button>
-          ${p.unit.tenantPhone?`<button class="btn btn-sm" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')">${svgIcon('chat')}</button>`:''}
-          <button class="btn btn-sm btn-danger" onclick="openEndContract('${p.unit.id}')" title="إخلاء الوحدة — تصبح شاغرة">${svgIcon('door')}</button>
+          ${p.unit.tenantPhone?`<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`:''}
         </div></td>
       </tr>`;
     });
@@ -833,20 +831,20 @@ function viewAccounting(){
   const yr=acct(y,null,bId,mode);
   const modeLbl=mode==='annual'?'القيمة الإجمالية السنوية':'القيمة حسب العقود';
 
-  let h=`<div class="page-head"><div><h1>${svgIcon('calculator')} المحاسبة</h1>
+  let h=`<div class="page-head" data-eyebrow="ACCOUNTING / 03"><div><h1>${svgIcon('calculator')} المحاسبة</h1>
     <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية${filterBuilding?' — '+esc(filterBuilding.name):''} — ${modeLbl}</div></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label style="font-weight:700;font-size:13px">السنة:</label>
-      <select onchange="acctYear=parseInt(this.value);render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--text);font-weight:700">
+      <select onchange="acctYear=parseInt(this.value);render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-weight:700">
         ${years.map(yy=>`<option value="${yy}" ${yy===y?'selected':''}>${yy}</option>`).join('')}
       </select>
       <label style="font-weight:700;font-size:13px">العقار:</label>
-      <select onchange="acctBuildingId=this.value||null;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--text);font-weight:700">
+      <select onchange="acctBuildingId=this.value||null;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-weight:700">
         <option value="" ${!bId?'selected':''}>كل العقارات</option>
         ${db.buildings.map(b=>`<option value="${b.id}" ${bId===b.id?'selected':''}>${esc(b.name)}</option>`).join('')}
       </select>
       <label style="font-weight:700;font-size:13px">أساس الحساب:</label>
-      <select onchange="acctMode=this.value;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--text);font-weight:700">
+      <select onchange="acctMode=this.value;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-weight:700">
         <option value="contracts" ${mode==='contracts'?'selected':''}>القيمة حسب العقود</option>
         <option value="annual" ${mode==='annual'?'selected':''}>القيمة الإجمالية السنوية</option>
       </select>
@@ -854,15 +852,14 @@ function viewAccounting(){
       <button class="btn btn-primary" onclick="exportAccountingPDF(${y},${bId?`'${bId}'`:'null'},'${mode}')">${svgIcon('doc')} تقرير PDF</button>
     </div></div>`;
 
-  const rateColor = yr.rate>=90?'green':yr.rate>=70?'amber':'red';
-  const rateWarn = yr.rate<90 ? `<div style="margin-top:5px;font-size:11px;font-weight:800;color:${yr.rate<70?'var(--danger)':'var(--warning)'}">${svgIcon('warning')} ${yr.rate<70?'يحتاج متابعة':'تحتاج تحسين'}</div>` : '';
+  const rateWarn = yr.rate<90 ? `يحتاج ${yr.rate<70?'متابعة':'تحسين'}` : '';
   h+=`<div class="stats">
-    ${stat('blue',svgIcon('chart'),fmtMoney(yr.expected),'إجمالي قيمة العقود')}
-    ${stat('green',svgIcon('check'),fmtMoney(yr.collected),'إجمالي المحصّل الفعلي')}
-    ${stat('amber',svgIcon('clock'),fmtMoney(yr.outstanding),'غير مُحصَّل')}
-    ${stat(rateColor,svgIcon('trending'),yr.rate+'%','نسبة التحصيل',null,rateWarn)}
-    ${stat('red',svgIcon('cash'),fmtMoney(yr.expenses),'المصروفات')}
-    ${stat(yr.net>=0?'green':'red',svgIcon('wallet'),fmtMoney(yr.net),'صافي الدخل')}
+    ${stat(svgIcon('chart'),fmtMoney(yr.expected),'إجمالي قيمة العقود',`سنة ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}`)}
+    ${stat(svgIcon('check'),fmtMoney(yr.collected),'إجمالي المحصّل الفعلي',`${yr.rate}٪ من قيمة العقود`,null,{dark:true,spark:last7MonthsCollected()})}
+    ${stat(svgIcon('clock'),fmtMoney(yr.outstanding),'غير مُحصَّل',`من إجمالي ${fmtMoney(yr.expected)}`)}
+    ${stat(svgIcon('trending'),yr.rate+'%','نسبة التحصيل',rateWarn||'نسبة تحصيل ممتازة',null,{ratio:yr.rate})}
+    ${stat(svgIcon('cash'),fmtMoney(yr.expenses),'المصروفات',yr.collected?`${Math.round(yr.expenses/yr.collected*100)}٪ من المحصّل`:'')}
+    ${stat(svgIcon('wallet'),fmtMoney(yr.net),'صافي الدخل',yr.net>=0?'دخل صافٍ موجب':'عجز في صافي الدخل')}
   </div>`;
 
   const rateAdvice = yr.rate>=90
@@ -932,7 +929,7 @@ function viewAccounting(){
     years.slice().sort((a,b)=>a-b).forEach(yy=>{ const c=acct(yy,null,bId,mode).collected;
       h+=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <div style="width:54px;font-weight:700;${yy===y?'color:var(--primary-d)':''}">${yy}</div>
-        <div style="flex:1;background:var(--surface-2);border-radius:8px;height:26px;overflow:hidden;border:1px solid var(--border)">
+        <div style="flex:1;background:var(--surface-2);border-radius:0;height:26px;overflow:hidden;border:1px solid var(--border)">
           <div style="height:100%;width:${Math.round(c/maxC*100)}%;background:linear-gradient(90deg,var(--primary),var(--primary-d));min-width:2px"></div></div>
         <div style="width:140px;text-align:left;font-weight:700">${fmtMoney(c)}</div></div>`;
     });
@@ -1068,7 +1065,7 @@ function exportAccountingPDF(year,buildingId,mode){
 /* ---------- قائمة العقارات ---------- */
 function viewProperties(){
   if(db.buildings.length===0) return pageEmpty();
-  let h=`<div class="page-head"><div><h1>${svgIcon('building')} العقارات</h1>
+  let h=`<div class="page-head" data-eyebrow="PROPERTIES / 02"><div><h1>${svgIcon('building')} العقارات</h1>
     <div class="sub">${db.buildings.length} عقار • ${db.units.length} وحدة</div></div>
     <button class="btn btn-primary" onclick="openBuildingForm()">${svgIcon('plus')} إضافة عقار</button></div>`;
   h+=`<div class="bgrid">`;
@@ -1095,7 +1092,7 @@ function viewBuilding(bId){
   if(!b) return pageEmpty();
   const us=unitsOf(bId);
   let h=`<div class="crumbs"><a onclick="go('properties')">العقارات</a><span>›</span><span>${esc(b.name)}</span></div>`;
-  h+=`<div class="page-head"><div><h1>${svgIcon('building')} ${esc(b.name)}</h1>
+  h+=`<div class="page-head" data-eyebrow="PROPERTY / 02"><div><h1>${svgIcon('building')} ${esc(b.name)}</h1>
     <div class="sub">${b.address?svgIcon('pin')+' '+esc(b.address)+' • ':''}${us.length} وحدة${b.waterMeter?' • '+svgIcon('drop')+' '+esc(b.waterMeter):''}${b.deliveryDate?' • '+svgIcon('key')+' التسليم: '+fmtDate(b.deliveryDate):''}</div></div>
     <div style="display:flex;gap:8px">
       <button class="btn" onclick="openBuildingForm('${b.id}')">${svgIcon('edit')} تعديل العقار</button>
@@ -1117,8 +1114,8 @@ function viewBuilding(bId){
     if(b.deedImage){
       const di=b.deedImage; const diImg=di.type&&di.type.startsWith('image/');
       h+=`<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">${svgIcon('doc')} صورة الصك</div>
-        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px">
-          ${diImg?`<img src="${di.data}" style="width:64px;height:64px;object-fit:cover;border-radius:7px;cursor:pointer" onclick="openBuildingFile('${b.id}','deed',0)">`:`<span style="font-size:36px">${svgIcon('doc')}</span>`}
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:0">
+          ${diImg?`<img src="${di.data}" style="width:64px;height:64px;object-fit:cover;border-radius:0;cursor:pointer" onclick="openBuildingFile('${b.id}','deed',0)">`:`<span style="font-size:36px">${svgIcon('doc')}</span>`}
           <div style="flex:1;font-size:13px;font-weight:700">${esc(di.name)}</div>
           <a href="${di.data}" download="${esc(di.name)}" class="btn btn-sm">${svgIcon('download')} تنزيل</a>
         </div></div>`;
@@ -1127,8 +1124,8 @@ function viewBuilding(bId){
       h+=`<div><div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:7px">${svgIcon('doc')} مرفقات أخرى (${b.attachments.length})</div>`;
       b.attachments.forEach((a,i)=>{
         const aImg=a.type&&a.type.startsWith('image/');
-        h+=`<div style="display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
-          ${aImg?`<img src="${a.data}" style="width:40px;height:40px;object-fit:cover;border-radius:5px;cursor:pointer" onclick="openBuildingFile('${b.id}','att',${i})">`:`<span style="font-size:24px">${svgIcon('doc')}</span>`}
+        h+=`<div style="display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:0;margin-bottom:6px">
+          ${aImg?`<img src="${a.data}" style="width:40px;height:40px;object-fit:cover;border-radius:0;cursor:pointer" onclick="openBuildingFile('${b.id}','att',${i})">`:`<span style="font-size:24px">${svgIcon('doc')}</span>`}
           <div style="flex:1;font-size:13px;font-weight:700">${esc(a.name)}</div>
           <a href="${a.data}" download="${esc(a.name)}" class="btn btn-sm">${svgIcon('download')}</a>
         </div>`;
@@ -1193,8 +1190,8 @@ function _bRenderDeed(){
   const el=document.getElementById('b-deed-prev'); if(!el) return;
   if(!_bForm.deedImage){ el.innerHTML=''; return; }
   const d=_bForm.deedImage; const isImg=d.type&&d.type.startsWith('image/');
-  el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;margin-top:7px">
-    ${isImg?`<img src="${d.data}" style="width:56px;height:56px;object-fit:cover;border-radius:6px">`:`<span style="font-size:34px">${svgIcon('doc')}</span>`}
+  el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:0;margin-top:7px">
+    ${isImg?`<img src="${d.data}" style="width:56px;height:56px;object-fit:cover;border-radius:0">`:`<span style="font-size:34px">${svgIcon('doc')}</span>`}
     <div style="flex:1;font-size:13px;font-weight:700;word-break:break-all">${esc(d.name)}</div>
     <a href="${d.data}" download="${esc(d.name)}" class="btn btn-sm" title="تنزيل">${svgIcon('download')}</a>
     <button class="btn btn-sm" onclick="_bForm.deedImage=null;_bRenderDeed()" title="حذف">${svgIcon('trash')}</button>
@@ -1205,8 +1202,8 @@ function _bRenderAtts(){
   if(!_bForm.attachments.length){ el.innerHTML='<div style="color:var(--muted);font-size:13px;padding:4px 0">لا توجد مرفقات</div>'; return; }
   el.innerHTML=_bForm.attachments.map((a,i)=>{
     const isImg=a.type&&a.type.startsWith('image/');
-    return `<div style="display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
-      ${isImg?`<img src="${a.data}" style="width:40px;height:40px;object-fit:cover;border-radius:5px">`:`<span style="font-size:24px">${svgIcon('doc')}</span>`}
+    return `<div style="display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:0;margin-bottom:6px">
+      ${isImg?`<img src="${a.data}" style="width:40px;height:40px;object-fit:cover;border-radius:0">`:`<span style="font-size:24px">${svgIcon('doc')}</span>`}
       <div style="flex:1;font-size:13px;font-weight:700;word-break:break-all">${esc(a.name)}</div>
       <a href="${a.data}" download="${esc(a.name)}" class="btn btn-sm" title="تنزيل">${svgIcon('download')}</a>
       <button class="btn btn-sm" onclick="_bForm.attachments.splice(${i},1);_bRenderAtts()" title="حذف">${svgIcon('trash')}</button>
@@ -1464,7 +1461,7 @@ function openUnit(uId){
   if(u.notes) h+=`<div class="info-box" style="margin-top:16px">${svgIcon('doc')} <div>${esc(u.notes)}</div></div>`;
   h+=`</div><div class="modal-foot">
       <button class="btn btn-primary" onclick="exportUnitPDF('${u.id}')">${svgIcon('doc')} تصدير PDF</button>
-      ${u.tenantPhone?`<button class="btn" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendUnitWhatsApp('${u.id}')">${svgIcon('chat')} واتساب</button>`:''}
+      ${u.tenantPhone?`<button class="btn" onclick="sendUnitWhatsApp('${u.id}')">${svgIcon('chat')} واتساب</button>`:''}
       ${u.tenantName?`<button class="btn" onclick="openRenewContract('${u.id}')">${svgIcon('refresh')} تجديد العقد</button>`:''}
       ${u.tenantName?`<button class="btn" onclick="openChangeTenant('${u.id}')">${svgIcon('refresh')} تغيير المستأجر</button>`:''}
       ${u.tenantName?`<button class="btn btn-danger" onclick="openEndContract('${u.id}')">${svgIcon('door')} إنهاء وخروج</button>`:''}
@@ -1986,17 +1983,17 @@ function openGuide(){
   openModal(`<div class="modal lg"><div class="modal-head"><h3>📖 دليل المستخدم <span class="count">${sec.length} أقسام</span></h3><button class="x" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
       <style>
-        .gsec{border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:.15s}
+        .gsec{border:1px solid var(--border);border-radius:0;margin-bottom:10px;overflow:hidden;transition:.15s}
         .gsec:hover{border-color:var(--primary)}
         .gsec-h{width:100%;background:var(--surface-2);border:none;padding:12px 15px;display:flex;align-items:center;gap:12px;font-size:14.5px;font-weight:800;color:var(--text);cursor:pointer;text-align:right}
         .gsec-h:hover{background:var(--primary-l)}
-        .gsec-icon{flex:none;width:34px;height:34px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;font-size:17px}
+        .gsec-icon{flex:none;width:34px;height:34px;border-radius:0;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;font-size:17px}
         .gsec-t{flex:1}
         .gsec-b{padding:14px 17px;font-size:13.5px;line-height:1.85;color:var(--text);border-top:1px solid var(--border);background:var(--surface)}
         .gsec-b ul,.gsec-b ol{margin:0;padding-inline-start:20px}
         .gsec-b li{margin-bottom:6px}
         .gsec-b b{color:var(--primary-d)}
-        .gsec-b .tip{background:var(--info-l);border-radius:8px;padding:8px 11px;margin-top:9px;color:var(--info);font-size:12.8px}
+        .gsec-b .tip{background:var(--info-l);border-radius:0;padding:8px 11px;margin-top:9px;color:var(--info);font-size:12.8px}
         .gsec-ar{transition:.2s;color:var(--muted);font-size:13px;flex:none}
       </style>
       <div class="info-box" style="margin-bottom:12px">📖 <div><b>نظام إدارة الإيجارات</b> — دليل كامل لإدارة العقارات والوحدات ومتابعة الدفعات بدوريات متعددة، مع مزامنة سحابية وإرسال واتساب. اضغط أي قسم لفتحه.</div></div>
