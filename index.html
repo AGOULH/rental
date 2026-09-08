@@ -941,7 +941,7 @@ function openExpenseForm(eId,defaultBuildingId){
     <div class="modal-body">
       <div class="row2">
         <div class="field"><label>العقار</label><select id="e-building"><option value="">عام (غير مخصّص)</option>${db.buildings.map(b=>`<option value="${b.id}" ${e.buildingId===b.id?'selected':''}>${esc(b.name)}</option>`).join('')}</select></div>
-        <div class="field"><label>البند</label><select id="e-cat">${cats.map(c=>`<option ${e.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+        <div class="field"><label>البند *</label><select id="e-cat"><option value="" ${!e.category?'selected':''}>اختر البند...</option>${cats.map(c=>`<option ${e.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
       </div>
       <div class="row2">
         <div class="field"><label>المبلغ ( ${db.settings.currency} ) *</label><input type="number" id="e-amount" value="${e.amount||''}" placeholder="مثال: 1500"></div>
@@ -958,10 +958,12 @@ function openExpenseForm(eId,defaultBuildingId){
 function saveExpense(eId){
   const amount=parseFloat(document.getElementById('e-amount').value)||0;
   const date=document.getElementById('e-date').value;
+  const category=document.getElementById('e-cat').value;
+  if(!category){ alert('اختر بند المصروف'); return; }
   if(amount<=0){ alert('أدخل مبلغًا صحيحًا'); return; }
   if(!date){ alert('أدخل التاريخ'); return; }
   const data={ buildingId:document.getElementById('e-building').value||null,
-    category:document.getElementById('e-cat').value, amount, date,
+    category, amount, date,
     note:document.getElementById('e-note').value.trim() };
   if(eId){ Object.assign(db.expenses.find(x=>x.id===eId),data); }
   else{ db.expenses.push({id:uid(),...data}); }
