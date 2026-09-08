@@ -502,6 +502,17 @@ function unitTotals(unit){
     overdueCount:ps.filter(p=>payStatus(p)==='overdue').length,
     partialCount:ps.filter(p=>p.status==='partial').length};
 }
+/* ملخص التعثر (الشغور) للوحدة الشاغرة: منذ متى شاغرة + القيمة الإجمالية المفقودة خلال فترة التعثر */
+function vacancyInfo(unit){
+  if(unit.tenantName) return null;
+  const hist=unit.history||[];
+  const since=hist.length?hist[hist.length-1].endedAt:unit.contractStart;
+  if(!since) return null;
+  const days=Math.max(0,-daysFromToday(since));
+  const lastRent=Number(unit.rentAmount)||(hist.length?Number(hist[hist.length-1].rentAmount||hist[hist.length-1].quarterlyRent)||0:0);
+  const lostValue=Math.round(lastRent/365*days);
+  return {since,days,lostValue};
+}
 
 /* ============================ التنقل والعرض ============================ */
 function go(name,bId){ view={name,buildingId:bId||null}; render(); window.scrollTo(0,0); }
@@ -1122,9 +1133,10 @@ function viewBuilding(bId){
   us.forEach(u=>{
     const t=unitTotals(u); const nx=nextUnpaid(u);
     const pct=t.total?Math.round(t.paid/t.total*100):0;
+    const vac=vacancyInfo(u);
     let statusBadge;
     if(t.overdueCount) statusBadge=`<span class="badge b-red">متأخر ${t.overdueCount}</span>`;
-    else if(!u.tenantName) statusBadge=`<span class="badge b-gray">شاغرة</span>`;
+    else if(!u.tenantName) statusBadge=`<span class="badge b-amber">متعثر${vac?' '+vac.days+' يوم':''}</span>`;
     else if(t.remaining===0) statusBadge=`<span class="badge b-green">مسدّد بالكامل</span>`;
     else statusBadge=`<span class="badge b-blue">منتظم</span>`;
     h+=`<tr>
@@ -1135,8 +1147,7 @@ function viewBuilding(bId){
       <td>${fmtDate(u.contractStart)}</td>
       <td>${nx?fmtDate(nx.dueDate):'<span class="muted">—</span>'}</td>
       <td>${statusBadge}</td>
-      <td style="min-width:120px"><div class="pbar"><span style="width:${pct}%"></span></div>
-        <div class="muted" style="margin-top:3px">${pct}% • باقٍ ${fmtMoney(t.remaining)}</div></td>
+      <td style="min-width:120px">${vac?`<div class="muted">منذ ${fmtDate(vac.since)}</div><div style="font-weight:700;color:var(--warning)">قيمة التعثر: ${fmtMoney(vac.lostValue)}</div>`:`<div class="pbar"><span style="width:${pct}%"></span></div><div class="muted" style="margin-top:3px">${pct}% • باقٍ ${fmtMoney(t.remaining)}</div>`}</td>
       <td><button class="btn btn-sm btn-primary" onclick="openUnit('${u.id}')">إدارة</button></td>
     </tr>`;
   });
@@ -1383,12 +1394,21 @@ function openUnit(uId){
     ${u.electricityMeter?`<div class="dcell"><div class="t">عداد الكهرباء ${svgIcon('bolt')}</div><div class="v">${esc(u.electricityMeter)}</div></div>`:''}
   </div>`;
 
+  const vac=vacancyInfo(u);
+  if(vac){
+    h+=`<div class="detail-grid" style="margin-top:14px">
+      <div class="dcell" style="background:var(--warning-l);border-color:rgba(245,105,0,.35)"><div class="t">الحالة</div><div class="v" style="color:var(--warning)">متعثر</div></div>
+      <div class="dcell" style="background:var(--warning-l);border-color:rgba(245,105,0,.35)"><div class="t">فترة التعثر</div><div class="v" style="color:var(--warning)">${vac.days} يوم <span class="muted" style="font-weight:500">(منذ ${fmtDate(vac.since)})</span></div></div>
+      <div class="dcell" style="background:var(--warning-l);border-color:rgba(245,105,0,.35)"><div class="t">القيمة الإجمالية لفترة التعثر</div><div class="v" style="color:var(--warning)">${fmtMoney(vac.lostValue)}</div></div>
+    </div>`;
+  } else {
   h+=`<div class="detail-grid" style="margin-top:14px">
     <div class="dcell" style="background:var(--success-l);border-color:rgba(48,209,88,.35)"><div class="t">المحصّل</div><div class="v" style="color:var(--success)">${fmtMoney(t.paid)}</div></div>
     <div class="dcell" style="background:var(--warning-l);border-color:rgba(245,105,0,.35)"><div class="t">المتبقّي</div><div class="v" style="color:var(--warning)">${fmtMoney(t.remaining)}</div></div>
     ${t.overdue?`<div class="dcell" style="background:var(--danger-l);border-color:rgba(255,69,58,.35)"><div class="t">متأخرات</div><div class="v" style="color:var(--danger)">${fmtMoney(t.overdue)}</div></div>`:''}
     <div class="dcell"><div class="t">نسبة السداد</div><div class="v">${pct}%</div><div class="pbar" style="margin-top:6px"><span style="width:${pct}%"></span></div></div>
   </div>`;
+  }
 
   h+=`<div class="panel-head" style="border:none;padding:18px 0 8px"><h2>${svgIcon('list')} جدول الدفعات (${periodLbl(u)})</h2>
     <span class="count">${u.payments.length} دفعة</span></div>`;
