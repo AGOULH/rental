@@ -773,17 +773,12 @@ function allYears(){
   ys.add(new Date().getFullYear());
   return [...ys].sort((a,b)=>b-a);
 }
-/* هل تتقاطع فترة (بداية-نهاية) مع السنة الميلادية المحددة؟ */
-function overlapsYear(startISO,endISO,year){
-  if(!startISO) return false;
-  return startISO<=(year+'-12-31') && (endISO||startISO)>=(year+'-01-01');
-}
 /* إجمالي مصروفات بند معيّن (افتراضيًا: صيانة) لعقار/سنة */
 function categoryExpenses(year, buildingId, category){
   return (db.expenses||[]).filter(e=>yearOf(e.date)===year && (!buildingId||e.buildingId===buildingId) && (!category||e.category===category))
     .reduce((s,e)=>s+(Number(e.amount)||0),0);
 }
-/* تجميع محاسبي لفترة (سنة/ربع/عقار) — المستحق = القيمة الإجمالية السنوية للإيجار لكل وحدة مؤجَّرة خلال السنة */
+/* تجميع محاسبي لفترة (سنة/ربع/عقار) — المستحق = التجميع حسب تاريخ استحقاق كل دفعة فعلية خلال الفترة */
 function acct(year, quarter, buildingId){
   let expected=0, collected=0, overdue=0;
   db.units.forEach(u=>{
@@ -793,19 +788,10 @@ function acct(year, quarter, buildingId){
     pays.forEach(p=>{
       if(yearOf(p.dueDate)!==year) return;
       if(quarter && quarterOf(p.dueDate)!==quarter) return;
+      expected += p.amount;
       collected += (p.paidAmount||0);
       if(p.status!=='paid' && daysFromToday(p.dueDate)<0) overdue += (p.amount-(p.paidAmount||0));
     });
-    // قيمة سنوية واحدة كحد أقصى لكل وحدة: نفضّل المستأجر الحالي، وإلا آخر عقد مؤرشف تقاطع مع هذه السنة
-    // (تجنّبًا لاحتساب قيمة الإيجار مرتين لنفس الوحدة عند تغيّر المستأجر خلال نفس السنة)
-    let rentForYear=null;
-    if(u.tenantName && overlapsYear(u.contractStart, contractEnd(u), year)){
-      rentForYear = Number(u.rentAmount)||0;
-    } else {
-      const hist=(u.history||[]).filter(tn=>overlapsYear(tn.contractStart, addMonths(tn.contractStart, tn.durationMonths||12), year));
-      if(hist.length) rentForYear = Number(hist[hist.length-1].rentAmount||hist[hist.length-1].quarterlyRent)||0;
-    }
-    if(rentForYear!=null) expected += rentForYear/(quarter?4:1);
   });
   const expenses=categoryExpenses(year,buildingId,null);
   return { expected, collected, outstanding:expected-collected, overdue, expenses, net:collected-expenses, rate: expected?Math.round(collected/expected*100):0 };
@@ -826,7 +812,7 @@ function viewAccounting(){
   const yr=acct(y,null,bId);
 
   let h=`<div class="page-head" data-eyebrow="ACCOUNTING / 03"><div><h1>${svgIcon('calculator')} المحاسبة</h1>
-    <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية${filterBuilding?' — '+esc(filterBuilding.name):''} — القيمة الإجمالية السنوية</div></div>
+    <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية${filterBuilding?' — '+esc(filterBuilding.name):''}</div></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label style="font-weight:700;font-size:13px">السنة:</label>
       <select onchange="acctYear=parseInt(this.value);render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-weight:700">
@@ -989,7 +975,6 @@ function deleteExpense(eId){
 
 /* ---------- تقرير محاسبي PDF ---------- */
 function exportAccountingPDF(year,buildingId){
-  const modeLbl='القيمة الإجمالية السنوية';
   const filterBuilding=buildingId?db.buildings.find(x=>x.id===buildingId):null;
   const yr=acct(year,null,buildingId||null);
   const qN=['الربع الأول','الربع الثاني','الربع الثالث','الربع الرابع'];
@@ -1029,7 +1014,7 @@ function exportAccountingPDF(year,buildingId){
   </style></head><body>
     <div class="btnbar noprint"><button onclick="window.print()">🖨️ طباعة / حفظ PDF</button></div>
     <div class="hd"><div><h1>التقرير المحاسبي السنوي — ${year}${filterBuilding?' — '+esc(filterBuilding.name):''}</h1>
-      <div class="meta">نظام إدارة الإيجارات • أساس الاحتساب: ${modeLbl} • تاريخ الإصدار: ${fmtDate(todayISO())}</div></div><div class="logo">🧮</div></div>
+      <div class="meta">نظام إدارة الإيجارات • تاريخ الإصدار: ${fmtDate(todayISO())}</div></div><div class="logo">🧮</div></div>
     <div class="cards">
       <div class="c"><div class="t">المستحق</div><div class="v">${fmtMoney(yr.expected)}</div></div>
       <div class="c"><div class="t">المحصّل</div><div class="v" style="color:#16a34a">${fmtMoney(yr.collected)}</div></div>
@@ -1045,7 +1030,7 @@ function exportAccountingPDF(year,buildingId){
     <h2>${filterBuilding?'العقار':'حسب العقار'}</h2>
     <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>الصيانة % من الإيجار</th></tr></thead><tbody>${bRows}</tbody></table>
     ${eRows?`<h2>تفاصيل المصروفات</h2><table><thead><tr><th>التاريخ</th><th>العقار</th><th>البند</th><th>الوصف</th><th>المبلغ</th></tr></thead><tbody>${eRows}</tbody></table>`:''}
-    <div class="ft">طريقة الاحتساب: المستحق = القيمة الكاملة السنوية للإيجار لكل وحدة لها مستأجر خلال السنة • صافي الدخل = المحصّل − المصروفات • صدر من نظام إدارة الإيجارات</div>
+    <div class="ft">طريقة الاحتساب: المستحق = التجميع حسب السنة والربع الميلادي لتاريخ استحقاق كل دفعة • صافي الدخل = المحصّل − المصروفات • صدر من نظام إدارة الإيجارات</div>
   </body></html>`);
   w.document.close();
 }
@@ -1838,13 +1823,12 @@ function viewTenancy(uId,idx){
 }
 /* تصدير المحاسبة Excel/CSV */
 function exportAccountingCSV(year,buildingId){
-  const modeLbl='القيمة الإجمالية السنوية';
   const filterBuilding=buildingId?db.buildings.find(x=>x.id===buildingId):null;
   /* يمنع "حقن الصيغ" (CSV/Formula Injection): أي نص يبدأ بـ = أو + أو - أو @ قد يُنفَّذ كصيغة عند فتح الملف في Excel */
   const csvSafe=(v)=>{ const s=String(v==null?'':v); return /^[=+\-@\t\r]/.test(s) ? "'"+s : s; };
   const cell=(v)=> (typeof v==='number')? v : '"'+csvSafe(v).replace(/"/g,'""')+'"';
   const rows=[];
-  rows.push(['التقرير المحاسبي السنوي', year, modeLbl].concat(filterBuilding?[filterBuilding.name]:[]));
+  rows.push(['التقرير المحاسبي السنوي', year].concat(filterBuilding?[filterBuilding.name]:[]));
   rows.push([]);
   rows.push(['التفصيل الربع سنوي']);
   rows.push(['الربع','المستحق','المحصّل','المتبقّي','نسبة التحصيل %','المصروفات','الصافي']);
@@ -1928,7 +1912,7 @@ function openGuide(){
     '<li>مدد التنبيه قابلة للضبط من «الإعدادات».</li></ul>'],
    ['🧮','المحاسبة',
     '<ul><li>اختر <b>السنة</b> و<b>العقار</b> (أو «كل العقارات») من أعلى الصفحة.</li>'+
-    '<li><b>أساس الحساب:</b> المستحق = القيمة الإجمالية السنوية للإيجار لكل وحدة مؤجَّرة خلال السنة — مفيد لمقارنة الطاقة الإيجارية الكاملة بغضّ النظر عن توقيت الدفعات.</li>'+
+    '<li><b>أساس الحساب:</b> المستحق يُحسب من تاريخ استحقاق كل دفعة فعلية ضمن جدول الدفعات (وليس بتقسيم متساوٍ على الأرباع) — لذلك قد يختلف مستحق كل ربع عن الآخر حسب دورية السداد وتواريخ العقود.</li>'+
     '<li>بطاقات: <b>إجمالي قيمة العقود</b>، <b>إجمالي المحصّل الفعلي</b>، غير المُحصَّل، <b>نسبة التحصيل</b> (تُبرز تحذيرًا تلقائيًا عند انخفاضها)، المصروفات، <b>صافي الدخل</b>.</li>'+
     '<li>لوحة <b>«ℹ️ ما الفرق بين قيمة العقود والمحصّل الفعلي؟»</b> (اضغط لفتحها) تشرح الفرق بينهما بأرقامك الفعلية، ومعادلة نسبة التحصيل، ونصيحة تتغيّر حسب مستوى النسبة.</li>'+
     '<li><b>التفصيل الربع سنوي</b> + الإجمالي السنوي، و<b>حسب كل عقار</b> مع عمود <b>«🔧 الصيانة % من الإيجار»</b> لمقارنة تكلفة الصيانة بحجم الإيجار، ومقارنة المحصّل عبر السنوات.</li>'+
