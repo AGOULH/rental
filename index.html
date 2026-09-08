@@ -884,8 +884,7 @@ function viewAccounting(){
   h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('building')} حسب العقار — ${y}</h2></div><div class="panel-body">
       <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th><th>الصيانة % من الإيجار</th></tr></thead><tbody>`;
   (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(y,null,b.id);
-      const maint=categoryExpenses(y,b.id,'صيانة');
-      const maintPct=a.expected?Math.round(maint/a.expected*100):0;
+      const maintPct=a.expected?Math.round(a.expenses/a.expected*100):0;
       h+=`<tr onclick="go('building','${b.id}')" style="cursor:pointer">
         <td style="font-weight:700">${esc(b.name)}</td>
         <td>${fmtMoney(a.expected)}</td>
@@ -986,7 +985,7 @@ function exportAccountingPDF(year,buildingId){
   }
   let bRows='';
   (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(year,null,b.id);
-    const maint=categoryExpenses(year,b.id,'صيانة'); const maintPct=a.expected?Math.round(maint/a.expected*100):0;
+    const maintPct=a.expected?Math.round(a.expenses/a.expected*100):0;
     bRows+=`<tr><td>${esc(b.name)}</td><td>${fmtMoney(a.expected)}</td><td style="color:#16a34a">${fmtMoney(a.collected)}</td><td style="color:#d97706">${fmtMoney(a.outstanding)}</td><td style="color:#dc2626">${a.expenses?fmtMoney(a.expenses):'—'}</td><td style="font-weight:bold">${fmtMoney(a.net)}</td><td>${maintPct}%</td></tr>`;
   });
   const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===year && (!buildingId || e.buildingId===buildingId)).sort((a,b)=>a.date<b.date?1:-1);
@@ -1842,7 +1841,7 @@ function exportAccountingCSV(year,buildingId){
   rows.push([filterBuilding?'العقار':'حسب العقار']);
   rows.push(['العقار','المستحق','المحصّل','المتبقّي','المصروفات','الصافي','الصيانة % من الإيجار']);
   (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(year,null,b.id);
-    const maint=categoryExpenses(year,b.id,'صيانة'); const maintPct=a.expected?Math.round(maint/a.expected*100):0;
+    const maintPct=a.expected?Math.round(a.expenses/a.expected*100):0;
     rows.push([b.name,a.expected,a.collected,a.outstanding,a.expenses,a.net,maintPct]); });
   rows.push([]);
   rows.push(['المصروفات']);
