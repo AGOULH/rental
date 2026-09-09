@@ -2155,7 +2155,7 @@ function pushCloud(){
 }
 function cloudLogout(){
   if(!cloud.enabled) return;
-  if(!confirm('تسجيل الخروج من المزامنة على هذا الجهاز؟\nبياناتك تبقى محفوظة في السحابة وتُسترجع بإدخال نفس الرمز.')) return;
+  if(!confirm('رمز الدخول الحالي: '+cloud.code+'\n\nتسجيل الخروج من المزامنة على هذا الجهاز؟\nبياناتك تبقى محفوظة في السحابة وتُسترجع بإدخال نفس الرمز.')) return;
   if(cloud.unsub){ try{cloud.unsub();}catch(e){} }
   cloud.enabled=false; cloud.ref=null; cloud.code=null; cloud.unsub=null;
   localStorage.removeItem(CODE_KEY);
