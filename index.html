@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-build" content="202609091900">
+<meta name="app-build" content="202609091920">
 <title>نظام إدارة الإيجارات v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2236,6 +2236,7 @@ function applyUpdate(){
   location.href = location.pathname + '?v=' + Date.now();
 }
 document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') checkForUpdate(); });
+setInterval(checkForUpdate, 3*60*1000);
 
 /* ============================ التشغيل ============================ */
 function bootstrap(){
