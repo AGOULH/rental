@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="app-build" content="202609091808">
 <title>نظام إدارة الإيجارات v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -231,6 +232,8 @@
   .sync-badge.ok{background:var(--success-l);color:var(--success);border-color:transparent}
   .sync-badge.off{background:var(--warning-l);color:var(--warning);border-color:transparent}
   .sync-badge:hover{filter:brightness(1.06)}
+  .update-banner{position:fixed;inset-inline:0;bottom:0;z-index:9999;display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;background:var(--accent-900);color:#fff;font-size:13px;font-weight:600}
+  .update-banner button{background:#fff;color:var(--accent-900);border:none;border-radius:0;padding:6px 14px;font-size:12px;font-weight:700}
   .overlay.gate{background:var(--bg);z-index:200}
   .gatebox{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:38px 32px;width:100%;max-width:410px;text-align:center}
   .gate-logo{margin-bottom:8px;display:flex;justify-content:center}
@@ -2211,6 +2214,24 @@ function submitGate(){
   connectCloud(code);
 }
 
+/* ============================ فحص التحديثات ============================ */
+const APP_BUILD = document.querySelector('meta[name="app-build"]').content;
+function checkForUpdate(){
+  fetch(location.pathname + '?_=' + Date.now(), {cache:'no-store'})
+    .then(function(r){ return r.text(); })
+    .then(function(html){
+      const m = html.match(/name="app-build" content="([^"]+)"/);
+      if(m && m[1] && m[1] !== APP_BUILD && !document.getElementById('updateBanner')){
+        const b=document.createElement('div');
+        b.id='updateBanner'; b.className='update-banner';
+        b.innerHTML='يوجد تحديث جديد للتطبيق <button onclick="location.reload()">تحديث الآن</button>';
+        document.body.appendChild(b);
+      }
+    })
+    .catch(function(){});
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') checkForUpdate(); });
+
 /* ============================ التشغيل ============================ */
 function bootstrap(){
   if(cloud.ready){
@@ -2221,6 +2242,7 @@ function bootstrap(){
     // تعذّر تحميل Firebase (بلا إنترنت مثلًا): وضع محلي فقط على هذا الجهاز
     loadLocal(); render();
   }
+  checkForUpdate();
 }
 bootstrap();
 </script>
