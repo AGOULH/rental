@@ -775,6 +775,8 @@ function printDueNotice(uId,pId){
 /* ============================ المحاسبة ============================ */
 let acctYear = null;
 let acctBuildingId = null; // null = كل العقارات
+let acctCategory = null; // null = كل البنود
+const EXPENSE_CATS=['صيانة','كهرباء','ماء','رسوم حكومية','ضرائب/زكاة','إدارة','تأمين','تنظيف','أخرى'];
 function yearOf(iso){ return iso ? parseInt(iso.slice(0,4)) : null; }
 function quarterOf(iso){ return iso ? Math.floor((parseInt(iso.slice(5,7))-1)/3)+1 : null; }
 function allYears(){
@@ -893,9 +895,10 @@ function viewAccounting(){
   h+=`</tbody></table></div></div>`;
 
   h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('building')} حسب العقار — ${y}</h2></div><div class="panel-body">
-      <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th><th>الصيانة % من الإيجار</th></tr></thead><tbody>`;
+      <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th><th>الصيانة % من الإيجار</th><th>نسبة العائد</th></tr></thead><tbody>`;
   (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(y,null,b.id);
       const maintPct=a.expected?Math.round(a.expenses/a.expected*100):0;
+      const roi=b.propertyValue?Math.round(a.net/b.propertyValue*1000)/10:null;
       h+=`<tr onclick="go('building','${b.id}')" style="cursor:pointer">
         <td style="font-weight:700">${esc(b.name)}</td>
         <td>${fmtMoney(a.expected)}</td>
@@ -904,7 +907,8 @@ function viewAccounting(){
         <td style="color:var(--danger)">${a.expenses?fmtMoney(a.expenses):'—'}</td>
         <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td>
         <td>${rateBar(a.rate)}</td>
-        <td style="font-weight:700">${maintPct}%<div class="muted">محصّل: ${fmtMoney(a.collected)}</div></td></tr>`;
+        <td style="font-weight:700">${maintPct}%<div class="muted">محصّل: ${fmtMoney(a.collected)}</div></td>
+        <td style="font-weight:700;color:${roi===null?'var(--muted)':roi>=0?'var(--success)':'var(--danger)'}">${roi===null?'—':roi+'%'}</td></tr>`;
   });
   h+=`</tbody></table></div></div>`;
 
@@ -921,11 +925,21 @@ function viewAccounting(){
     h+=`</div></div>`;
   }
 
-  const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===y && (!bId || e.buildingId===bId)).sort((a,b)=>a.date<b.date?1:-1);
+  const yearExps=(db.expenses||[]).filter(e=>yearOf(e.date)===y && (!bId || e.buildingId===bId));
+  const catsInData=[...new Set(yearExps.map(e=>e.category).filter(Boolean))];
+  const catOptions=[...new Set([...EXPENSE_CATS,...catsInData])];
+  if(acctCategory && catOptions.indexOf(acctCategory)<0) acctCategory=null;
+  const exps=yearExps.filter(e=>!acctCategory || e.category===acctCategory).sort((a,b)=>a.date<b.date?1:-1);
   h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('wallet')} المصروفات — ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}</h2>
-    <button class="btn btn-sm btn-primary" onclick="openExpenseForm(null,${bId?`'${bId}'`:'null'})">${svgIcon('plus')} إضافة مصروف</button></div><div class="panel-body">`;
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select onchange="acctCategory=this.value||null;render()" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-weight:700;font-size:13px">
+        <option value="" ${!acctCategory?'selected':''}>كل البنود</option>
+        ${catOptions.map(c=>`<option value="${esc(c)}" ${acctCategory===c?'selected':''}>${esc(c)}</option>`).join('')}
+      </select>
+      <button class="btn btn-sm btn-primary" onclick="openExpenseForm(null,${bId?`'${bId}'`:'null'})">${svgIcon('plus')} إضافة مصروف</button>
+    </div></div><div class="panel-body">`;
   if(exps.length===0){
-    h+=`<div style="padding:20px;color:var(--muted)">لا توجد مصروفات مسجّلة ${filterBuilding?'لهذا العقار في هذه السنة':'لهذه السنة'}. أضِف الصيانة والفواتير والرسوم لاحتساب صافي الدخل بدقة.</div>`;
+    h+=`<div style="padding:20px;color:var(--muted)">لا توجد مصروفات مسجّلة ${filterBuilding?'لهذا العقار في هذه السنة':'لهذه السنة'}${acctCategory?' لبند «'+esc(acctCategory)+'»':''}. أضِف الصيانة والفواتير والرسوم لاحتساب صافي الدخل بدقة.</div>`;
   } else {
     h+=`<table><thead><tr><th>التاريخ</th><th>العقار</th><th>البند</th><th>الوصف</th><th>المبلغ</th><th></th></tr></thead><tbody>`;
     exps.forEach(e=>{ const b=db.buildings.find(x=>x.id===e.buildingId);
@@ -946,7 +960,7 @@ function viewAccounting(){
 /* ---------- إدارة المصروفات ---------- */
 function openExpenseForm(eId,defaultBuildingId){
   const e=eId?(db.expenses.find(x=>x.id===eId)||{}):{date:todayISO(),buildingId:defaultBuildingId||null};
-  const cats=['صيانة','كهرباء وماء','رسوم حكومية','ضرائب/زكاة','إدارة','تأمين','تنظيف','أخرى'];
+  const cats=EXPENSE_CATS;
   openModal(`<div class="modal"><div class="modal-head"><h3>${eId?svgIcon('edit')+' تعديل مصروف':svgIcon('plus')+' إضافة مصروف'}</h3><button class="x" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
       <div class="row2">
@@ -1086,14 +1100,20 @@ function viewBuilding(bId){
   if(b.notes) h+=`<div class="info-box" style="margin-bottom:18px">${svgIcon('doc')} <div>${esc(b.notes)}</div></div>`;
 
   // معلومات الملكية (صك + ماء + مرفقات)
-  const _hasPropInfo=b.deedNumber||b.deedDate||b.waterMeter||b.deedImage||(b.attachments&&b.attachments.length);
+  const _hasPropInfo=b.deedNumber||b.deedDate||b.waterMeter||b.propertyValue||b.deedImage||(b.attachments&&b.attachments.length);
   if(_hasPropInfo){
     h+=`<div class="panel" style="margin-bottom:18px"><div class="panel-head"><h2>${svgIcon('list')} معلومات الملكية</h2></div><div class="panel-body pad">`;
-    if(b.deedNumber||b.deedDate||b.waterMeter){
+    if(b.deedNumber||b.deedDate||b.waterMeter||b.propertyValue){
       h+=`<div class="detail-grid" style="margin-bottom:14px">`;
       if(b.deedNumber) h+=`<div class="dcell"><div class="t">رقم الصك</div><div class="v">${esc(b.deedNumber)}</div></div>`;
       if(b.deedDate) h+=`<div class="dcell"><div class="t">تاريخ الصك</div><div class="v">${fmtDate(b.deedDate)}</div></div>`;
       if(b.waterMeter) h+=`<div class="dcell"><div class="t">عداد الماء ${svgIcon('drop')}</div><div class="v">${esc(b.waterMeter)}</div></div>`;
+      if(b.propertyValue){
+        const _yr=acct(new Date().getFullYear(),null,b.id);
+        const _roi=Math.round(_yr.net/b.propertyValue*1000)/10;
+        h+=`<div class="dcell"><div class="t">قيمة العقار</div><div class="v">${fmtMoney(b.propertyValue)}</div></div>`;
+        h+=`<div class="dcell"><div class="t">نسبة العائد السنوي</div><div class="v" style="color:${_yr.net>=0?'var(--success)':'var(--danger)'}">${_roi}%</div></div>`;
+      }
       h+=`</div>`;
     }
     if(b.deedImage){
@@ -1246,6 +1266,7 @@ function openBuildingForm(bId){
         <div class="field"><label>رقم الصك</label><input id="b-deed-num" value="${esc(b.deedNumber||'')}" placeholder="رقم صك الملكية"></div>
         <div class="field"><label>تاريخ الصك</label><input type="date" id="b-deed-date" value="${b.deedDate||''}"></div>
       </div>
+      <div class="field"><label>قيمة العقار <span class="hint">(اختياري — لاحتساب نسبة العائد)</span></label><input type="number" id="b-value" value="${b.propertyValue||''}" placeholder="مثال: 2000000"></div>
       <div class="row2">
         <div class="field"><label>عداد الماء ${svgIcon('drop')}</label><input id="b-water" value="${esc(b.waterMeter||'')}" placeholder="رقم عداد الماء (اختياري)"></div>
         <div class="field"><label>تاريخ التسليم المتوقع <span class="hint">(اختياري)</span></label><input type="date" id="b-deliv" value="${b.deliveryDate||''}"></div>
@@ -1276,6 +1297,7 @@ function saveBuilding(bId){
     deliveryDate:document.getElementById('b-deliv').value||null,
     deedNumber:document.getElementById('b-deed-num').value.trim(),
     deedDate:document.getElementById('b-deed-date').value||null,
+    propertyValue:Number(document.getElementById('b-value').value)||0,
     waterMeter:document.getElementById('b-water').value.trim(),
     deedImage:_bForm.deedImage,
     attachments:_bForm.attachments.slice(),
@@ -1872,10 +1894,11 @@ function exportAccountingCSV(year,buildingId){
   rows.push(['الإجمالي السنوي',yr.expected,yr.collected,yr.outstanding,yr.rate,yr.expenses,yr.net]);
   rows.push([]);
   rows.push([filterBuilding?'العقار':'حسب العقار']);
-  rows.push(['العقار','المستحق','المحصّل','المتبقّي','المصروفات','الصافي','الصيانة % من الإيجار']);
+  rows.push(['العقار','المستحق','المحصّل','المتبقّي','المصروفات','الصافي','الصيانة % من الإيجار','نسبة العائد %']);
   (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(year,null,b.id);
     const maintPct=a.expected?Math.round(a.expenses/a.expected*100):0;
-    rows.push([b.name,a.expected,a.collected,a.outstanding,a.expenses,a.net,maintPct]); });
+    const roi=b.propertyValue?Math.round(a.net/b.propertyValue*1000)/10:'';
+    rows.push([b.name,a.expected,a.collected,a.outstanding,a.expenses,a.net,maintPct,roi]); });
   rows.push([]);
   rows.push(['المصروفات']);
   rows.push(['التاريخ','العقار','البند','الوصف','المبلغ']);
@@ -2111,7 +2134,8 @@ function loadDemo(){
   // مصروفات تجريبية
   db.expenses=[
     {id:uid(),buildingId:b1,category:'صيانة',amount:1200,date:addMonths(todayISO(),-5),note:'إصلاح مصعد'},
-    {id:uid(),buildingId:b1,category:'كهرباء وماء',amount:800,date:addMonths(todayISO(),-2),note:'فاتورة المرافق'},
+    {id:uid(),buildingId:b1,category:'كهرباء',amount:500,date:addMonths(todayISO(),-2),note:'فاتورة الكهرباء'},
+    {id:uid(),buildingId:b1,category:'ماء',amount:300,date:addMonths(todayISO(),-2),note:'فاتورة الماء'},
     {id:uid(),buildingId:b2,category:'رسوم حكومية',amount:2500,date:addMonths(todayISO(),-3),note:'رخصة وتصاريح'}
   ];
   save(); go('dashboard');
