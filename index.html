@@ -2176,7 +2176,7 @@ function showGate(){
     +'<div class="gate-logo">'+svgIcon('key')+'</div>'
     +'<h2>نظام إدارة الإيجارات</h2>'
     +'<p>أدخل رمز الدخول للوصول إلى بياناتك على كل الأجهزة.<br>'
-    +'<span class="gate-hint">أول مرة؟ اختر رمزًا جديدًا (8 خانات على الأقل، حروف وأرقام) واحفظه — هو مفتاح بياناتك.</span></p>'
+    +'<span class="gate-hint">أول مرة؟ اختر رمزًا جديدًا (يفضّل 8 خانات فأكثر، حروف وأرقام) واحفظه — هو مفتاح بياناتك.</span></p>'
     +'<input id="gate-code" type="password" inputmode="text" placeholder="رمز الدخول" onkeydown="if(event.key===\'Enter\')submitGate()">'
     +'<button class="btn btn-primary gate-btn" onclick="submitGate()">'+svgIcon('unlock')+' دخول ومزامنة</button>'
     +'<div class="gate-foot">'+svgIcon('lock')+' بياناتك مرتبطة بهذا الرمز. لا تشاركه إلا مع من تريد أن يطّلع على نفس البيانات أو يعدّلها.</div>'
@@ -2185,7 +2185,7 @@ function showGate(){
 }
 function submitGate(){
   var code=(document.getElementById('gate-code').value||'').trim();
-  if(code.length<8){ alert('لأمان بياناتك: اختر رمزًا من 8 خانات على الأقل (حروف وأرقام يصعب تخمينها).'); return; }
+  if(!code){ alert('أدخل رمز الدخول.'); return; }
   closeModal();
   connectCloud(code);
 }
