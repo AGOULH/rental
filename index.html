@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-build" content="202609091808">
+<meta name="app-build" content="202609091900">
 <title>نظام إدارة الإيجارات v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2224,11 +2224,16 @@ function checkForUpdate(){
       if(m && m[1] && m[1] !== APP_BUILD && !document.getElementById('updateBanner')){
         const b=document.createElement('div');
         b.id='updateBanner'; b.className='update-banner';
-        b.innerHTML='يوجد تحديث جديد للتطبيق <button onclick="location.reload()">تحديث الآن</button>';
+        b.innerHTML='يوجد تحديث جديد للتطبيق <button onclick="applyUpdate()">تحديث الآن</button>';
         document.body.appendChild(b);
       }
     })
     .catch(function(){});
+}
+function applyUpdate(){
+  // location.reload() قد يُعيد الصفحة من ذاكرة التخزين المؤقت للمتصفح على بعض أجهزة الجوال؛
+  // استخدام رابط بمعامل فريد يضمن جلب نسخة جديدة فعليًا من الخادم
+  location.href = location.pathname + '?v=' + Date.now();
 }
 document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') checkForUpdate(); });
 
