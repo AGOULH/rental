@@ -348,15 +348,24 @@ function periodAmount(u){ return (Number(u.rentAmount)||0)/periodsPerYear(u); }
 
 /* واتساب — يفتح الجوال مباشرة على الرقم، الجهاز الثابت يفتح واتساب ويب */
 function isMobile(){ return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
+/* يحوّل رقم جوال سعودي محلي (05xxxxxxxx) إلى الصيغة الدولية التي يشترطها رابط wa.me (966...) */
+function normalizePhone(phone){
+  let p=(phone||'').replace(/[^0-9]/g,'');
+  if(!p) return '';
+  if(p.startsWith('00')) p=p.slice(2);
+  if(p.startsWith('0')) p='966'+p.slice(1);
+  else if(p.length===9 && p.startsWith('5')) p='966'+p;
+  return p;
+}
 function openWhatsApp(phone,msg){
-  const p=(phone||'').replace(/[^0-9]/g,'');
+  const p=normalizePhone(phone);
   const enc=encodeURIComponent(msg);
   const url=p?(isMobile()?`whatsapp://send?phone=${p}&text=${enc}`:`https://wa.me/${p}?text=${enc}`):`https://wa.me/?text=${enc}`;
   window.open(url,'_blank');
 }
 /* يُنشئ سكريبت لنوافذ المستندات: يلتقط الصفحة كصورة PNG ويشاركها عبر واتساب */
 function waWindowScript(phone,msg,title){
-  const p=JSON.stringify((phone||'').replace(/[^0-9]/g,''));
+  const p=JSON.stringify(normalizePhone(phone));
   const m=JSON.stringify(msg||'');
   const t=JSON.stringify(title||'مستند');
   return `<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script><scr`+`ipt>
