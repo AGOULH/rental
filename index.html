@@ -594,7 +594,7 @@ function viewDashboard(){
       <td><div style="display:flex;gap:5px;justify-content:flex-end">
         <button class="btn btn-sm" onclick="openUnit('${p.unit.id}')">تفاصيل</button>
         <button class="btn btn-sm btn-primary" onclick="openPartialPay('${p.unit.id}','${p.id}')">تحصيل</button>
-        ${p.unit.tenantPhone?`<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`:''}
+        <button class="btn btn-sm" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>
       </div></td>
     </tr>`; });
     h+=`</tbody></table></div>`;
@@ -614,7 +614,7 @@ function viewDashboard(){
       <td><div style="display:flex;gap:5px;justify-content:flex-end">
         <button class="btn btn-sm" onclick="openUnit('${p.unit.id}')">تفاصيل</button>
         <button class="btn btn-sm btn-primary" onclick="openPartialPay('${p.unit.id}','${p.id}')">تحصيل</button>
-        ${p.unit.tenantPhone?`<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`:''}
+        <button class="btn btn-sm" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>
       </div></td>
     </tr>`; });
     h+=`</tbody></table></div></div>`;
@@ -725,7 +725,7 @@ function viewPaymentsFilter(){
           <button class="btn btn-sm" onclick="openUnit('${p.unit.id}')">تفاصيل</button>
           <button class="btn btn-sm btn-primary" onclick="openPartialPay('${p.unit.id}','${p.id}')">تحصيل</button>
           <button class="btn btn-sm" onclick="printDueNotice('${p.unit.id}','${p.id}')" title="طباعة">${svgIcon('printer')}</button>
-          ${p.unit.tenantPhone?`<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`:''}
+          <button class="btn btn-sm" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>
         </div></td>
       </tr>`;
     });
@@ -1468,11 +1468,11 @@ function openUnit(uId){
       actions=`<button class="btn btn-sm btn-primary" onclick="togglePay('${u.id}','${p.id}')" title="تسجيل باقي المبلغ كمسدّد">✓ إكمال السداد</button>`+
         `<button class="btn btn-sm" onclick="openPartialPay('${u.id}','${p.id}')" title="تسجيل دفعة جزئية إضافية">${svgIcon('cash')} جزئي</button>`+
         `<button class="btn btn-sm" onclick="undoLastPartial('${u.id}','${p.id}')" title="التراجع عن آخر دفعة جزئية">${svgIcon('undo')}</button>`+
-        (u.tenantPhone?`<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${u.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`:'');
+        `<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${u.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`;
     } else {
       actions=`<button class="btn btn-sm btn-primary" onclick="togglePay('${u.id}','${p.id}')">✓ تسجيل سداد كامل</button>`+
         `<button class="btn btn-sm" onclick="openPartialPay('${u.id}','${p.id}')" title="تسجيل دفعة جزئية">${svgIcon('cash')} دفع جزئي</button>`+
-        (u.tenantPhone?`<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${u.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`:'');
+        `<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${u.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`;
     }
     h+=`<tr>
       <td style="font-weight:700">${p.n}</td>
@@ -1503,7 +1503,7 @@ function openUnit(uId){
   if(u.notes) h+=`<div class="info-box" style="margin-top:16px">${svgIcon('doc')} <div>${esc(u.notes)}</div></div>`;
   h+=`</div><div class="modal-foot">
       <button class="btn btn-primary" onclick="exportUnitPDF('${u.id}')">${svgIcon('doc')} تصدير PDF</button>
-      ${u.tenantPhone?`<button class="btn" onclick="sendUnitWhatsApp('${u.id}')">${svgIcon('chat')} واتساب</button>`:''}
+      <button class="btn" onclick="sendUnitWhatsApp('${u.id}')">${svgIcon('chat')} واتساب</button>
       ${u.tenantName?`<button class="btn" onclick="openRenewContract('${u.id}')">${svgIcon('refresh')} تجديد العقد</button>`:''}
       ${u.tenantName?`<button class="btn" onclick="openChangeTenant('${u.id}')">${svgIcon('refresh')} تغيير المستأجر</button>`:''}
       ${u.tenantName?`<button class="btn btn-danger" onclick="openEndContract('${u.id}')">${svgIcon('door')} إنهاء وخروج</button>`:''}
