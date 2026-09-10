@@ -1467,10 +1467,12 @@ function openUnit(uId){
     } else if(p.status==='partial'){
       actions=`<button class="btn btn-sm btn-primary" onclick="togglePay('${u.id}','${p.id}')" title="تسجيل باقي المبلغ كمسدّد">✓ إكمال السداد</button>`+
         `<button class="btn btn-sm" onclick="openPartialPay('${u.id}','${p.id}')" title="تسجيل دفعة جزئية إضافية">${svgIcon('cash')} جزئي</button>`+
-        `<button class="btn btn-sm" onclick="undoLastPartial('${u.id}','${p.id}')" title="التراجع عن آخر دفعة جزئية">${svgIcon('undo')}</button>`;
+        `<button class="btn btn-sm" onclick="undoLastPartial('${u.id}','${p.id}')" title="التراجع عن آخر دفعة جزئية">${svgIcon('undo')}</button>`+
+        (u.tenantPhone?`<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${u.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`:'');
     } else {
       actions=`<button class="btn btn-sm btn-primary" onclick="togglePay('${u.id}','${p.id}')">✓ تسجيل سداد كامل</button>`+
-        `<button class="btn btn-sm" onclick="openPartialPay('${u.id}','${p.id}')" title="تسجيل دفعة جزئية">${svgIcon('cash')} دفع جزئي</button>`;
+        `<button class="btn btn-sm" onclick="openPartialPay('${u.id}','${p.id}')" title="تسجيل دفعة جزئية">${svgIcon('cash')} دفع جزئي</button>`+
+        (u.tenantPhone?`<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${u.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`:'');
     }
     h+=`<tr>
       <td style="font-weight:700">${p.n}</td>
