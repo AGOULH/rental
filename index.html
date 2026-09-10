@@ -17,10 +17,10 @@
     --accent-300:#b5d9fd; --accent-500:#749dc4; --accent-700:#416180; --accent-900:#1d2d3d;
     --neutral-300:#d4d4d7; --neutral-400:#b7b7ba;
     /* لا ألوان دلالية مختلفة (أخضر/أحمر/أصفر) — الحالات تُميَّز بدرجة الفولاذي والوزن فقط */
-    --success:#5d5d60; --success-l:rgba(29,31,32,.06);
+    --success:#5d5d60; --success-l:rgba(29,31,32,.13);
     --warning:#1d2d3d; --warning-l:#b5d9fd;
-    --danger:#1d2d3d; --danger-l:rgba(29,31,32,.08);
-    --info:#416180; --info-l:rgba(89,128,166,.12);
+    --danger:#1d2d3d; --danger-l:rgba(29,31,32,.20);
+    --info:#416180; --info-l:rgba(89,128,166,.18);
     --font:'IBM Plex Sans Arabic','Barlow',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
     --font-serif:'Barlow Condensed','IBM Plex Sans Arabic',sans-serif;
     --shadow:none;
@@ -144,11 +144,11 @@
   tbody tr:hover{background:var(--primary-l)}
   td .muted{color:var(--muted);font-size:12.5px}
 
-  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:0;font-size:12.5px;font-weight:700;white-space:nowrap}
-  .b-green{background:var(--success-l);color:var(--success)}
-  .b-red{background:var(--danger-l);color:var(--danger)}
-  .b-amber{background:var(--warning-l);color:var(--warning)}
-  .b-blue{background:var(--info-l);color:var(--info)}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:0;font-size:12.5px;font-weight:700;white-space:nowrap;border:1px solid transparent}
+  .b-green{background:var(--success-l);color:var(--success);border-color:rgba(29,31,32,.22)}
+  .b-red{background:var(--danger-l);color:var(--danger);border-color:rgba(29,31,32,.4)}
+  .b-amber{background:var(--warning-l);color:var(--warning);border-color:rgba(29,31,32,.3)}
+  .b-blue{background:var(--info-l);color:var(--info);border-color:rgba(65,97,128,.4)}
   .b-gray{background:var(--surface-2);color:var(--text);border:1px solid var(--border)}
   .dot{width:6px;height:6px;border-radius:0;display:inline-block}
 
