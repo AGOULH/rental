@@ -760,7 +760,7 @@ function printDueNotice(uId,pId){
   const d=daysFromToday(p.dueDate);
   const waMsg=`إشعار استحقاق دفعة إيجار\n${b.name} — ${u.name}\nالمستأجر: ${u.tenantName||''}\nالدفعة رقم: ${p.n}\nتاريخ الاستحقاق: ${fmtDate(p.dueDate)}\nالمبلغ المتبقي: ${fmtMoneyText(remainingAmt(p))}${p.status==='partial'?' (من أصل '+fmtMoneyText(p.amount)+')':''}`;
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>إشعار استحقاق</title>
+  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>إشعار استحقاق</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>*{font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}body{padding:40px;color:#0f172a}
   .vh{background:#188078;color:#fff;padding:18px 24px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between}
@@ -770,7 +770,8 @@ function printDueNotice(uId,pId){
   .amount{background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:16px;margin:18px 0;text-align:center}
   .amount .big{font-size:32px;font-weight:bold;color:#d97706}
   .btnbar{text-align:center;margin-bottom:18px}.btnbar button{border:none;padding:10px 22px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold;margin:0 5px}
-  @media print{.noprint{display:none}}</style>
+  @media print{.noprint{display:none}}
+  @media (max-width:520px){body{padding:16px}}</style>
   ${waWindowScript(u.tenantPhone,waMsg,'إشعار-استحقاق')}
   </head><body>
   <div class="btnbar noprint">
@@ -1040,7 +1041,7 @@ function exportAccountingPDF(year,buildingId){
     eRows+=`<tr><td>${fmtDate(e.date)}</td><td>${b?esc(b.name):'عام'}</td><td>${esc(e.category||'أخرى')}</td><td>${esc(e.note||'—')}</td><td style="color:#dc2626">${fmtMoney(e.amount)}</td></tr>`;
   });
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>التقرير المحاسبي ${year}${filterBuilding?' - '+esc(filterBuilding.name):''}</title>
+  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>التقرير المحاسبي ${year}${filterBuilding?' - '+esc(filterBuilding.name):''}</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *{font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
@@ -1057,6 +1058,7 @@ function exportAccountingPDF(year,buildingId){
     tfoot td,.tot td{background:#eef2f7!important;font-weight:bold}
     .ft{margin-top:26px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}
     @media print{body{padding:18px}.noprint{display:none}}
+    @media (max-width:520px){body{padding:16px}table{font-size:12px}th,td{padding:6px 8px}}
     .btnbar{text-align:center;margin-bottom:18px}.btnbar button{background:#188078;color:#fff;border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold}
   </style></head><body>
     <div class="btnbar noprint"><button onclick="window.print()">🖨️ طباعة / حفظ PDF</button></div>
@@ -1071,12 +1073,12 @@ function exportAccountingPDF(year,buildingId){
       <div class="c"><div class="t">صافي الدخل</div><div class="v" style="color:${yr.net>=0?'#16a34a':'#dc2626'}">${fmtMoney(yr.net)}</div></div>
     </div>
     <h2>التفصيل الربع سنوي</h2>
-    <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>التحصيل</th><th>المصروفات</th><th>الصافي</th></tr></thead>
+    <div style="overflow-x:auto"><table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>التحصيل</th><th>المصروفات</th><th>الصافي</th></tr></thead>
       <tbody>${qRows}</tbody>
-      <tfoot><tr class="tot"><td>الإجمالي</td><td>${fmtMoney(yr.expected)}</td><td>${fmtMoney(yr.collected)}</td><td>${fmtMoney(yr.outstanding)}</td><td>${yr.rate}%</td><td>${fmtMoney(yr.expenses)}</td><td>${fmtMoney(yr.net)}</td></tr></tfoot></table>
+      <tfoot><tr class="tot"><td>الإجمالي</td><td>${fmtMoney(yr.expected)}</td><td>${fmtMoney(yr.collected)}</td><td>${fmtMoney(yr.outstanding)}</td><td>${yr.rate}%</td><td>${fmtMoney(yr.expenses)}</td><td>${fmtMoney(yr.net)}</td></tr></tfoot></table></div>
     <h2>${filterBuilding?'العقار':'حسب العقار'}</h2>
-    <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>الصيانة % من الإيجار</th></tr></thead><tbody>${bRows}</tbody></table>
-    ${eRows?`<h2>تفاصيل المصروفات</h2><table><thead><tr><th>التاريخ</th><th>العقار</th><th>البند</th><th>الوصف</th><th>المبلغ</th></tr></thead><tbody>${eRows}</tbody></table>`:''}
+    <div style="overflow-x:auto"><table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>الصيانة % من الإيجار</th></tr></thead><tbody>${bRows}</tbody></table></div>
+    ${eRows?`<h2>تفاصيل المصروفات</h2><div style="overflow-x:auto"><table><thead><tr><th>التاريخ</th><th>العقار</th><th>البند</th><th>الوصف</th><th>المبلغ</th></tr></thead><tbody>${eRows}</tbody></table></div>`:''}
     <div class="ft">طريقة الاحتساب: المستحق = التجميع حسب السنة والربع الميلادي لتاريخ استحقاق كل دفعة • صافي الدخل = المحصّل − المصروفات • صدر من نظام إدارة الإيجارات</div>
   </body></html>`);
   w.document.close();
@@ -1617,7 +1619,7 @@ function paymentReportHTML(b, o){
       <td style="color:${col};font-weight:bold">${lbl}</td>
       <td>${p.paidDate?fmtDate(p.paidDate):'—'}</td></tr>`;
   });
-  return (`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>كشف دفعات - ${esc(o.unitName)}</title>
+  return (`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>كشف دفعات - ${esc(o.unitName)}</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *{font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
@@ -1638,6 +1640,7 @@ function paymentReportHTML(b, o){
     .formula{margin-top:18px;font-size:12.5px;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 14px}
     .ft{margin-top:26px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}
     @media print{body{padding:18px}.noprint{display:none}}
+    @media (max-width:520px){body{padding:16px}.info{grid-template-columns:1fr}.sum{flex-wrap:wrap}.sum div{min-width:45%}table{font-size:12.5px}th,td{padding:7px 8px}}
     .btnbar{text-align:center;margin-bottom:18px}
     .btnbar button{border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold;margin:0 5px}
   </style>${waWindowScript(o.phone,waMsg,'كشف-دفعات')}</head><body>
@@ -1665,8 +1668,8 @@ function paymentReportHTML(b, o){
       <div><div class="t">المحصّل</div><div class="v" style="color:#16a34a">${fmtMoney(paidT)}</div></div>
       <div><div class="t">المتبقّي</div><div class="v" style="color:#d97706">${fmtMoney(totalT-paidT)}</div></div>
     </div>
-    <table><thead><tr><th>#</th><th>تاريخ الاستحقاق</th><th>المبلغ</th><th>الحالة</th><th>تاريخ السداد</th></tr></thead>
-      <tbody>${rows}</tbody></table>
+    <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>تاريخ الاستحقاق</th><th>المبلغ</th><th>الحالة</th><th>تاريخ السداد</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
     <div class="formula">طريقة الاحتساب: تاريخ الدفعة (ن) = تاريخ بداية العقد + (ن−1) × 3 أشهر — دفعات ربع سنوية.</div>
     <div class="ft">صدر هذا الكشف من نظام إدارة الإيجارات • ${fmtDate(todayISO())}</div>
   </body></html>`);
@@ -1706,7 +1709,7 @@ function printReceipt(uId,payId,histIdx){
   const recNo='R'+(p.paidDate||todayISO()).replace(/-/g,'')+'-'+String(u.id).slice(-3).toUpperCase()+p.n;
   const cur=db.settings.currency;
   const rcptMsg=`سند قبض — رقم: ${recNo}\nالتاريخ: ${fmtDate(p.paidDate||todayISO())}\nاستلمنا من: ${src.tenantName||'—'}\nعن إيجار: ${u.name} — ${b.name}\nالدفعة رقم: ${p.n}\nالمبلغ: ${fmtMoneyText(p.amount)}`;
-  openReportWindow(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>سند قبض ${recNo}</title>
+  openReportWindow(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>سند قبض ${recNo}</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *{font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
@@ -1724,6 +1727,7 @@ function printReceipt(uId,payId,histIdx){
     .sign div{text-align:center;width:42%}.sign .ln{border-top:1px solid #94a3b8;margin-top:36px;padding-top:6px;color:#64748b}
     .ft{text-align:center;font-size:11px;color:#94a3b8;margin-top:18px}
     @media print{body{padding:10px}.noprint{display:none}}
+    @media (max-width:520px){body{padding:16px}.sign div{width:auto}}
     .btnbar{text-align:center;margin-bottom:18px}.btnbar button{border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold;margin:0 5px}
   </style>${waWindowScript(src.tenantPhone,rcptMsg,'سند-قبض')}</head><body>
     <div class="btnbar noprint">
