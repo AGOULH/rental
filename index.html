@@ -594,6 +594,7 @@ function viewDashboard(){
       <td><div style="display:flex;gap:5px;justify-content:flex-end">
         <button class="btn btn-sm" onclick="openUnit('${p.unit.id}')">تفاصيل</button>
         <button class="btn btn-sm btn-primary" onclick="openPartialPay('${p.unit.id}','${p.id}')">تحصيل</button>
+        ${p.unit.tenantPhone?`<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`:''}
       </div></td>
     </tr>`; });
     h+=`</tbody></table></div>`;
@@ -613,6 +614,7 @@ function viewDashboard(){
       <td><div style="display:flex;gap:5px;justify-content:flex-end">
         <button class="btn btn-sm" onclick="openUnit('${p.unit.id}')">تفاصيل</button>
         <button class="btn btn-sm btn-primary" onclick="openPartialPay('${p.unit.id}','${p.id}')">تحصيل</button>
+        ${p.unit.tenantPhone?`<button class="btn btn-sm" onclick="sendPaymentWhatsApp('${p.unit.id}','${p.id}')" title="واتساب">${svgIcon('chat')}</button>`:''}
       </div></td>
     </tr>`; });
     h+=`</tbody></table></div></div>`;
