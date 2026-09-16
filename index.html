@@ -277,6 +277,7 @@
       <button data-v="dashboard" onclick="go('dashboard')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>لوحة التحكم</button>
       <button data-v="properties" onclick="go('properties')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M9 15h1.5M13.5 15H15M10 21v-3.5h4V21"/></svg></span>العقارات</button>
       <button data-v="accounting" onclick="go('accounting')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M8 6.5h8"/><circle cx="8.3" cy="11" r=".6"/><circle cx="12" cy="11" r=".6"/><circle cx="15.7" cy="11" r=".6"/><circle cx="8.3" cy="14.5" r=".6"/><circle cx="12" cy="14.5" r=".6"/><circle cx="15.7" cy="14.5" r=".6"/><circle cx="8.3" cy="18" r=".6"/><circle cx="12" cy="18" r=".6"/><circle cx="15.7" cy="18" r=".6"/></svg></span>المحاسبة</button>
+      <button data-v="waqf" onclick="go('waqf')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H18a1 1 0 0 1 1 1v2"/><rect x="3" y="7.5" width="18" height="12" rx="2.5"/><circle cx="16.5" cy="14" r="1.4"/></svg></span>الوقف</button>
       <button data-v="payments" onclick="go('payments')"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.2" cy="6" r="1"/><circle cx="4.2" cy="12" r="1"/><circle cx="4.2" cy="18" r="1"/></svg></span>المستحقات</button>
       <button onclick="openGuide()"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V6a2.5 2.5 0 0 1 2.5-2.5H20V17H6.5A2.5 2.5 0 0 0 4 19.5 2.5 2.5 0 0 0 6.5 22H20"/></svg></span>دليل المستخدم</button>
       <button onclick="openSettings()"><span class="nav-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5v-3l-2.2-.4a6.8 6.8 0 0 0-.7-1.7l1.3-1.8-2.1-2.1-1.8 1.3a6.8 6.8 0 0 0-1.7-.7L12 2.6H9l-.4 2.2a6.8 6.8 0 0 0-1.7.7L5.1 4.2 3 6.3l1.3 1.8a6.8 6.8 0 0 0-.7 1.7l-2.2.4v3l2.2.4a6.8 6.8 0 0 0 .7 1.7L3 17.1l2.1 2.1 1.8-1.3a6.8 6.8 0 0 0 1.7.7l.4 2.2h3l.4-2.2a6.8 6.8 0 0 0 1.7-.7l1.8 1.3 2.1-2.1-1.3-1.8a6.8 6.8 0 0 0 .7-1.7Z"/></svg></span>الإعدادات</button>
@@ -317,12 +318,13 @@ try{
 }catch(e){ cloud.ready = false; console.warn('Firebase init', e); }
 
 function defaults(){
-  return { settings:{ currency:'ريال', paymentReminderDays:30, deliveryReminderDays:60 }, buildings:[], units:[], expenses:[] };
+  return { settings:{ currency:'ريال', paymentReminderDays:30, deliveryReminderDays:60 }, buildings:[], units:[], expenses:[], waqf:{transactions:[]} };
 }
 function normalize(d){
   d = d || defaults();
   d.settings = Object.assign(defaults().settings, d.settings||{});
   d.buildings = d.buildings||[]; d.units = d.units||[]; d.expenses = d.expenses||[];
+  d.waqf = d.waqf||{transactions:[]}; d.waqf.transactions = d.waqf.transactions||[];
   d.units.forEach(u=>{
     u.payments=u.payments||[]; u.history=u.history||[];
     if(u.quarterlyRent!==undefined && u.rentAmount===undefined) u.rentAmount=u.quarterlyRent;
@@ -542,6 +544,7 @@ function render(){
   else if(view.name==='properties') app.innerHTML=viewProperties();
   else if(view.name==='building') app.innerHTML=viewBuilding(view.buildingId);
   else if(view.name==='accounting') app.innerHTML=viewAccounting();
+  else if(view.name==='waqf') app.innerHTML=viewWaqf();
   else if(view.name==='payments') app.innerHTML=viewPaymentsFilter();
 }
 
@@ -1082,6 +1085,183 @@ function exportAccountingPDF(year,buildingId){
     <div class="ft">طريقة الاحتساب: المستحق = التجميع حسب السنة والربع الميلادي لتاريخ استحقاق كل دفعة • صافي الدخل = المحصّل − المصروفات • صدر من نظام إدارة الإيجارات</div>
   </body></html>`);
   w.document.close();
+}
+
+/* ============================ الوقف ============================
+   إيداع: نوعان — "إيجار" يُوزَّع تلقائيًا (صيانة 10% / ادخار 40% / اعمال 40% / شخصي 10%)
+          أو "خدمات" يُضاف بالكامل إلى بند الصيانة فقط.
+   سحب: يُخصم من التصنيف المحدد فقط، وينعكس تلقائيًا على الرصيد العام (مجموع التصنيفات الأربعة). */
+const WAQF_CATS=['صيانة','ادخار','اعمال','شخصي'];
+const WAQF_SPLIT={'صيانة':0.10,'ادخار':0.40,'اعمال':0.40,'شخصي':0.10};
+let waqfYear=null, waqfTypeFilter=null, waqfCatFilter=null;
+function waqfBalances(){
+  const bal={'صيانة':0,'ادخار':0,'اعمال':0,'شخصي':0};
+  (db.waqf.transactions||[]).forEach(t=>{
+    const amt=Number(t.amount)||0;
+    if(t.type==='deposit'){
+      if(t.depositType==='service') bal['صيانة']+=amt;
+      else WAQF_CATS.forEach(c=>bal[c]+=amt*WAQF_SPLIT[c]);
+    } else if(t.type==='withdraw' && bal.hasOwnProperty(t.category)){
+      bal[t.category]-=amt;
+    }
+  });
+  return bal;
+}
+function waqfGeneralBalance(bal){ return WAQF_CATS.reduce((s,c)=>s+bal[c],0); }
+function waqfAllYears(){
+  const ys=new Set();
+  (db.waqf.transactions||[]).forEach(t=>{ if(t.date) ys.add(yearOf(t.date)); });
+  ys.add(new Date().getFullYear());
+  return [...ys].sort((a,b)=>b-a);
+}
+function waqfMatchesCategory(t,cat){
+  if(!cat) return true;
+  if(t.type==='withdraw') return t.category===cat;
+  if(t.type==='deposit') return t.depositType==='service' ? cat==='صيانة' : true;
+  return true;
+}
+function viewWaqf(){
+  const bal=waqfBalances();
+  const general=waqfGeneralBalance(bal);
+  let h=`<div class="page-head" data-eyebrow="WAQF"><div><h1>${svgIcon('wallet')} الوقف</h1>
+    <div class="sub">حسابات الوقف — الإيداع والسحب حسب التصنيف</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="openWaqfForm(null,'deposit')">${svgIcon('plus')} إيداع</button>
+      <button class="btn" onclick="openWaqfForm(null,'withdraw')">${svgIcon('undo')} سحب</button>
+    </div></div>`;
+
+  h+=`<div class="stats">
+    ${stat(svgIcon('wallet'),fmtMoney(general),'الرصيد العام','',null,{dark:true})}
+    ${stat(svgIcon('cash'),fmtMoney(bal['صيانة']),'صيانة (10%)')}
+    ${stat(svgIcon('trending'),fmtMoney(bal['ادخار']),'ادخار (40%)')}
+    ${stat(svgIcon('chart'),fmtMoney(bal['اعمال']),'اعمال (40%)')}
+    ${stat(svgIcon('key'),fmtMoney(bal['شخصي']),'شخصي (10%)')}
+  </div>`;
+
+  h+=`<details class="acct-info">
+    <summary>${svgIcon('info')} آلية توزيع الإيداع والسحب</summary>
+    <div class="info-box" style="align-items:flex-start">${svgIcon('calculator')}
+      <div>
+        <div>عند إضافة <b>إيداع إيجار</b> يُقسَّم المبلغ تلقائيًا: صيانة <b>10%</b> — ادخار <b>40%</b> — اعمال <b>40%</b> — شخصي <b>10%</b>.</div>
+        <div class="formula">مثال: إيداع إيجار بقيمة 10,000 ريال ⇦ صيانة 1,000 — ادخار 4,000 — اعمال 4,000 — شخصي 1,000</div>
+        <div style="margin-top:8px">عند إضافة <b>إيداع خدمات</b> يُضاف المبلغ بالكامل إلى بند <b>الصيانة</b> فقط بدون توزيع، ويُحتسب في الرصيد العام.</div>
+        <div style="margin-top:8px">عند <b>السحب</b> يُخصم المبلغ من التصنيف المحدد فقط (صيانة/ادخار/اعمال/شخصي)، وينعكس تلقائيًا على الرصيد العام.</div>
+      </div>
+    </div>
+  </details>`;
+
+  const years=waqfAllYears();
+  if(waqfYear && years.indexOf(waqfYear)<0) waqfYear=null;
+  let list=(db.waqf.transactions||[]).slice();
+  if(waqfYear) list=list.filter(t=>yearOf(t.date)===waqfYear);
+  if(waqfTypeFilter) list=list.filter(t=>t.type===waqfTypeFilter);
+  if(waqfCatFilter) list=list.filter(t=>waqfMatchesCategory(t,waqfCatFilter));
+  list.sort((a,b)=>a.date<b.date?1:-1);
+
+  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('list')} سجل الحركات</h2>
+    <span class="count">${list.length} حركة</span></div>
+    <div class="toolbar" style="padding:14px 20px 0">
+      <select onchange="waqfYear=this.value?parseInt(this.value):null;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-weight:700">
+        <option value="">كل السنوات</option>
+        ${years.map(y=>`<option value="${y}" ${waqfYear===y?'selected':''}>${y}</option>`).join('')}
+      </select>
+      <select onchange="waqfTypeFilter=this.value||null;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-weight:700">
+        <option value="">كل الحركات</option>
+        <option value="deposit" ${waqfTypeFilter==='deposit'?'selected':''}>إيداع</option>
+        <option value="withdraw" ${waqfTypeFilter==='withdraw'?'selected':''}>سحب</option>
+      </select>
+      <select onchange="waqfCatFilter=this.value||null;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-weight:700">
+        <option value="">كل التصنيفات</option>
+        ${WAQF_CATS.map(c=>`<option value="${c}" ${waqfCatFilter===c?'selected':''}>${c}</option>`).join('')}
+      </select>
+    </div>`;
+
+  if(list.length===0){
+    h+=`<div class="panel-body pad" style="color:var(--muted)">لا توجد حركات مطابقة لهذه الفلترة.</div>`;
+  } else {
+    h+=`<div class="panel-body"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>التفاصيل</th><th>المبلغ</th><th>التوزيع</th><th>ملاحظة</th><th></th></tr></thead><tbody>`;
+    list.forEach(t=>{
+      const isDep=t.type==='deposit';
+      const detail=isDep?(t.depositType==='service'?'خدمات':'إيجار'):esc(t.category);
+      const dist=isDep
+        ? (t.depositType==='service' ? `صيانة: ${fmtMoney(t.amount)}` : WAQF_CATS.map(c=>`${c} ${fmtMoney((t.amount||0)*WAQF_SPLIT[c])}`).join(' · '))
+        : '—';
+      h+=`<tr>
+        <td>${fmtDate(t.date)}</td>
+        <td><span class="badge ${isDep?'b-green':'b-red'}">${isDep?'إيداع':'سحب'}</span></td>
+        <td>${detail}</td>
+        <td style="font-weight:700">${fmtMoney(t.amount)}</td>
+        <td class="muted" style="font-size:12.5px">${dist}</td>
+        <td>${esc(t.note||'—')}</td>
+        <td><div style="display:flex;gap:5px;justify-content:flex-end">
+          <button class="btn btn-sm" onclick="openWaqfForm('${t.id}')">${svgIcon('edit')}</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteWaqf('${t.id}')">${svgIcon('trash')}</button>
+        </div></td>
+      </tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  }
+  h+=`</div>`;
+  return h;
+}
+function openWaqfForm(tId,defaultType){
+  const t=tId?(db.waqf.transactions.find(x=>x.id===tId)||{}):{type:defaultType||'deposit',date:todayISO()};
+  const isDeposit=t.type==='deposit';
+  openModal(`<div class="modal"><div class="modal-head"><h3>${tId?svgIcon('edit')+' تعديل حركة':(isDeposit?svgIcon('plus')+' إضافة إيداع':svgIcon('undo')+' تسجيل سحب')}</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>التاريخ *</label><input type="date" id="w-date" value="${t.date||todayISO()}"></div>
+      ${isDeposit?`
+      <div class="field"><label>نوع الإيداع *</label><select id="w-deptype" onchange="updateWaqfPreview()">
+        <option value="rent" ${t.depositType!=='service'?'selected':''}>إيجار (يُوزَّع تلقائيًا على الأقسام الأربعة)</option>
+        <option value="service" ${t.depositType==='service'?'selected':''}>خدمات (يُضاف بالكامل إلى الصيانة)</option>
+      </select></div>`:`
+      <div class="field"><label>التصنيف (السحب منه) *</label><select id="w-cat">
+        ${WAQF_CATS.map(c=>`<option value="${c}" ${t.category===c?'selected':''}>${c}</option>`).join('')}
+      </select></div>`}
+      <div class="field"><label>المبلغ ( ${db.settings.currency} ) *</label><input type="number" id="w-amount" value="${t.amount||''}" oninput="updateWaqfPreview()" placeholder="مثال: 10000"></div>
+      <div class="field"><label>ملاحظة</label><input id="w-note" value="${esc(t.note||'')}"></div>
+      ${isDeposit?`<div id="w-preview" class="formula"></div>`:''}
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="saveWaqf('${tId||''}','${t.type}')">${svgIcon('save')} حفظ</button>
+      <button class="btn" onclick="closeModal()">إلغاء</button>
+      ${tId?`<button class="btn btn-danger" style="margin-inline-start:auto" onclick="deleteWaqf('${tId}')">${svgIcon('trash')} حذف</button>`:''}
+    </div></div>`);
+  if(isDeposit) updateWaqfPreview();
+}
+function updateWaqfPreview(){
+  const el=document.getElementById('w-preview'); if(!el) return;
+  const amtEl=document.getElementById('w-amount'), typeEl=document.getElementById('w-deptype');
+  const amt=parseFloat(amtEl&&amtEl.value)||0;
+  const dtype=typeEl?typeEl.value:'rent';
+  if(dtype==='service') el.innerHTML=`يُضاف بالكامل إلى <b>الصيانة</b>: <b>${fmtMoney(amt)}</b>`;
+  else el.innerHTML=WAQF_CATS.map(c=>`${c} (${Math.round(WAQF_SPLIT[c]*100)}%): <b>${fmtMoney(amt*WAQF_SPLIT[c])}</b>`).join('<br>');
+}
+function saveWaqf(tId,type){
+  const date=document.getElementById('w-date').value;
+  const amount=parseFloat(document.getElementById('w-amount').value)||0;
+  if(!date){ alert('أدخل التاريخ'); return; }
+  if(amount<=0){ alert('أدخل مبلغًا صحيحًا'); return; }
+  const note=document.getElementById('w-note').value.trim();
+  const data={ type, date, amount, note };
+  if(type==='deposit'){
+    data.depositType=document.getElementById('w-deptype').value;
+  } else {
+    data.category=document.getElementById('w-cat').value;
+    const bal=waqfBalances();
+    const old=tId?db.waqf.transactions.find(x=>x.id===tId):null;
+    let avail=bal[data.category];
+    if(old && old.type==='withdraw' && old.category===data.category) avail+=Number(old.amount)||0;
+    if(amount>avail+0.01){ alert('الرصيد غير كافٍ في تصنيف «'+data.category+'». الرصيد المتاح: '+fmtMoneyText(avail)); return; }
+  }
+  if(tId){ Object.assign(db.waqf.transactions.find(x=>x.id===tId),data); }
+  else{ db.waqf.transactions.push({id:uid(),...data}); }
+  save(); closeModal(); render();
+}
+function deleteWaqf(tId){
+  if(!confirm('حذف هذه الحركة؟')) return;
+  db.waqf.transactions=db.waqf.transactions.filter(x=>x.id!==tId);
+  save(); closeModal(); render();
 }
 
 /* ---------- قائمة العقارات ---------- */
@@ -2117,7 +2297,7 @@ function importData(input){
   r.onload=e=>{ try{ const d=JSON.parse(e.target.result);
     if(!d.buildings||!d.units) throw 0;
     if(!confirm('سيتم استبدال البيانات الحالية بالنسخة المستوردة. متابعة؟')) return;
-    db=d; db.settings=Object.assign(defaults().settings,db.settings||{});
+    db=normalize(d);
     save(); closeModal(); go('dashboard');
   }catch(err){ alert('ملف غير صالح'); } };
   r.readAsText(f);
