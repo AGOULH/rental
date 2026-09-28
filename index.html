@@ -812,8 +812,8 @@ function allYears(){
   return [...ys].sort((a,b)=>b-a);
 }
 /* إجمالي مصروفات بند معيّن (افتراضيًا: صيانة) لعقار/سنة */
-function categoryExpenses(year, buildingId, category){
-  return (db.expenses||[]).filter(e=>yearOf(e.date)===year && (!buildingId||e.buildingId===buildingId) && (!category||e.category===category))
+function categoryExpenses(year, buildingId, category, quarter){
+  return (db.expenses||[]).filter(e=>yearOf(e.date)===year && (!quarter||quarterOf(e.date)===quarter) && (!buildingId||e.buildingId===buildingId) && (!category||e.category===category))
     .reduce((s,e)=>s+(Number(e.amount)||0),0);
 }
 /* تجميع محاسبي لفترة (سنة/ربع/عقار) — المستحق = التجميع حسب تاريخ استحقاق كل دفعة فعلية خلال الفترة */
@@ -826,12 +826,13 @@ function acct(year, quarter, buildingId){
     pays.forEach(p=>{
       if(yearOf(p.dueDate)!==year) return;
       if(quarter && quarterOf(p.dueDate)!==quarter) return;
+      if(p.settled){ expected += (p.paidAmount||0); collected += (p.paidAmount||0); return; } // مُسوّاة: المتبقي لا يُحتسب غير محصّل
       expected += p.amount;
       collected += (p.paidAmount||0);
       if(p.status!=='paid' && daysFromToday(p.dueDate)<0) overdue += (p.amount-(p.paidAmount||0));
     });
   });
-  const expenses=categoryExpenses(year,buildingId,null);
+  const expenses=categoryExpenses(year,buildingId,null,quarter);
   return { expected, collected, outstanding:expected-collected, overdue, expenses, net:collected-expenses, rate: expected?Math.round(collected/expected*100):0 };
 }
 function rateBar(rate){
@@ -1859,7 +1860,7 @@ function paymentReportHTML(b, o){
 function paysTotals(payments){
   payments=payments||[];
   const paid=payments.reduce((s,p)=>s+(p.paidAmount!=null?p.paidAmount:(p.status==='paid'?p.amount:0)),0);
-  const total=payments.reduce((s,p)=>s+p.amount,0);
+  const total=payments.reduce((s,p)=>s+(p.settled?(p.paidAmount||0):p.amount),0);
   return { paid, total, remaining:total-paid };
 }
 /* تفقيط المبلغ بالعربية (أعداد صحيحة) */
@@ -2061,6 +2062,16 @@ function endContract(uId){
   u.payments=[];
   save(); closeModal(); openUnit(uId);
 }
+/* تسوية مستحقات مستأجر سابق: المتبقي من الدفعات غير المسدّدة لا يُحتسب ضمن «غير محصّل». pId=null يسوّي كل المتبقي */
+function toggleSettle(uId,idx,pId){
+  const u=db.units.find(x=>x.id===uId); const tn=u.history[idx];
+  (tn.payments||[]).forEach(p=>{
+    if(p.status==='paid') return;
+    if(pId===null) p.settled=true;
+    else if(p.id===pId) p.settled=!p.settled;
+  });
+  save(); viewTenancy(uId,idx);
+}
 /* عرض سجل مستأجر سابق */
 function viewTenancy(uId,idx){
   const u=db.units.find(x=>x.id===uId); const tn=u.history[idx];
@@ -2075,12 +2086,15 @@ function viewTenancy(uId,idx){
   h+=`<table style="margin-top:14px"><thead><tr><th>#</th><th>الاستحقاق</th><th>المبلغ</th><th>الحالة</th><th>السداد</th><th></th></tr></thead><tbody>`;
   (tn.payments||[]).forEach(p=>{ const paid=p.status==='paid'; const partial=p.status==='partial';
     h+=`<tr><td style="font-weight:700">${p.n}</td><td>${fmtDate(p.dueDate)}</td><td style="font-weight:700">${fmtMoney(p.amount)}${partial?'<div class="muted">مدفوع '+fmtMoney(p.paidAmount||0)+'</div>':''}</td>
-      <td><span class="badge ${paid?'b-green':partial?'b-blue':'b-gray'}">${paid?'✓ مسدّدة':partial?'جزئي':'غير مسدّدة'}</span></td>
+      <td><span class="badge ${paid?'b-green':p.settled?'b-gray':partial?'b-blue':'b-gray'}">${paid?'✓ مسدّدة':p.settled?'مُسوّاة'+(partial?' (جزئي)':''):partial?'جزئي':'غير مسدّدة'}</span></td>
       <td>${p.paidDate?fmtDate(p.paidDate):'<span class="muted">—</span>'}</td>
-      <td>${paid?`<button class="btn btn-sm" onclick="printReceipt('${uId}','${p.id}',${idx})" title="سند قبض">${svgIcon('receipt')}</button>`:''}</td></tr>`;
+      <td><div style="display:flex;gap:5px;justify-content:flex-end">${paid?`<button class="btn btn-sm" onclick="printReceipt('${uId}','${p.id}',${idx})" title="سند قبض">${svgIcon('receipt')}</button>`:
+        `<button class="btn btn-sm" onclick="toggleSettle('${uId}',${idx},'${p.id}')" title="${p.settled?'إلغاء التسوية':'تسوية: عدم احتساب المتبقي في غير المحصّل'}">${p.settled?'إلغاء التسوية':'تسوية'}</button>`}</div></td></tr>`;
   });
+  const unsettled=(tn.payments||[]).some(p=>p.status!=='paid' && !p.settled);
   h+=`</tbody></table></div><div class="modal-foot">
     <button class="btn btn-primary" onclick="exportTenancyPDF('${uId}',${idx})">${svgIcon('doc')} تصدير PDF</button>
+    ${unsettled?`<button class="btn" onclick="toggleSettle('${uId}',${idx},null)">${svgIcon('check')} تسوية المستحقات المتبقية</button>`:''}
     <button class="btn" onclick="openUnit('${uId}')" style="margin-inline-start:auto">رجوع للوحدة</button></div></div>`;
   openModal(h);
 }
