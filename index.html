@@ -331,9 +331,15 @@ function normalize(d){
     u.rentAmount=u.rentAmount||0; u.paymentPeriod=u.paymentPeriod||'quarterly'; u.electricityMeter=u.electricityMeter||'';
     u.contractNumber=u.contractNumber||'';
     u.payments.forEach(normalizePayment);
-    u.history.forEach(tn=>{ (tn.payments||[]).forEach(normalizePayment); });
+    u.history.forEach(tn=>{ (tn.payments||[]).forEach(normalizePayment); autoSettleLeaver(tn); });
   });
   return d;
+}
+/* المستأجر الذي خرج (إنهاء/تغيير مستأجر): تُسوّى دفعاته غير المسدّدة تلقائيًا مرة واحدة، ويمكن إلغاء تسوية أي دفعة يدويًا */
+function autoSettleLeaver(tn){
+  if(tn.autoSettled || (tn.reason!=='ended' && tn.reason!=='change')) return;
+  (tn.payments||[]).forEach(p=>{ if(p.status!=='paid') p.settled=true; });
+  tn.autoSettled=true;
 }
 /* يضمن وجود حقول الدفع الجزئي على كل دفعة (توافقًا مع البيانات القديمة) */
 function normalizePayment(p){
@@ -1971,6 +1977,7 @@ function changeTenant(uId){
     u.history=u.history||[];
     u.history.push({ tenantName:u.tenantName, tenantPhone:u.tenantPhone, rentAmount:u.rentAmount, quarterlyRent:u.quarterlyRent,
       contractStart:u.contractStart, durationMonths:u.durationMonths, payments:(u.payments||[]).slice(), archivedAt:todayISO(), reason:'change' });
+    autoSettleLeaver(u.history[u.history.length-1]);
   }
   u.tenantName=name; u.tenantPhone=document.getElementById('ct-phone').value.trim();
   u.rentAmount=rent; u.quarterlyRent=rent;
@@ -2058,6 +2065,7 @@ function endContract(uId){
   u.history=u.history||[];
   u.history.push({ tenantName:u.tenantName, tenantPhone:u.tenantPhone, rentAmount:u.rentAmount, quarterlyRent:u.quarterlyRent,
     contractStart:u.contractStart, durationMonths:u.durationMonths, payments:(u.payments||[]).slice(), archivedAt:todayISO(), endedAt:moveOutDate, reason:'ended' });
+  autoSettleLeaver(u.history[u.history.length-1]);
   u.tenantName=''; u.tenantPhone='';
   u.payments=[];
   save(); closeModal(); openUnit(uId);
