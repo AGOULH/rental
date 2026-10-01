@@ -1100,14 +1100,14 @@ function exportAccountingPDF(year,buildingId){
    سحب: يُخصم من التصنيف المحدد فقط، وينعكس تلقائيًا على الرصيد العام (مجموع التصنيفات الأربعة). */
 const WAQF_CATS=['صيانة','ادخار','اعمال','شخصي'];
 const WAQF_SPLIT={'صيانة':0.10,'ادخار':0.40,'اعمال':0.40,'شخصي':0.10};
-let waqfYear=null, waqfTypeFilter=null, waqfCatFilter=null;
+let waqfYear=null, waqfTypeFilter=null, waqfCatFilter=null, waqfFrom='', waqfTo='';
 function waqfBalances(){
   const bal={'صيانة':0,'ادخار':0,'اعمال':0,'شخصي':0};
   (db.waqf.transactions||[]).forEach(t=>{
     const amt=Number(t.amount)||0;
     if(t.type==='deposit'){
       if(t.depositType==='service') bal['صيانة']+=amt;
-      else if(t.depositType==='direct'){ if(bal.hasOwnProperty(t.category)) bal[t.category]+=amt; }
+      else if(t.depositType==='direct'||t.depositType==='category'){ if(bal.hasOwnProperty(t.category)) bal[t.category]+=amt; }
       else WAQF_CATS.forEach(c=>bal[c]+=amt*WAQF_SPLIT[c]);
     } else if(t.type==='withdraw' && bal.hasOwnProperty(t.category)){
       bal[t.category]-=amt;
@@ -1125,7 +1125,7 @@ function waqfAllYears(){
 function waqfMatchesCategory(t,cat){
   if(!cat) return true;
   if(t.type==='withdraw') return t.category===cat;
-  if(t.type==='deposit') return t.depositType==='service' ? cat==='صيانة' : t.depositType==='direct' ? t.category===cat : true;
+  if(t.type==='deposit') return t.depositType==='service' ? cat==='صيانة' : (t.depositType==='direct'||t.depositType==='category') ? t.category===cat : true;
   return true;
 }
 function viewWaqf(){
@@ -1167,6 +1167,8 @@ function viewWaqf(){
   if(waqfYear) list=list.filter(t=>yearOf(t.date)===waqfYear);
   if(waqfTypeFilter) list=list.filter(t=>t.type===waqfTypeFilter);
   if(waqfCatFilter) list=list.filter(t=>waqfMatchesCategory(t,waqfCatFilter));
+  if(waqfFrom) list=list.filter(t=>t.date>=waqfFrom);
+  if(waqfTo) list=list.filter(t=>t.date<=waqfTo);
   list.sort((a,b)=>a.date<b.date?1:-1);
 
   h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('list')} سجل الحركات</h2>
@@ -1185,6 +1187,9 @@ function viewWaqf(){
         <option value="">كل التصنيفات</option>
         ${WAQF_CATS.map(c=>`<option value="${c}" ${waqfCatFilter===c?'selected':''}>${c}</option>`).join('')}
       </select>
+      <label style="display:flex;align-items:center;gap:6px;font-weight:700">من <input type="date" value="${waqfFrom}" onchange="waqfFrom=this.value;render()" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text)"></label>
+      <label style="display:flex;align-items:center;gap:6px;font-weight:700">إلى <input type="date" value="${waqfTo}" onchange="waqfTo=this.value;render()" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text)"></label>
+      ${waqfFrom||waqfTo?`<button class="btn btn-sm" onclick="waqfFrom='';waqfTo='';render()">مسح التاريخ</button>`:''}
     </div>`;
 
   if(list.length===0){
@@ -1194,9 +1199,10 @@ function viewWaqf(){
     list.forEach(t=>{
       const isDep=t.type==='deposit';
       const isDirect=isDep?t.depositType==='direct':!!t.direct;
-      const detail=isDirect?'مباشر — '+esc(t.category):isDep?(t.depositType==='service'?'خدمات':'إيجار'):esc(t.category);
+      const isCatDep=isDep&&t.depositType==='category';
+      const detail=isDirect?'مباشر — '+esc(t.category):isCatDep?esc(t.category):isDep?(t.depositType==='service'?'خدمات':'إيجار'):esc(t.category);
       const dist=isDep
-        ? (t.depositType==='service' ? `صيانة: ${fmtMoney(t.amount)}` : isDirect ? `${esc(t.category)}: ${fmtMoney(t.amount)}` : WAQF_CATS.map(c=>`${c} ${fmtMoney((t.amount||0)*WAQF_SPLIT[c])}`).join(' · '))
+        ? (t.depositType==='service' ? `صيانة: ${fmtMoney(t.amount)}` : (isDirect||isCatDep) ? `${esc(t.category)}: ${fmtMoney(t.amount)}` : WAQF_CATS.map(c=>`${c} ${fmtMoney((t.amount||0)*WAQF_SPLIT[c])}`).join(' · '))
         : '—';
       h+=`<tr>
         <td>${fmtDate(t.date)}</td>
@@ -1228,8 +1234,9 @@ function openWaqfForm(tId,defaultType,defaultDirect){
         ${WAQF_CATS.map(c=>`<option value="${c}" ${t.category===c?'selected':''}>${c}</option>`).join('')}
       </select></div>`:isDeposit?`
       <div class="field"><label>نوع الإيداع *</label><select id="w-deptype" onchange="updateWaqfPreview()">
-        <option value="rent" ${t.depositType!=='service'?'selected':''}>إيجار (يُوزَّع تلقائيًا على الأقسام الأربعة)</option>
+        <option value="rent" ${t.depositType!=='service'&&t.depositType!=='category'?'selected':''}>إيجار (يُوزَّع تلقائيًا على الأقسام الأربعة)</option>
         <option value="service" ${t.depositType==='service'?'selected':''}>خدمات (يُضاف بالكامل إلى الصيانة)</option>
+        ${WAQF_CATS.map(c=>`<option value="cat:${c}" ${t.depositType==='category'&&t.category===c?'selected':''}>${c} (يُضاف بالكامل إلى ${c})</option>`).join('')}
       </select></div>`:`
       <div class="field"><label>التصنيف (السحب منه) *</label><select id="w-cat">
         ${WAQF_CATS.map(c=>`<option value="${c}" ${t.category===c?'selected':''}>${c}</option>`).join('')}
@@ -1252,7 +1259,7 @@ function updateWaqfPreview(){
   const amt=parseFloat(amtEl&&amtEl.value)||0;
   const catEl=document.getElementById('w-cat');
   const dtype=typeEl?typeEl.value:(catEl?'direct':'rent');
-  if(dtype==='direct') el.innerHTML=`يُضاف بالكامل إلى <b>${esc(catEl.value)}</b>: <b>${fmtMoney(amt)}</b>`;
+  if(dtype==='direct'||dtype.indexOf('cat:')===0) el.innerHTML=`يُضاف بالكامل إلى <b>${esc(dtype==='direct'?catEl.value:dtype.slice(4))}</b>: <b>${fmtMoney(amt)}</b>`;
   else if(dtype==='service') el.innerHTML=`يُضاف بالكامل إلى <b>الصيانة</b>: <b>${fmtMoney(amt)}</b>`;
   else el.innerHTML=WAQF_CATS.map(c=>`${c} (${Math.round(WAQF_SPLIT[c]*100)}%): <b>${fmtMoney(amt*WAQF_SPLIT[c])}</b>`).join('<br>');
 }
@@ -1268,8 +1275,9 @@ function saveWaqf(tId,type,direct){
     data.depositType='direct';
     data.category=document.getElementById('w-cat').value;
   } else if(type==='deposit'){
-    data.depositType=document.getElementById('w-deptype').value;
-    data.category=undefined;
+    const dt=document.getElementById('w-deptype').value;
+    if(dt.indexOf('cat:')===0){ data.depositType='category'; data.category=dt.slice(4); }
+    else { data.depositType=dt; data.category=undefined; }
   } else {
     data.direct=!!direct;
     data.category=document.getElementById('w-cat').value;
