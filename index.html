@@ -822,7 +822,7 @@ let acctBuildingIds = []; // فارغة = كل العقارات
 let acctPickOpen = false;
 /* مطابقة العقار مع الفلتر: null/[] = الكل، مصفوفة = أي عقار محدّد، نص = عقار واحد */
 function bMatch(id, sel){ return !sel || (Array.isArray(sel) ? (sel.length===0 || sel.indexOf(id)>=0) : id===sel); }
-/* تأشير تحويل حصة ٢٥٪ لربع معيّن (يُحفظ في العقار: shareTransfers['2026-Q1']=تاريخ التأشير) */
+/* تأشير تحويل حصة ٢٥٪ لشهر معيّن (يُحفظ في العقار: shareTransfers['2026-M1']=تاريخ التأشير) */
 function toggleShareTransfer(bId,key){
   const b=db.buildings.find(x=>x.id===bId); if(!b) return;
   b.shareTransfers=b.shareTransfers||{};
@@ -949,9 +949,7 @@ function viewAccounting(){
   // خانة ٢٥٪ من الصافي تظهر فقط عند اختيار عقار «شارع محمد» وحده
   const q25=filterBuildings&&filterBuildings.length===1&&(filterBuildings[0].name||'').indexOf('شارع محمد')>=0;
   h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('calendar')} التفصيل الربع سنوي — ${y}${fLabel?' — '+esc(fLabel):''}</h2></div><div class="panel-body">
-    <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>نسبة التحصيل</th><th>المصروفات</th><th>الصافي</th>${q25?'<th>٢٥٪ من الصافي</th><th>تم التحويل</th>':''}</tr></thead><tbody>`;
-  const q25B=q25?filterBuildings[0]:null, q25T=(q25B&&q25B.shareTransfers)||{};
-  let q25Done=0;
+    <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>نسبة التحصيل</th><th>المصروفات</th><th>الصافي</th>${q25?'<th>٢٥٪ من الصافي</th>':''}</tr></thead><tbody>`;
   for(let q=1;q<=4;q++){ const a=acct(y,q,bIds);
     h+=`<tr>
       <td style="font-weight:700">${qNames[q-1]}</td>
@@ -960,18 +958,14 @@ function viewAccounting(){
       <td style="color:${a.outstanding>0?'var(--warning)':'var(--muted)'}">${fmtMoney(a.outstanding)}</td>
       <td>${rateBar(a.rate)}</td>
       <td style="color:var(--danger)">${a.expenses?fmtMoney(a.expenses):'—'}</td>
-      <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td>${q25?(()=>{ const k=y+'-Q'+q, d=q25T[k]; if(d) q25Done+=a.net*0.25;
-        return `<td style="font-weight:700">${fmtMoney(a.net*0.25)}</td>
-        <td><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;color:${d?'var(--success)':'var(--muted)'};font-weight:700">
-          <input type="checkbox" ${d?'checked':''} onchange="toggleShareTransfer('${q25B.id}','${k}')" style="width:17px;height:17px;accent-color:var(--primary)">
-          ${d?'تم — '+fmtDate(d):'لم يُحوَّل'}</label></td>`; })():''}</tr>`;
+      <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td>${q25?`<td style="font-weight:700">${fmtMoney(a.net*0.25)}</td>`:''}</tr>`;
   }
   h+=`<tr style="background:var(--surface-2);font-weight:800;border-top:2px solid var(--border)">
       <td>الإجمالي السنوي</td><td>${fmtMoney(yr.expected)}</td>
       <td style="color:var(--success)">${fmtMoney(yr.collected)}</td>
       <td style="color:var(--warning)">${fmtMoney(yr.outstanding)}</td>
       <td>${yr.rate}%</td><td style="color:var(--danger)">${fmtMoney(yr.expenses)}</td>
-      <td style="color:${yr.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(yr.net)}</td>${q25?`<td>${fmtMoney(yr.net*0.25)}</td><td style="font-size:12.5px">محوَّل: ${fmtMoney(q25Done)}</td>`:''}</tr>`;
+      <td style="color:${yr.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(yr.net)}</td>${q25?`<td>${fmtMoney(yr.net*0.25)}</td>`:''}</tr>`;
   h+=`</tbody></table></div></div>`;
 
   // تفصيل شهري خاص بعقار «شارع محمد» مع خانة ٢٥٪ من الصافي
@@ -980,8 +974,10 @@ function viewAccounting(){
     const mNames=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
     const mt=acct(y,null,mBld.id);
     h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('calendar')} التفصيل الشهري — ${y} — ${esc(mBld.name)}</h2></div><div class="panel-body">
-      <table><thead><tr><th>الشهر</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>٢٥٪ من الصافي</th></tr></thead><tbody>`;
+      <table><thead><tr><th>الشهر</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>٢٥٪ من الصافي</th><th>تم التحويل</th></tr></thead><tbody>`;
+    const mT=mBld.shareTransfers||{}; let mDone=0;
     for(let m=1;m<=12;m++){ const a=acct(y,null,mBld.id,m);
+      const k=y+'-M'+m, d=mT[k]; if(d) mDone+=a.net*0.25;
       h+=`<tr>
         <td style="font-weight:700">${mNames[m-1]}</td>
         <td>${fmtMoney(a.expected)}</td>
@@ -989,7 +985,10 @@ function viewAccounting(){
         <td style="color:${a.outstanding>0?'var(--warning)':'var(--muted)'}">${fmtMoney(a.outstanding)}</td>
         <td style="color:var(--danger)">${a.expenses?fmtMoney(a.expenses):'—'}</td>
         <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td>
-        <td style="font-weight:700">${fmtMoney(a.net*0.25)}</td></tr>`;
+        <td style="font-weight:700">${fmtMoney(a.net*0.25)}</td>
+        <td><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;color:${d?'var(--success)':'var(--muted)'};font-weight:700">
+          <input type="checkbox" ${d?'checked':''} onchange="toggleShareTransfer('${mBld.id}','${k}')" style="width:17px;height:17px;accent-color:var(--primary)">
+          ${d?'تم — '+fmtDate(d):'لم يُحوَّل'}</label></td></tr>`;
     }
     h+=`<tr style="background:var(--surface-2);font-weight:800;border-top:2px solid var(--border)">
         <td>الإجمالي السنوي</td><td>${fmtMoney(mt.expected)}</td>
@@ -997,7 +996,8 @@ function viewAccounting(){
         <td style="color:var(--warning)">${fmtMoney(mt.outstanding)}</td>
         <td style="color:var(--danger)">${fmtMoney(mt.expenses)}</td>
         <td style="color:${mt.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(mt.net)}</td>
-        <td>${fmtMoney(mt.net*0.25)}</td></tr>`;
+        <td>${fmtMoney(mt.net*0.25)}</td>
+        <td style="font-size:12.5px">محوَّل: ${fmtMoney(mDone)}</td></tr>`;
     h+=`</tbody></table></div></div>`;
   }
 
