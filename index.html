@@ -208,6 +208,13 @@
   details.acct-info[open] summary::before{content:'▾'}
   details.acct-info summary:hover{color:var(--primary-d)}
   details.acct-info .info-box{margin:0 19px 17px}
+  .bpick{position:relative}
+  .bpick>button{padding:9px 12px;border:1.5px solid var(--border);background:var(--surface-2);color:var(--text);font-weight:700;cursor:pointer;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bpick-menu{position:absolute;top:calc(100% + 4px);inset-inline-start:0;z-index:50;min-width:220px;max-height:300px;overflow:auto;background:var(--surface);border:1.5px solid var(--border);box-shadow:var(--shadow);padding:6px}
+  .bpick-menu label{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;font-size:13.5px;font-weight:600}
+  .bpick-menu label:hover{background:var(--surface-2)}
+  .bpick-menu label.all{border-bottom:1px solid var(--border);margin-bottom:4px;font-weight:800}
+  .bpick-menu input{width:16px;height:16px;accent-color:var(--primary)}
 
   .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:6px}
   .dcell{background:var(--surface-2);border:1px solid var(--border);border-radius:0;padding:13px 15px}
@@ -811,7 +818,16 @@ function printDueNotice(uId,pId){
 
 /* ============================ المحاسبة ============================ */
 let acctYear = null;
-let acctBuildingId = null; // null = كل العقارات
+let acctBuildingIds = []; // فارغة = كل العقارات
+let acctPickOpen = false;
+/* مطابقة العقار مع الفلتر: null/[] = الكل، مصفوفة = أي عقار محدّد، نص = عقار واحد */
+function bMatch(id, sel){ return !sel || (Array.isArray(sel) ? (sel.length===0 || sel.indexOf(id)>=0) : id===sel); }
+function toggleAcctBuilding(id){
+  if(id===null) acctBuildingIds=[];
+  else{ const i=acctBuildingIds.indexOf(id); if(i>=0) acctBuildingIds.splice(i,1); else acctBuildingIds.push(id); }
+  acctPickOpen=true; render();
+}
+document.addEventListener('click',e=>{ if(acctPickOpen && !e.target.closest('.bpick')){ acctPickOpen=false; const m=document.querySelector('.bpick-menu'); if(m) m.remove(); } });
 let acctCategory = null; // null = كل البنود
 const EXPENSE_CATS=['صيانة','كهرباء','ماء','رسوم حكومية','ضرائب/زكاة','إدارة','تأمين','تنظيف','أخرى'];
 function yearOf(iso){ return iso ? parseInt(iso.slice(0,4)) : null; }
@@ -825,14 +841,14 @@ function allYears(){
 }
 /* إجمالي مصروفات بند معيّن (افتراضيًا: صيانة) لعقار/سنة */
 function categoryExpenses(year, buildingId, category, quarter){
-  return (db.expenses||[]).filter(e=>yearOf(e.date)===year && (!quarter||quarterOf(e.date)===quarter) && (!buildingId||e.buildingId===buildingId) && (!category||e.category===category))
+  return (db.expenses||[]).filter(e=>yearOf(e.date)===year && (!quarter||quarterOf(e.date)===quarter) && bMatch(e.buildingId,buildingId) && (!category||e.category===category))
     .reduce((s,e)=>s+(Number(e.amount)||0),0);
 }
 /* تجميع محاسبي لفترة (سنة/ربع/عقار) — المستحق = التجميع حسب تاريخ استحقاق كل دفعة فعلية خلال الفترة */
 function acct(year, quarter, buildingId){
   let expected=0, collected=0, overdue=0;
   db.units.forEach(u=>{
-    if(buildingId && u.buildingId!==buildingId) return;
+    if(!bMatch(u.buildingId,buildingId)) return;
     let pays=(u.payments||[]).slice();
     (u.history||[]).forEach(t=>{ pays=pays.concat(t.payments||[]); }); // تشمل دفعات المستأجرين السابقين
     pays.forEach(p=>{
@@ -857,30 +873,34 @@ function viewAccounting(){
   const years=allYears();
   const nowY=new Date().getFullYear();
   if(!acctYear || years.indexOf(acctYear)<0) acctYear = years.indexOf(nowY)>=0 ? nowY : years[0];
-  if(acctBuildingId && !db.buildings.find(x=>x.id===acctBuildingId)) acctBuildingId=null;
-  const y=acctYear, bId=acctBuildingId;
-  const filterBuilding=bId?db.buildings.find(x=>x.id===bId):null;
-  const yr=acct(y,null,bId);
+  acctBuildingIds=acctBuildingIds.filter(id=>db.buildings.some(x=>x.id===id));
+  const y=acctYear, bIds=acctBuildingIds.length?acctBuildingIds:null;
+  const filterBuildings=bIds?db.buildings.filter(b=>bIds.indexOf(b.id)>=0):null;
+  const fLabel=filterBuildings?filterBuildings.map(b=>b.name).join('، '):'';
+  const yr=acct(y,null,bIds);
 
   let h=`<div class="page-head" data-eyebrow="ACCOUNTING / 03"><div><h1>${svgIcon('calculator')} المحاسبة</h1>
-    <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية${filterBuilding?' — '+esc(filterBuilding.name):''}</div></div>
+    <div class="sub">التحصيل والمستحقات والمصروفات وصافي الدخل — تقارير ربع سنوية وسنوية${fLabel?' — '+esc(fLabel):''}</div></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label style="font-weight:700;font-size:13px">السنة:</label>
       <select onchange="acctYear=parseInt(this.value);render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-weight:700">
         ${years.map(yy=>`<option value="${yy}" ${yy===y?'selected':''}>${yy}</option>`).join('')}
       </select>
       <label style="font-weight:700;font-size:13px">العقار:</label>
-      <select onchange="acctBuildingId=this.value||null;render()" style="padding:9px 12px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-weight:700">
-        <option value="" ${!bId?'selected':''}>كل العقارات</option>
-        ${db.buildings.map(b=>`<option value="${b.id}" ${bId===b.id?'selected':''}>${esc(b.name)}</option>`).join('')}
-      </select>
-      <button class="btn" onclick="exportAccountingCSV(${y},${bId?`'${bId}'`:'null'})">${svgIcon('chart')} تصدير Excel</button>
-      <button class="btn btn-primary" onclick="exportAccountingPDF(${y},${bId?`'${bId}'`:'null'})">${svgIcon('doc')} تقرير PDF</button>
+      <div class="bpick">
+        <button type="button" onclick="acctPickOpen=!acctPickOpen;render()" title="${esc(fLabel||'كل العقارات')}">${!bIds?'كل العقارات':bIds.length===1?esc(fLabel):bIds.length+' عقارات محددة'} ▾</button>
+        ${acctPickOpen?`<div class="bpick-menu">
+          <label class="all"><input type="checkbox" ${!bIds?'checked':''} onchange="toggleAcctBuilding(null)"> كل العقارات</label>
+          ${db.buildings.map(b=>`<label><input type="checkbox" ${bIds&&bIds.indexOf(b.id)>=0?'checked':''} onchange="toggleAcctBuilding('${b.id}')"> ${esc(b.name)}</label>`).join('')}
+        </div>`:''}
+      </div>
+      <button class="btn" onclick="exportAccountingCSV(${y},acctBuildingIds)">${svgIcon('chart')} تصدير Excel</button>
+      <button class="btn btn-primary" onclick="exportAccountingPDF(${y},acctBuildingIds)">${svgIcon('doc')} تقرير PDF</button>
     </div></div>`;
 
   const rateWarn = yr.rate<90 ? `يحتاج ${yr.rate<70?'متابعة':'تحسين'}` : '';
   h+=`<div class="stats">
-    ${stat(svgIcon('chart'),fmtMoney(yr.expected),'إجمالي قيمة العقود',`سنة ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}`)}
+    ${stat(svgIcon('chart'),fmtMoney(yr.expected),'إجمالي قيمة العقود',`سنة ${y}${fLabel?' — '+esc(fLabel):''}`)}
     ${stat(svgIcon('check'),fmtMoney(yr.collected),'إجمالي المحصّل الفعلي',`${yr.rate}٪ من قيمة العقود`,null,{dark:true,spark:last7MonthsCollected()})}
     ${stat(svgIcon('clock'),fmtMoney(yr.outstanding),'غير مُحصَّل',`من إجمالي ${fmtMoney(yr.expected)}`)}
     ${stat(svgIcon('trending'),yr.rate+'%','نسبة التحصيل',rateWarn||'نسبة تحصيل ممتازة',null,{ratio:yr.rate})}
@@ -900,7 +920,7 @@ function viewAccounting(){
         <div style="margin-bottom:8px"><b>إجمالي قيمة العقود</b> = مجموع القيم المكتوبة في عقود الإيجار، سواء تم تحصيلها أو لا — يشمل المستحقات غير المدفوعة، ويعكس الدخل التعاقدي (على الورق).</div>
         <div style="margin-bottom:8px"><b>إجمالي المحصّل الفعلي</b> = المبلغ الذي استُلم فعليًا خلال السنة — يستبعد المتأخرات والوحدات الشاغرة، ويعتمد على التدفق النقدي الحقيقي.</div>
         <div class="formula">
-          سنة ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}:<br>
+          سنة ${y}${fLabel?' — '+esc(fLabel):''}:<br>
           إجمالي قيمة العقود = <b>${fmtMoney(yr.expected)}</b> — إجمالي المحصّل = <b>${fmtMoney(yr.collected)}</b> — غير مُحصَّل = <b>${fmtMoney(yr.outstanding)}</b><br>
           نسبة التحصيل = المحصّل ÷ قيمة العقود × 100 = <b style="color:${rateAdvice.c}">${yr.rate}%</b>
         </div>
@@ -912,9 +932,9 @@ function viewAccounting(){
   </details>`;
 
   const qNames=['الربع الأول (يناير–مارس)','الربع الثاني (أبريل–يونيو)','الربع الثالث (يوليو–سبتمبر)','الربع الرابع (أكتوبر–ديسمبر)'];
-  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('calendar')} التفصيل الربع سنوي — ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}</h2></div><div class="panel-body">
+  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('calendar')} التفصيل الربع سنوي — ${y}${fLabel?' — '+esc(fLabel):''}</h2></div><div class="panel-body">
     <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>نسبة التحصيل</th><th>المصروفات</th><th>الصافي</th></tr></thead><tbody>`;
-  for(let q=1;q<=4;q++){ const a=acct(y,q,bId);
+  for(let q=1;q<=4;q++){ const a=acct(y,q,bIds);
     h+=`<tr>
       <td style="font-weight:700">${qNames[q-1]}</td>
       <td>${fmtMoney(a.expected)}</td>
@@ -934,7 +954,7 @@ function viewAccounting(){
 
   h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('building')} حسب العقار — ${y}</h2></div><div class="panel-body">
       <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th><th>الصيانة % من الإيجار</th><th>نسبة العائد</th></tr></thead><tbody>`;
-  (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(y,null,b.id);
+  (filterBuildings||db.buildings).forEach(b=>{ const a=acct(y,null,b.id);
       const maintPct=a.expected?Math.round(a.expenses/a.expected*100):0;
       const roi=b.propertyValue?Math.round(a.net/b.propertyValue*1000)/10:null;
       h+=`<tr onclick="go('building','${b.id}')" style="cursor:pointer">
@@ -951,9 +971,9 @@ function viewAccounting(){
   h+=`</tbody></table></div></div>`;
 
   if(years.length>1){
-    const maxC=Math.max(...years.map(yy=>acct(yy,null,bId).collected),1);
-    h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('trending')} المحصّل عبر السنوات${filterBuilding?' — '+esc(filterBuilding.name):''}</h2></div><div class="panel-body pad">`;
-    years.slice().sort((a,b)=>a-b).forEach(yy=>{ const c=acct(yy,null,bId).collected;
+    const maxC=Math.max(...years.map(yy=>acct(yy,null,bIds).collected),1);
+    h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('trending')} المحصّل عبر السنوات${fLabel?' — '+esc(fLabel):''}</h2></div><div class="panel-body pad">`;
+    years.slice().sort((a,b)=>a-b).forEach(yy=>{ const c=acct(yy,null,bIds).collected;
       h+=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <div style="width:54px;font-weight:700;${yy===y?'color:var(--primary-d)':''}">${yy}</div>
         <div style="flex:1;background:var(--surface-2);border-radius:0;height:26px;overflow:hidden;border:1px solid var(--border)">
@@ -963,21 +983,21 @@ function viewAccounting(){
     h+=`</div></div>`;
   }
 
-  const yearExps=(db.expenses||[]).filter(e=>yearOf(e.date)===y && (!bId || e.buildingId===bId));
+  const yearExps=(db.expenses||[]).filter(e=>yearOf(e.date)===y && bMatch(e.buildingId,bIds));
   const catsInData=[...new Set(yearExps.map(e=>e.category).filter(Boolean))];
   const catOptions=[...new Set([...EXPENSE_CATS,...catsInData])];
   if(acctCategory && catOptions.indexOf(acctCategory)<0) acctCategory=null;
   const exps=yearExps.filter(e=>!acctCategory || e.category===acctCategory).sort((a,b)=>a.date<b.date?1:-1);
-  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('wallet')} المصروفات — ${y}${filterBuilding?' — '+esc(filterBuilding.name):''}</h2>
+  h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('wallet')} المصروفات — ${y}${fLabel?' — '+esc(fLabel):''}</h2>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select onchange="acctCategory=this.value||null;render()" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:0;background:var(--surface-2);color:var(--text);font-weight:700;font-size:13px">
         <option value="" ${!acctCategory?'selected':''}>كل البنود</option>
         ${catOptions.map(c=>`<option value="${esc(c)}" ${acctCategory===c?'selected':''}>${esc(c)}</option>`).join('')}
       </select>
-      <button class="btn btn-sm btn-primary" onclick="openExpenseForm(null,${bId?`'${bId}'`:'null'})">${svgIcon('plus')} إضافة مصروف</button>
+      <button class="btn btn-sm btn-primary" onclick="openExpenseForm(null,${bIds&&bIds.length===1?`'${bIds[0]}'`:'null'})">${svgIcon('plus')} إضافة مصروف</button>
     </div></div><div class="panel-body">`;
   if(exps.length===0){
-    h+=`<div style="padding:20px;color:var(--muted)">لا توجد مصروفات مسجّلة ${filterBuilding?'لهذا العقار في هذه السنة':'لهذه السنة'}${acctCategory?' لبند «'+esc(acctCategory)+'»':''}. أضِف الصيانة والفواتير والرسوم لاحتساب صافي الدخل بدقة.</div>`;
+    h+=`<div style="padding:20px;color:var(--muted)">لا توجد مصروفات مسجّلة ${filterBuildings?(filterBuildings.length>1?'لهذه العقارات':'لهذا العقار')+' في هذه السنة':'لهذه السنة'}${acctCategory?' لبند «'+esc(acctCategory)+'»':''}. أضِف الصيانة والفواتير والرسوم لاحتساب صافي الدخل بدقة.</div>`;
   } else {
     h+=`<table><thead><tr><th>التاريخ</th><th>العقار</th><th>البند</th><th>الوصف</th><th>المبلغ</th><th></th></tr></thead><tbody>`;
     exps.forEach(e=>{ const b=db.buildings.find(x=>x.id===e.buildingId);
@@ -1038,8 +1058,10 @@ function deleteExpense(eId){
 }
 
 /* ---------- تقرير محاسبي PDF ---------- */
-function exportAccountingPDF(year,buildingId){
-  const filterBuilding=buildingId?db.buildings.find(x=>x.id===buildingId):null;
+function exportAccountingPDF(year,buildingIds){
+  const buildingId=buildingIds&&buildingIds.length?buildingIds.slice():null;
+  const filterBuildings=buildingId?db.buildings.filter(b=>buildingId.indexOf(b.id)>=0):null;
+  const fLabel=filterBuildings?filterBuildings.map(b=>b.name).join('، '):'';
   const yr=acct(year,null,buildingId||null);
   const qN=['الربع الأول','الربع الثاني','الربع الثالث','الربع الرابع'];
   let qRows='';
@@ -1047,17 +1069,17 @@ function exportAccountingPDF(year,buildingId){
     qRows+=`<tr><td>${qN[q-1]}</td><td>${fmtMoney(a.expected)}</td><td style="color:#16a34a">${fmtMoney(a.collected)}</td><td style="color:#d97706">${fmtMoney(a.outstanding)}</td><td>${a.rate}%</td><td style="color:#dc2626">${a.expenses?fmtMoney(a.expenses):'—'}</td><td style="font-weight:bold">${fmtMoney(a.net)}</td></tr>`;
   }
   let bRows='';
-  (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(year,null,b.id);
+  (filterBuildings||db.buildings).forEach(b=>{ const a=acct(year,null,b.id);
     const maintPct=a.expected?Math.round(a.expenses/a.expected*100):0;
     bRows+=`<tr><td>${esc(b.name)}</td><td>${fmtMoney(a.expected)}</td><td style="color:#16a34a">${fmtMoney(a.collected)}</td><td style="color:#d97706">${fmtMoney(a.outstanding)}</td><td style="color:#dc2626">${a.expenses?fmtMoney(a.expenses):'—'}</td><td style="font-weight:bold">${fmtMoney(a.net)}</td><td>${maintPct}%</td></tr>`;
   });
-  const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===year && (!buildingId || e.buildingId===buildingId)).sort((a,b)=>a.date<b.date?1:-1);
+  const exps=(db.expenses||[]).filter(e=>yearOf(e.date)===year && bMatch(e.buildingId,buildingId)).sort((a,b)=>a.date<b.date?1:-1);
   let eRows='';
   exps.forEach(e=>{ const b=db.buildings.find(x=>x.id===e.buildingId);
     eRows+=`<tr><td>${fmtDate(e.date)}</td><td>${b?esc(b.name):'عام'}</td><td>${esc(e.category||'أخرى')}</td><td>${esc(e.note||'—')}</td><td style="color:#dc2626">${fmtMoney(e.amount)}</td></tr>`;
   });
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>التقرير المحاسبي ${year}${filterBuilding?' - '+esc(filterBuilding.name):''}</title>
+  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>التقرير المحاسبي ${year}${fLabel?' - '+esc(fLabel):''}</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *{font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
@@ -1078,7 +1100,7 @@ function exportAccountingPDF(year,buildingId){
     .btnbar{text-align:center;margin-bottom:18px}.btnbar button{background:#188078;color:#fff;border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold}
   </style></head><body>
     <div class="btnbar noprint"><button onclick="window.print()">🖨️ طباعة / حفظ PDF</button></div>
-    <div class="hd"><div><h1>التقرير المحاسبي السنوي — ${year}${filterBuilding?' — '+esc(filterBuilding.name):''}</h1>
+    <div class="hd"><div><h1>التقرير المحاسبي السنوي — ${year}${fLabel?' — '+esc(fLabel):''}</h1>
       <div class="meta">نظام إدارة الإيجارات • تاريخ الإصدار: ${fmtDate(todayISO())}</div></div><div class="logo">🧮</div></div>
     <div class="cards">
       <div class="c"><div class="t">المستحق</div><div class="v">${fmtMoney(yr.expected)}</div></div>
@@ -1092,7 +1114,7 @@ function exportAccountingPDF(year,buildingId){
     <div style="overflow-x:auto"><table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>التحصيل</th><th>المصروفات</th><th>الصافي</th></tr></thead>
       <tbody>${qRows}</tbody>
       <tfoot><tr class="tot"><td>الإجمالي</td><td>${fmtMoney(yr.expected)}</td><td>${fmtMoney(yr.collected)}</td><td>${fmtMoney(yr.outstanding)}</td><td>${yr.rate}%</td><td>${fmtMoney(yr.expenses)}</td><td>${fmtMoney(yr.net)}</td></tr></tfoot></table></div>
-    <h2>${filterBuilding?'العقار':'حسب العقار'}</h2>
+    <h2>${filterBuildings&&filterBuildings.length===1?'العقار':'حسب العقار'}</h2>
     <div style="overflow-x:auto"><table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>الصيانة % من الإيجار</th></tr></thead><tbody>${bRows}</tbody></table></div>
     ${eRows?`<h2>تفاصيل المصروفات</h2><div style="overflow-x:auto"><table><thead><tr><th>التاريخ</th><th>العقار</th><th>البند</th><th>الوصف</th><th>المبلغ</th></tr></thead><tbody>${eRows}</tbody></table></div>`:''}
     <div class="ft">طريقة الاحتساب: المستحق = التجميع حسب السنة والربع الميلادي لتاريخ استحقاق كل دفعة • صافي الدخل = المحصّل − المصروفات • صدر من نظام إدارة الإيجارات</div>
@@ -2226,13 +2248,15 @@ function viewTenancy(uId,idx){
   openModal(h);
 }
 /* تصدير المحاسبة Excel/CSV */
-function exportAccountingCSV(year,buildingId){
-  const filterBuilding=buildingId?db.buildings.find(x=>x.id===buildingId):null;
+function exportAccountingCSV(year,buildingIds){
+  const buildingId=buildingIds&&buildingIds.length?buildingIds.slice():null;
+  const filterBuildings=buildingId?db.buildings.filter(b=>buildingId.indexOf(b.id)>=0):null;
+  const fLabel=filterBuildings?filterBuildings.map(b=>b.name).join('، '):'';
   /* يمنع "حقن الصيغ" (CSV/Formula Injection): أي نص يبدأ بـ = أو + أو - أو @ قد يُنفَّذ كصيغة عند فتح الملف في Excel */
   const csvSafe=(v)=>{ const s=String(v==null?'':v); return /^[=+\-@\t\r]/.test(s) ? "'"+s : s; };
   const cell=(v)=> (typeof v==='number')? v : '"'+csvSafe(v).replace(/"/g,'""')+'"';
   const rows=[];
-  rows.push(['التقرير المحاسبي السنوي', year].concat(filterBuilding?[filterBuilding.name]:[]));
+  rows.push(['التقرير المحاسبي السنوي', year].concat(fLabel?[fLabel]:[]));
   rows.push([]);
   rows.push(['التفصيل الربع سنوي']);
   rows.push(['الربع','المستحق','المحصّل','المتبقّي','نسبة التحصيل %','المصروفات','الصافي']);
@@ -2241,22 +2265,22 @@ function exportAccountingCSV(year,buildingId){
   const yr=acct(year,null,buildingId||null);
   rows.push(['الإجمالي السنوي',yr.expected,yr.collected,yr.outstanding,yr.rate,yr.expenses,yr.net]);
   rows.push([]);
-  rows.push([filterBuilding?'العقار':'حسب العقار']);
+  rows.push([filterBuildings&&filterBuildings.length===1?'العقار':'حسب العقار']);
   rows.push(['العقار','المستحق','المحصّل','المتبقّي','المصروفات','الصافي','الصيانة % من الإيجار','نسبة العائد %']);
-  (filterBuilding?[filterBuilding]:db.buildings).forEach(b=>{ const a=acct(year,null,b.id);
+  (filterBuildings||db.buildings).forEach(b=>{ const a=acct(year,null,b.id);
     const maintPct=a.expected?Math.round(a.expenses/a.expected*100):0;
     const roi=b.propertyValue?Math.round(a.net/b.propertyValue*1000)/10:'';
     rows.push([b.name,a.expected,a.collected,a.outstanding,a.expenses,a.net,maintPct,roi]); });
   rows.push([]);
   rows.push(['المصروفات']);
   rows.push(['التاريخ','العقار','البند','الوصف','المبلغ']);
-  (db.expenses||[]).filter(e=>yearOf(e.date)===year && (!buildingId || e.buildingId===buildingId)).sort((a,b)=>a.date<b.date?1:-1).forEach(e=>{
+  (db.expenses||[]).filter(e=>yearOf(e.date)===year && bMatch(e.buildingId,buildingId)).sort((a,b)=>a.date<b.date?1:-1).forEach(e=>{
     const b=db.buildings.find(x=>x.id===e.buildingId);
     rows.push([e.date,(b?b.name:'عام'),e.category||'أخرى',e.note||'',Number(e.amount)||0]);
   });
   const csv='﻿'+rows.map(r=>r.map(cell).join(',')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='محاسبة-'+year+(filterBuilding?'-'+filterBuilding.name:'')+'.csv'; a.click();
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='محاسبة-'+year+(fLabel?'-'+fLabel:'')+'.csv'; a.click();
 }
 
 /* ============================ دليل المستخدم ============================ */
