@@ -1429,14 +1429,15 @@ function viewBuilding(bId){
   if(b.notes) h+=`<div class="info-box" style="margin-bottom:18px">${svgIcon('doc')} <div>${esc(b.notes)}</div></div>`;
 
   // معلومات الملكية (صك + ماء + مرفقات)
-  const _hasPropInfo=b.deedNumber||b.deedDate||b.waterMeter||b.propertyValue||b.deedImage||(b.attachments&&b.attachments.length);
+  const _hasPropInfo=b.deedNumber||b.deedDate||b.waterMeter||b.purchasePrice||b.propertyValue||b.deedImage||(b.attachments&&b.attachments.length);
   if(_hasPropInfo){
     h+=`<div class="panel" style="margin-bottom:18px"><div class="panel-head"><h2>${svgIcon('list')} معلومات الملكية</h2></div><div class="panel-body pad">`;
-    if(b.deedNumber||b.deedDate||b.waterMeter||b.propertyValue){
+    if(b.deedNumber||b.deedDate||b.waterMeter||b.purchasePrice||b.propertyValue){
       h+=`<div class="detail-grid" style="margin-bottom:14px">`;
       if(b.deedNumber) h+=`<div class="dcell"><div class="t">رقم الصك</div><div class="v">${esc(b.deedNumber)}</div></div>`;
       if(b.deedDate) h+=`<div class="dcell"><div class="t">تاريخ الصك</div><div class="v">${fmtDate(b.deedDate)}</div></div>`;
       if(b.waterMeter) h+=`<div class="dcell"><div class="t">عداد الماء ${svgIcon('drop')}</div><div class="v">${esc(b.waterMeter)}</div></div>`;
+      if(b.purchasePrice) h+=`<div class="dcell"><div class="t">قيمة شراء العقار</div><div class="v">${fmtMoney(b.purchasePrice)}</div></div>`;
       if(b.propertyValue){
         const _yr=acct(new Date().getFullYear(),null,b.id);
         const _roi=Math.round(_yr.net/b.propertyValue*1000)/10;
@@ -1595,7 +1596,10 @@ function openBuildingForm(bId){
         <div class="field"><label>رقم الصك</label><input id="b-deed-num" value="${esc(b.deedNumber||'')}" placeholder="رقم صك الملكية"></div>
         <div class="field"><label>تاريخ الصك</label><input type="date" id="b-deed-date" value="${b.deedDate||''}"></div>
       </div>
-      <div class="field"><label>قيمة العقار <span class="hint">(اختياري — لاحتساب نسبة العائد)</span></label><input type="number" id="b-value" value="${b.propertyValue||''}" placeholder="مثال: 2000000"></div>
+      <div class="row2">
+        <div class="field"><label>قيمة شراء العقار <span class="hint">(اختياري)</span></label><input type="number" id="b-purchase" value="${b.purchasePrice||''}" placeholder="مثال: 1800000"></div>
+        <div class="field"><label>قيمة العقار <span class="hint">(اختياري — لاحتساب نسبة العائد)</span></label><input type="number" id="b-value" value="${b.propertyValue||''}" placeholder="مثال: 2000000"></div>
+      </div>
       <div class="row2">
         <div class="field"><label>عداد الماء ${svgIcon('drop')}</label><input id="b-water" value="${esc(b.waterMeter||'')}" placeholder="رقم عداد الماء (اختياري)"></div>
         <div class="field"><label>تاريخ التسليم المتوقع <span class="hint">(اختياري)</span></label><input type="date" id="b-deliv" value="${b.deliveryDate||''}"></div>
@@ -1626,6 +1630,7 @@ function saveBuilding(bId){
     deliveryDate:document.getElementById('b-deliv').value||null,
     deedNumber:document.getElementById('b-deed-num').value.trim(),
     deedDate:document.getElementById('b-deed-date').value||null,
+    purchasePrice:Number(document.getElementById('b-purchase').value)||0,
     propertyValue:Number(document.getElementById('b-value').value)||0,
     waterMeter:document.getElementById('b-water').value.trim(),
     deedImage:_bForm.deedImage,
