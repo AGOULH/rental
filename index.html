@@ -1128,16 +1128,37 @@ function waqfMatchesCategory(t,cat){
   if(t.type==='deposit') return t.depositType==='service' ? cat==='صيانة' : (t.depositType==='direct'||t.depositType==='category') ? t.category===cat : true;
   return true;
 }
+function waqfFilteredList(){
+  let list=(db.waqf.transactions||[]).slice();
+  if(waqfYear) list=list.filter(t=>yearOf(t.date)===waqfYear);
+  if(waqfTypeFilter) list=list.filter(t=>t.type===waqfTypeFilter);
+  if(waqfCatFilter) list=list.filter(t=>waqfMatchesCategory(t,waqfCatFilter));
+  if(waqfFrom) list=list.filter(t=>t.date>=waqfFrom);
+  if(waqfTo) list=list.filter(t=>t.date<=waqfTo);
+  return list.sort((a,b)=>a.date<b.date?1:-1);
+}
+function waqfRowInfo(t){
+  const isDep=t.type==='deposit';
+  const isDirect=isDep?t.depositType==='direct':!!t.direct;
+  const isCatDep=isDep&&t.depositType==='category';
+  const detail=isDirect?'مباشر — '+esc(t.category):isCatDep?esc(t.category):isDep?(t.depositType==='service'?'خدمات':'إيجار'):esc(t.category);
+  const dist=isDep
+    ? (t.depositType==='service' ? `صيانة: ${fmtMoney(t.amount)}` : (isDirect||isCatDep) ? `${esc(t.category)}: ${fmtMoney(t.amount)}` : WAQF_CATS.map(c=>`${c} ${fmtMoney((t.amount||0)*WAQF_SPLIT[c])}`).join(' · '))
+    : '—';
+  return {isDep,detail,dist};
+}
 function viewWaqf(){
   const bal=waqfBalances();
   const general=waqfGeneralBalance(bal);
   let h=`<div class="page-head" data-eyebrow="WAQF"><div><h1>${svgIcon('wallet')} الوقف</h1>
     <div class="sub">حسابات الوقف — الإيداع والسحب حسب التصنيف</div></div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="openWaqfForm(null,'deposit')">${svgIcon('plus')} إيداع</button>
       <button class="btn" onclick="openWaqfForm(null,'withdraw')">${svgIcon('undo')} سحب</button>
       <button class="btn" onclick="openWaqfForm(null,'deposit',true)">${svgIcon('plus')} إيداع مباشر</button>
       <button class="btn" onclick="openWaqfForm(null,'withdraw',true)">${svgIcon('undo')} سحب مباشر</button>
+      <button class="btn" onclick="exportWaqfPDF()">${svgIcon('printer')} تصدير PDF</button>
+      <button class="btn btn-danger" onclick="openWaqfReset()">${svgIcon('trash')} تصفير الوقف</button>
     </div></div>`;
 
   h+=`<div class="stats">
@@ -1163,13 +1184,7 @@ function viewWaqf(){
 
   const years=waqfAllYears();
   if(waqfYear && years.indexOf(waqfYear)<0) waqfYear=null;
-  let list=(db.waqf.transactions||[]).slice();
-  if(waqfYear) list=list.filter(t=>yearOf(t.date)===waqfYear);
-  if(waqfTypeFilter) list=list.filter(t=>t.type===waqfTypeFilter);
-  if(waqfCatFilter) list=list.filter(t=>waqfMatchesCategory(t,waqfCatFilter));
-  if(waqfFrom) list=list.filter(t=>t.date>=waqfFrom);
-  if(waqfTo) list=list.filter(t=>t.date<=waqfTo);
-  list.sort((a,b)=>a.date<b.date?1:-1);
+  const list=waqfFilteredList();
 
   h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('list')} سجل الحركات</h2>
     <span class="count">${list.length} حركة</span></div>
@@ -1197,13 +1212,7 @@ function viewWaqf(){
   } else {
     h+=`<div class="panel-body"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>التفاصيل</th><th>المبلغ</th><th>التوزيع</th><th>ملاحظة</th><th></th></tr></thead><tbody>`;
     list.forEach(t=>{
-      const isDep=t.type==='deposit';
-      const isDirect=isDep?t.depositType==='direct':!!t.direct;
-      const isCatDep=isDep&&t.depositType==='category';
-      const detail=isDirect?'مباشر — '+esc(t.category):isCatDep?esc(t.category):isDep?(t.depositType==='service'?'خدمات':'إيجار'):esc(t.category);
-      const dist=isDep
-        ? (t.depositType==='service' ? `صيانة: ${fmtMoney(t.amount)}` : (isDirect||isCatDep) ? `${esc(t.category)}: ${fmtMoney(t.amount)}` : WAQF_CATS.map(c=>`${c} ${fmtMoney((t.amount||0)*WAQF_SPLIT[c])}`).join(' · '))
-        : '—';
+      const {isDep,detail,dist}=waqfRowInfo(t);
       h+=`<tr>
         <td>${fmtDate(t.date)}</td>
         <td><span class="badge ${isDep?'b-green':'b-red'}">${isDep?'إيداع':'سحب'}</span></td>
@@ -1289,6 +1298,76 @@ function saveWaqf(tId,type,direct){
   }
   if(tId){ Object.assign(db.waqf.transactions.find(x=>x.id===tId),data); }
   else{ db.waqf.transactions.push({id:uid(),...data}); }
+  save(); closeModal(); render();
+}
+function exportWaqfPDF(){
+  const bal=waqfBalances(), general=waqfGeneralBalance(bal);
+  const list=waqfFilteredList();
+  const dep=list.filter(t=>t.type==='deposit').reduce((s,t)=>s+(Number(t.amount)||0),0);
+  const wd=list.filter(t=>t.type==='withdraw').reduce((s,t)=>s+(Number(t.amount)||0),0);
+  const f=[];
+  if(waqfYear) f.push('السنة: '+waqfYear);
+  if(waqfTypeFilter) f.push('النوع: '+(waqfTypeFilter==='deposit'?'إيداع':'سحب'));
+  if(waqfCatFilter) f.push('التصنيف: '+waqfCatFilter);
+  if(waqfFrom) f.push('من: '+fmtDate(waqfFrom));
+  if(waqfTo) f.push('إلى: '+fmtDate(waqfTo));
+  let rows='';
+  list.forEach(t=>{ const {isDep,detail,dist}=waqfRowInfo(t);
+    rows+=`<tr><td>${fmtDate(t.date)}</td><td style="color:${isDep?'#16a34a':'#dc2626'}">${isDep?'إيداع':'سحب'}</td><td>${detail}</td><td style="font-weight:bold">${fmtMoney(t.amount)}</td><td style="font-size:12px">${dist}</td><td>${esc(t.note||'—')}</td></tr>`;
+  });
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>تقرير الوقف</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{font-family:'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;box-sizing:border-box}
+    body{padding:34px;color:#0f172a}
+    .hd{border-bottom:3px solid #188078;padding-bottom:16px;margin-bottom:20px}
+    .hd h1{font-size:24px;color:#188078;margin:0}.hd .meta{font-size:13px;color:#64748b;margin-top:4px}
+    .cards{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
+    .cards .c{flex:1;min-width:120px;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;text-align:center}
+    .cards .t{font-size:12px;color:#64748b}.cards .v{font-size:19px;font-weight:bold;margin-top:3px}
+    h2{font-size:16px;color:#188078;margin:22px 0 8px;border-right:4px solid #188078;padding-right:9px}
+    table{width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:6px}
+    th,td{border:1px solid #e2e8f0;padding:9px 11px;text-align:right}
+    th{background:#188078;color:#fff}tr:nth-child(even) td{background:#f8fafc}
+    .tot td{background:#eef2f7!important;font-weight:bold}
+    .ft{margin-top:26px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}
+    @media print{body{padding:18px}.noprint{display:none}}
+    @media (max-width:520px){body{padding:16px}table{font-size:12px}th,td{padding:6px 8px}}
+    .btnbar{text-align:center;margin-bottom:18px}.btnbar button{background:#188078;color:#fff;border:none;padding:10px 26px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:bold}
+  </style></head><body>
+    <div class="btnbar noprint"><button onclick="window.print()">🖨️ طباعة / حفظ PDF</button></div>
+    <div class="hd"><h1>تقرير الوقف</h1>
+      <div class="meta">تاريخ الإصدار: ${fmtDate(todayISO())}${f.length?' • '+f.join(' • '):''}</div></div>
+    <h2>الأرصدة الحالية</h2>
+    <div class="cards">
+      <div class="c"><div class="t">الرصيد العام</div><div class="v">${fmtMoney(general)}</div></div>
+      ${WAQF_CATS.map(c=>`<div class="c"><div class="t">${c} (${Math.round(WAQF_SPLIT[c]*100)}%)</div><div class="v">${fmtMoney(bal[c])}</div></div>`).join('')}
+    </div>
+    <h2>سجل الحركات (${list.length} حركة)</h2>
+    ${list.length?`<table><thead><tr><th>التاريخ</th><th>النوع</th><th>التفاصيل</th><th>المبلغ</th><th>التوزيع</th><th>ملاحظة</th></tr></thead><tbody>${rows}</tbody>
+    <tfoot><tr class="tot"><td colspan="3">إجمالي الإيداعات</td><td colspan="3" style="color:#16a34a">${fmtMoney(dep)}</td></tr>
+    <tr class="tot"><td colspan="3">إجمالي السحوبات</td><td colspan="3" style="color:#dc2626">${fmtMoney(wd)}</td></tr></tfoot></table>`:'<p style="color:#64748b">لا توجد حركات مطابقة.</p>'}
+    <div class="ft">نظام إدارة الإيجارات — الوقف</div>
+  </body></html>`);
+  w.document.close();
+}
+function openWaqfReset(){
+  openModal(`<div class="modal"><div class="modal-head"><h3>${svgIcon('trash')} تصفير بيانات الوقف</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="info-box" style="color:var(--danger)">سيتم حذف جميع حركات الوقف (${(db.waqf.transactions||[]).length} حركة) وتصبح كل الأرصدة صفرًا. لا يمكن التراجع عن هذه العملية.</div>
+      ${cloud.code?`<div class="field" style="margin-top:12px"><label>رمز الدخول (للتأكيد) *</label><input type="password" id="w-reset-pin" autocomplete="off"></div>`:''}
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" onclick="resetWaqf()">${svgIcon('trash')} تصفير</button>
+      <button class="btn" onclick="closeModal()">إلغاء</button>
+    </div></div>`);
+}
+function resetWaqf(){
+  if(cloud.code && (document.getElementById('w-reset-pin').value||'').trim()!==cloud.code){ alert('رمز الدخول غير صحيح'); return; }
+  if(!confirm('تأكيد نهائي: حذف جميع حركات الوقف؟')) return;
+  db.waqf.transactions=[];
+  waqfYear=null; waqfTypeFilter=null; waqfCatFilter=null; waqfFrom=''; waqfTo='';
   save(); closeModal(); render();
 }
 function deleteWaqf(tId){
