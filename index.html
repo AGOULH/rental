@@ -831,6 +831,7 @@ document.addEventListener('click',e=>{ if(acctPickOpen && !e.target.closest('.bp
 let acctCategory = null; // null = كل البنود
 const EXPENSE_CATS=['صيانة','كهرباء','ماء','رسوم حكومية','ضرائب/زكاة','إدارة','تأمين','تنظيف','أخرى'];
 function yearOf(iso){ return iso ? parseInt(iso.slice(0,4)) : null; }
+function monthOf(iso){ return iso ? parseInt(iso.slice(5,7)) : null; }
 function quarterOf(iso){ return iso ? Math.floor((parseInt(iso.slice(5,7))-1)/3)+1 : null; }
 function allYears(){
   const ys=new Set();
@@ -840,12 +841,12 @@ function allYears(){
   return [...ys].sort((a,b)=>b-a);
 }
 /* إجمالي مصروفات بند معيّن (افتراضيًا: صيانة) لعقار/سنة */
-function categoryExpenses(year, buildingId, category, quarter){
-  return (db.expenses||[]).filter(e=>yearOf(e.date)===year && (!quarter||quarterOf(e.date)===quarter) && bMatch(e.buildingId,buildingId) && (!category||e.category===category))
+function categoryExpenses(year, buildingId, category, quarter, month){
+  return (db.expenses||[]).filter(e=>yearOf(e.date)===year && (!quarter||quarterOf(e.date)===quarter) && (!month||monthOf(e.date)===month) && bMatch(e.buildingId,buildingId) && (!category||e.category===category))
     .reduce((s,e)=>s+(Number(e.amount)||0),0);
 }
 /* تجميع محاسبي لفترة (سنة/ربع/عقار) — المستحق = التجميع حسب تاريخ استحقاق كل دفعة فعلية خلال الفترة */
-function acct(year, quarter, buildingId){
+function acct(year, quarter, buildingId, month){
   let expected=0, collected=0, overdue=0;
   db.units.forEach(u=>{
     if(!bMatch(u.buildingId,buildingId)) return;
@@ -854,13 +855,14 @@ function acct(year, quarter, buildingId){
     pays.forEach(p=>{
       if(yearOf(p.dueDate)!==year) return;
       if(quarter && quarterOf(p.dueDate)!==quarter) return;
+      if(month && monthOf(p.dueDate)!==month) return;
       if(p.settled){ expected += (p.paidAmount||0); collected += (p.paidAmount||0); return; } // مُسوّاة: المتبقي لا يُحتسب غير محصّل
       expected += p.amount;
       collected += (p.paidAmount||0);
       if(p.status!=='paid' && daysFromToday(p.dueDate)<0) overdue += (p.amount-(p.paidAmount||0));
     });
   });
-  const expenses=categoryExpenses(year,buildingId,null,quarter);
+  const expenses=categoryExpenses(year,buildingId,null,quarter,month);
   return { expected, collected, outstanding:expected-collected, overdue, expenses, net:collected-expenses, rate: expected?Math.round(collected/expected*100):0 };
 }
 function rateBar(rate){
@@ -937,8 +939,10 @@ function viewAccounting(){
   </details>`;
 
   const qNames=['الربع الأول (يناير–مارس)','الربع الثاني (أبريل–يونيو)','الربع الثالث (يوليو–سبتمبر)','الربع الرابع (أكتوبر–ديسمبر)'];
+  // خانة ٢٥٪ من الصافي تظهر فقط عند اختيار عقار «شارع محمد» وحده
+  const q25=filterBuildings&&filterBuildings.length===1&&(filterBuildings[0].name||'').indexOf('شارع محمد')>=0;
   h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('calendar')} التفصيل الربع سنوي — ${y}${fLabel?' — '+esc(fLabel):''}</h2></div><div class="panel-body">
-    <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>نسبة التحصيل</th><th>المصروفات</th><th>الصافي</th></tr></thead><tbody>`;
+    <table><thead><tr><th>الربع</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>نسبة التحصيل</th><th>المصروفات</th><th>الصافي</th>${q25?'<th>٢٥٪ من الصافي</th>':''}</tr></thead><tbody>`;
   for(let q=1;q<=4;q++){ const a=acct(y,q,bIds);
     h+=`<tr>
       <td style="font-weight:700">${qNames[q-1]}</td>
@@ -947,15 +951,42 @@ function viewAccounting(){
       <td style="color:${a.outstanding>0?'var(--warning)':'var(--muted)'}">${fmtMoney(a.outstanding)}</td>
       <td>${rateBar(a.rate)}</td>
       <td style="color:var(--danger)">${a.expenses?fmtMoney(a.expenses):'—'}</td>
-      <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td></tr>`;
+      <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td>${q25?`<td style="font-weight:700">${fmtMoney(a.net*0.25)}</td>`:''}</tr>`;
   }
   h+=`<tr style="background:var(--surface-2);font-weight:800;border-top:2px solid var(--border)">
       <td>الإجمالي السنوي</td><td>${fmtMoney(yr.expected)}</td>
       <td style="color:var(--success)">${fmtMoney(yr.collected)}</td>
       <td style="color:var(--warning)">${fmtMoney(yr.outstanding)}</td>
       <td>${yr.rate}%</td><td style="color:var(--danger)">${fmtMoney(yr.expenses)}</td>
-      <td style="color:${yr.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(yr.net)}</td></tr>`;
+      <td style="color:${yr.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(yr.net)}</td>${q25?`<td>${fmtMoney(yr.net*0.25)}</td>`:''}</tr>`;
   h+=`</tbody></table></div></div>`;
+
+  // تفصيل شهري خاص بعقار «شارع محمد» مع خانة ٢٥٪ من الصافي
+  const mBld=(filterBuildings||db.buildings).find(b=>(b.name||'').indexOf('شارع محمد')>=0);
+  if(mBld){
+    const mNames=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    const mt=acct(y,null,mBld.id);
+    h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('calendar')} التفصيل الشهري — ${y} — ${esc(mBld.name)}</h2></div><div class="panel-body">
+      <table><thead><tr><th>الشهر</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>٢٥٪ من الصافي</th></tr></thead><tbody>`;
+    for(let m=1;m<=12;m++){ const a=acct(y,null,mBld.id,m);
+      h+=`<tr>
+        <td style="font-weight:700">${mNames[m-1]}</td>
+        <td>${fmtMoney(a.expected)}</td>
+        <td style="color:var(--success);font-weight:700">${fmtMoney(a.collected)}</td>
+        <td style="color:${a.outstanding>0?'var(--warning)':'var(--muted)'}">${fmtMoney(a.outstanding)}</td>
+        <td style="color:var(--danger)">${a.expenses?fmtMoney(a.expenses):'—'}</td>
+        <td style="font-weight:700;color:${a.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(a.net)}</td>
+        <td style="font-weight:700">${fmtMoney(a.net*0.25)}</td></tr>`;
+    }
+    h+=`<tr style="background:var(--surface-2);font-weight:800;border-top:2px solid var(--border)">
+        <td>الإجمالي السنوي</td><td>${fmtMoney(mt.expected)}</td>
+        <td style="color:var(--success)">${fmtMoney(mt.collected)}</td>
+        <td style="color:var(--warning)">${fmtMoney(mt.outstanding)}</td>
+        <td style="color:var(--danger)">${fmtMoney(mt.expenses)}</td>
+        <td style="color:${mt.net>=0?'var(--success)':'var(--danger)'}">${fmtMoney(mt.net)}</td>
+        <td>${fmtMoney(mt.net*0.25)}</td></tr>`;
+    h+=`</tbody></table></div></div>`;
+  }
 
   h+=`<div class="panel"><div class="panel-head"><h2>${svgIcon('building')} حسب العقار — ${y}</h2></div><div class="panel-body">
       <table><thead><tr><th>العقار</th><th>المستحق</th><th>المحصّل</th><th>المتبقّي</th><th>المصروفات</th><th>الصافي</th><th>التحصيل</th><th>الصيانة % من الإيجار</th><th>نسبة العائد</th></tr></thead><tbody>`;
