@@ -898,6 +898,10 @@ function viewAccounting(){
       <button class="btn btn-primary" onclick="exportAccountingPDF(${y},acctBuildingIds)">${svgIcon('doc')} تقرير PDF</button>
     </div></div>`;
 
+  // نسبة العائد السنوي = صافي دخل العقارات ذات القيمة ÷ مجموع قيمها
+  const roiBs=(filterBuildings||db.buildings).filter(b=>b.propertyValue);
+  const roiVal=roiBs.reduce((t,b)=>t+b.propertyValue,0);
+  const roiAll=roiVal?Math.round(roiBs.reduce((t,b)=>t+acct(y,null,b.id).net,0)/roiVal*1000)/10:null;
   const rateWarn = yr.rate<90 ? `يحتاج ${yr.rate<70?'متابعة':'تحسين'}` : '';
   h+=`<div class="stats">
     ${stat(svgIcon('chart'),fmtMoney(yr.expected),'إجمالي قيمة العقود',`سنة ${y}${fLabel?' — '+esc(fLabel):''}`)}
@@ -906,6 +910,7 @@ function viewAccounting(){
     ${stat(svgIcon('trending'),yr.rate+'%','نسبة التحصيل',rateWarn||'نسبة تحصيل ممتازة',null,{ratio:yr.rate})}
     ${stat(svgIcon('cash'),fmtMoney(yr.expenses),'المصروفات',yr.collected?`${Math.round(yr.expenses/yr.collected*100)}٪ من المحصّل`:'')}
     ${stat(svgIcon('wallet'),fmtMoney(yr.net),'صافي الدخل',yr.net>=0?'دخل صافٍ موجب':'عجز في صافي الدخل')}
+    ${stat(svgIcon('trending'),roiAll===null?'—':roiAll+'%','نسبة العائد السنوي',roiAll===null?'أضف «قيمة العقار» لاحتسابها':`صافي الدخل ÷ قيمة العقارات ${fmtMoney(roiVal)}`)}
   </div>`;
 
   const rateAdvice = yr.rate>=90
