@@ -1107,6 +1107,7 @@ function waqfBalances(){
     const amt=Number(t.amount)||0;
     if(t.type==='deposit'){
       if(t.depositType==='service') bal['صيانة']+=amt;
+      else if(t.depositType==='direct'){ if(bal.hasOwnProperty(t.category)) bal[t.category]+=amt; }
       else WAQF_CATS.forEach(c=>bal[c]+=amt*WAQF_SPLIT[c]);
     } else if(t.type==='withdraw' && bal.hasOwnProperty(t.category)){
       bal[t.category]-=amt;
@@ -1124,7 +1125,7 @@ function waqfAllYears(){
 function waqfMatchesCategory(t,cat){
   if(!cat) return true;
   if(t.type==='withdraw') return t.category===cat;
-  if(t.type==='deposit') return t.depositType==='service' ? cat==='صيانة' : true;
+  if(t.type==='deposit') return t.depositType==='service' ? cat==='صيانة' : t.depositType==='direct' ? t.category===cat : true;
   return true;
 }
 function viewWaqf(){
@@ -1135,6 +1136,8 @@ function viewWaqf(){
     <div style="display:flex;gap:8px">
       <button class="btn btn-primary" onclick="openWaqfForm(null,'deposit')">${svgIcon('plus')} إيداع</button>
       <button class="btn" onclick="openWaqfForm(null,'withdraw')">${svgIcon('undo')} سحب</button>
+      <button class="btn" onclick="openWaqfForm(null,'deposit',true)">${svgIcon('plus')} إيداع مباشر</button>
+      <button class="btn" onclick="openWaqfForm(null,'withdraw',true)">${svgIcon('undo')} سحب مباشر</button>
     </div></div>`;
 
   h+=`<div class="stats">
@@ -1152,6 +1155,7 @@ function viewWaqf(){
         <div>عند إضافة <b>إيداع إيجار</b> يُقسَّم المبلغ تلقائيًا: صيانة <b>10%</b> — ادخار <b>40%</b> — اعمال <b>40%</b> — شخصي <b>10%</b>.</div>
         <div class="formula">مثال: إيداع إيجار بقيمة 10,000 ريال ⇦ صيانة 1,000 — ادخار 4,000 — اعمال 4,000 — شخصي 1,000</div>
         <div style="margin-top:8px">عند إضافة <b>إيداع خدمات</b> يُضاف المبلغ بالكامل إلى بند <b>الصيانة</b> فقط بدون توزيع، ويُحتسب في الرصيد العام.</div>
+        <div style="margin-top:8px">عند <b>الإيداع المباشر</b> يُضاف المبلغ بالكامل إلى التصنيف المختار فقط، وعند <b>السحب المباشر</b> يُخصم من التصنيف المختار فقط، وينعكس كلاهما على الرصيد العام.</div>
         <div style="margin-top:8px">عند <b>السحب</b> يُخصم المبلغ من التصنيف المحدد فقط (صيانة/ادخار/اعمال/شخصي)، وينعكس تلقائيًا على الرصيد العام.</div>
       </div>
     </div>
@@ -1189,9 +1193,10 @@ function viewWaqf(){
     h+=`<div class="panel-body"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>التفاصيل</th><th>المبلغ</th><th>التوزيع</th><th>ملاحظة</th><th></th></tr></thead><tbody>`;
     list.forEach(t=>{
       const isDep=t.type==='deposit';
-      const detail=isDep?(t.depositType==='service'?'خدمات':'إيجار'):esc(t.category);
+      const isDirect=isDep?t.depositType==='direct':!!t.direct;
+      const detail=isDirect?'مباشر — '+esc(t.category):isDep?(t.depositType==='service'?'خدمات':'إيجار'):esc(t.category);
       const dist=isDep
-        ? (t.depositType==='service' ? `صيانة: ${fmtMoney(t.amount)}` : WAQF_CATS.map(c=>`${c} ${fmtMoney((t.amount||0)*WAQF_SPLIT[c])}`).join(' · '))
+        ? (t.depositType==='service' ? `صيانة: ${fmtMoney(t.amount)}` : isDirect ? `${esc(t.category)}: ${fmtMoney(t.amount)}` : WAQF_CATS.map(c=>`${c} ${fmtMoney((t.amount||0)*WAQF_SPLIT[c])}`).join(' · '))
         : '—';
       h+=`<tr>
         <td>${fmtDate(t.date)}</td>
@@ -1211,13 +1216,17 @@ function viewWaqf(){
   h+=`</div>`;
   return h;
 }
-function openWaqfForm(tId,defaultType){
+function openWaqfForm(tId,defaultType,defaultDirect){
   const t=tId?(db.waqf.transactions.find(x=>x.id===tId)||{}):{type:defaultType||'deposit',date:todayISO()};
   const isDeposit=t.type==='deposit';
-  openModal(`<div class="modal"><div class="modal-head"><h3>${tId?svgIcon('edit')+' تعديل حركة':(isDeposit?svgIcon('plus')+' إضافة إيداع':svgIcon('undo')+' تسجيل سحب')}</h3><button class="x" onclick="closeModal()">✕</button></div>
+  const isDirect=tId?(isDeposit?t.depositType==='direct':!!t.direct):!!defaultDirect;
+  openModal(`<div class="modal"><div class="modal-head"><h3>${tId?svgIcon('edit')+' تعديل حركة':(isDeposit?svgIcon('plus')+(isDirect?' إيداع مباشر':' إضافة إيداع'):svgIcon('undo')+(isDirect?' سحب مباشر':' تسجيل سحب'))}</h3><button class="x" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
       <div class="field"><label>التاريخ *</label><input type="date" id="w-date" value="${t.date||todayISO()}"></div>
-      ${isDeposit?`
+      ${isDirect?`
+      <div class="field"><label>التصنيف (${isDeposit?'الإيداع فيه':'السحب منه'}) *</label><select id="w-cat" onchange="updateWaqfPreview()">
+        ${WAQF_CATS.map(c=>`<option value="${c}" ${t.category===c?'selected':''}>${c}</option>`).join('')}
+      </select></div>`:isDeposit?`
       <div class="field"><label>نوع الإيداع *</label><select id="w-deptype" onchange="updateWaqfPreview()">
         <option value="rent" ${t.depositType!=='service'?'selected':''}>إيجار (يُوزَّع تلقائيًا على الأقسام الأربعة)</option>
         <option value="service" ${t.depositType==='service'?'selected':''}>خدمات (يُضاف بالكامل إلى الصيانة)</option>
@@ -1227,10 +1236,11 @@ function openWaqfForm(tId,defaultType){
       </select></div>`}
       <div class="field"><label>المبلغ ( ${db.settings.currency} ) *</label><input type="number" id="w-amount" value="${t.amount||''}" oninput="updateWaqfPreview()" placeholder="مثال: 10000"></div>
       <div class="field"><label>ملاحظة</label><input id="w-note" value="${esc(t.note||'')}"></div>
+      ${isDirect&&cloud.code?`<div class="field"><label>رمز الدخول (للتأكيد) *</label><input type="password" id="w-pin" autocomplete="off" placeholder="نفس رمز الدخول للتطبيق"></div>`:''}
       ${isDeposit?`<div id="w-preview" class="formula"></div>`:''}
     </div>
     <div class="modal-foot">
-      <button class="btn btn-primary" onclick="saveWaqf('${tId||''}','${t.type}')">${svgIcon('save')} حفظ</button>
+      <button class="btn btn-primary" onclick="saveWaqf('${tId||''}','${t.type}',${isDirect})">${svgIcon('save')} حفظ</button>
       <button class="btn" onclick="closeModal()">إلغاء</button>
       ${tId?`<button class="btn btn-danger" style="margin-inline-start:auto" onclick="deleteWaqf('${tId}')">${svgIcon('trash')} حذف</button>`:''}
     </div></div>`);
@@ -1240,20 +1250,28 @@ function updateWaqfPreview(){
   const el=document.getElementById('w-preview'); if(!el) return;
   const amtEl=document.getElementById('w-amount'), typeEl=document.getElementById('w-deptype');
   const amt=parseFloat(amtEl&&amtEl.value)||0;
-  const dtype=typeEl?typeEl.value:'rent';
-  if(dtype==='service') el.innerHTML=`يُضاف بالكامل إلى <b>الصيانة</b>: <b>${fmtMoney(amt)}</b>`;
+  const catEl=document.getElementById('w-cat');
+  const dtype=typeEl?typeEl.value:(catEl?'direct':'rent');
+  if(dtype==='direct') el.innerHTML=`يُضاف بالكامل إلى <b>${esc(catEl.value)}</b>: <b>${fmtMoney(amt)}</b>`;
+  else if(dtype==='service') el.innerHTML=`يُضاف بالكامل إلى <b>الصيانة</b>: <b>${fmtMoney(amt)}</b>`;
   else el.innerHTML=WAQF_CATS.map(c=>`${c} (${Math.round(WAQF_SPLIT[c]*100)}%): <b>${fmtMoney(amt*WAQF_SPLIT[c])}</b>`).join('<br>');
 }
-function saveWaqf(tId,type){
+function saveWaqf(tId,type,direct){
   const date=document.getElementById('w-date').value;
   const amount=parseFloat(document.getElementById('w-amount').value)||0;
   if(!date){ alert('أدخل التاريخ'); return; }
   if(amount<=0){ alert('أدخل مبلغًا صحيحًا'); return; }
+  if(direct && cloud.code && (document.getElementById('w-pin').value||'').trim()!==cloud.code){ alert('رمز الدخول غير صحيح'); return; }
   const note=document.getElementById('w-note').value.trim();
   const data={ type, date, amount, note };
-  if(type==='deposit'){
+  if(type==='deposit' && direct){
+    data.depositType='direct';
+    data.category=document.getElementById('w-cat').value;
+  } else if(type==='deposit'){
     data.depositType=document.getElementById('w-deptype').value;
+    data.category=undefined;
   } else {
+    data.direct=!!direct;
     data.category=document.getElementById('w-cat').value;
     const bal=waqfBalances();
     const old=tId?db.waqf.transactions.find(x=>x.id===tId):null;
